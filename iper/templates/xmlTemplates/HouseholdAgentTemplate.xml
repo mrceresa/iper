@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<HouseholdAgent deriveFrom="BasicAgent">
+  <attributes>
+    <money val="1000" type="int"/>
+    <goodsToBuy val="BasicNeedsProducts, LuxuryProducts" type="list"/>
+    <avActions val="SearchForWork, MoveToMarket, ConsumeFood, BuyOnlyFood, BuyFood, BuyLuxury" type="list"/>
+    <avStates val="totalIncome, starving, salary" type="list"/>            
+  </attributes>
+</HouseholdAgent> 

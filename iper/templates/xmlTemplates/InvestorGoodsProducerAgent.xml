@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<InvestorGoodsProducerAgent deriveFrom="BasicAgent">
+  <attributes>
+    <money val="10000" type="int"/>    
+    <goodsToSell val="IGProducts" type="list"/>
+  </attributes>
+</InvestorGoodsProducerAgent> 

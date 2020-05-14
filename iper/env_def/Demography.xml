@@ -1,0 +1,12 @@
+<Demography class="Environment">
+  <requires/>
+  <provides/>
+  <agentAttributes>
+    <age min="0" max="100" sampleStrategy="uniform" default="0" type="int"/>
+  </agentAttributes>
+  <behaviours>
+    <AgingBehaviour/>
+    <DieOldBehaviour/>
+  </behaviours>
+  <rasters/>
+</Demography>

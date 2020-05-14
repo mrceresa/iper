@@ -1,0 +1,10 @@
+matplotlib
+ipython
+numpy
+scipy
+pandas
+cython
+-e git+https://github.com/projectmesa/mesa#egg=mesa
+-e git+https://github.com/Corvince/mesa-geo.git#egg=mesa-geo
+coloredlogs
+contextily

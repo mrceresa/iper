@@ -1,0 +1,14 @@
+<BasalMetabolism class="Environment">
+  <requires>
+    <EnergySource/>
+  </requires>  
+  <provides/>
+  <agentAttributes>
+    <energy min="0" max="100" default="24" type="int"/>
+  </agentAttributes>
+  <behaviours>
+    <ConsumeBasal/>
+    <DieOfStarvation/>    
+  </behaviours>
+  <rasters/>
+</BasalMetabolism>

@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<MonkeyAgent>
+  <attributes>
+    <avActions val="MoveUp, MoveDown, MoveLeft, MoveRight, Still, Harvest" type="list"/>
+    <avStates val="lookAround" type="list"/>                        
+  </attributes>
+  <events/>
+  <environments/>
+</MonkeyAgent> 

@@ -1,0 +1,14 @@
+<Market class="Environment">
+  <requires/>
+  <provides/>
+  <templates>
+  </templates>  
+  <agentAttributes>
+      <money min="0" default="0" type="int"/>
+      <goodsToBuy values="BasicNeedsProducts, LuxuryProducts" type="list"/>  
+      <avActions values="" type="list"/>
+      <avStates values="" type="list"/>            
+  </agentAttributes>      
+  <behaviours/>
+  <rasters/>
+</Market>

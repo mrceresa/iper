@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<BasicAgent>
+  <attributes>
+    <money val="0" type="int"/>
+    <goodsToBuy val="" type="list"/>
+    <goodsToSell val="" type="list"/>
+    <avActions val="" type="list"/>
+    <avStates val="" type="list"/>                        
+  </attributes>
+  <events/>
+  <environments/>
+</BasicAgent> 
