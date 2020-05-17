@@ -21,17 +21,10 @@ import contextily as ctx
 from io import StringIO
 import json
 
+from iper.space import GeoSpaceQR
+
 import logging
 _log = logging.getLogger(__name__)
-
-class BCNAgent(GeoAgent):
-
-  def __init__(self, unique_id, model, destination, initial_pos):
-    super(BCNAgent, self).__init__(unique_id, model)
-
-  def step(self):
-    _log.info("Not implemented")
-
 
 class VirusInformation(object):
   def __init__(self):
@@ -45,9 +38,9 @@ class Human(GeoAgent):
 
   def step(self):
     _log.debug("*** Agent %d stepping"%self.unique_id)    
-    #x = self.random.randrange(self.grid.width)
-    #y = self.random.randrange(self.grid.height)
-    #self.grid.place_agent(a, (x, y))  
+    x = random.uniform(-1.0, 1.0)*self.model._xs["dx"]
+    y = random.uniform(-1.0, 1.0)*self.model._xs["dy"]
+    self.model.grid.place_agent(self, Point(x,y))
     
     #neighbors = self.model.grid.get_neighbors(self)
 
@@ -61,7 +54,7 @@ class BCNCovid2020(Model):
     _log.info("Initalizing model")    
     
     self._basemap = basemap
-    self.grid = GeoSpace()
+    self.grid = GeoSpaceQR()
     self.schedule = RandomActivation(self)
     self.initial_outbreak_size = 100
     self.virus = VirusInformation()
@@ -71,8 +64,7 @@ class BCNCovid2020(Model):
     self.loadShapefiles()
     
     _log.info("Initalizing agents")
-    self.createAgents(N)
-    self.plotAll()    
+    self.createAgents(N)   
 
   def createAgents(self, N):
   
@@ -105,8 +97,8 @@ class BCNCovid2020(Model):
       _jsAg = json.load(_ioAg)
       _jsAg["id"] = i 
       _jsAg["geometry"]["coordinates"] = [
-          random.uniform(self._xs["w"],self._xs["e"]), 
-          random.uniform(self._xs["n"],self._xs["s"])
+          random.uniform(self._xs["n"],self._xs["s"]),
+          random.uniform(self._xs["w"],self._xs["e"])
           ]
 
       _jsH["features"].append( _jsAg )
@@ -122,19 +114,18 @@ class BCNCovid2020(Model):
 
     fig = plt.figure(figsize=(15, 15))
     ax1 = plt.gca()
-    
-    ctx.plot_map(self._loc, ax=ax1)
 
+    ctx.plot_map(self._loc, ax=ax1)
     _c = ["red", "blue"]
     for i, _r in enumerate(self._roads):
       _r.plot(ax=ax1, facecolor='none', edgecolor=_c[i])    
-      
-    # Plot agents
+    plt.tight_layout()
 
+    # Plot agents
     agentFeatures = self.grid.__geo_interface__
-    gdf = gpd.GeoDataFrame.from_features(agentFeatures)
+    gdf = gpd.GeoDataFrame.from_features(agentFeatures)   
+    print(gdf) 
     gdf.plot(ax=ax1)
-    
     
   def loadShapefiles(self):
 

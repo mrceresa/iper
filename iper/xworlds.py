@@ -14,7 +14,7 @@ import uuid
 import logging
 
 from copy import deepcopy
-from xWorld import _sandbox_defs, _agentTemplateFactory, _environmentFactory
+from iper import _sandbox_defs, _agentTemplateFactory, _environmentFactory
 import inspect
 import io, traceback
 

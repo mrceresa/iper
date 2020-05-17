@@ -9,11 +9,7 @@ import datetime
 import os, sys
 import logging
 
-from .model import Model
-from .agent import Agent
-
-
-__all__ = ["Model", "Agent"]
+__all__ = []
 
 __title__ = "iper"
 __version__ = "0.1"

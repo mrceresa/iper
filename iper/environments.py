@@ -2,7 +2,7 @@ from .xmlobjects import XMLObject, fromXmlFile, toStr
 import os
 from glob import glob
 import importlib
-from xWorld import _sandbox_defs
+from iper import _sandbox_defs
 
 class EnvironmentFactory(object):
   def __init__(self, basedir=_sandbox_defs["environments"]):

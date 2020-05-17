@@ -1,3 +1,5 @@
 *.pyc
 __pycache__/
 experiments/
+examples/SAR-COV2/prf
+examples/SAR-COV2/src/

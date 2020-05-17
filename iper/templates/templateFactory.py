@@ -8,7 +8,7 @@ from ..xmlobjects import toStr, fromXmlFile
 import logging
 
 from copy import deepcopy
-from xWorld import _sandbox_defs
+from iper import _sandbox_defs
 
 class XAgentFactory(object):
   def __init__(self, basedir=_sandbox_defs["templates"]):
