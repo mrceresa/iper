@@ -18,6 +18,8 @@ import pandas as pd
 #]
 #shells = [Polygon.from_bounds(*_s) for _s in shells]
 
+class MockModel:
+  pass
 
 def plotTest(sheet, agents, fname):
   fig = plt.figure(figsize=SIZE, dpi=90)
@@ -46,7 +48,7 @@ class TestGeoSpace(unittest.TestCase):
     sheet = Polygon.from_bounds( x_min, y_min, x_Max, y_Max )
 
     _ids = []; _lats = []; _longs = []
-    for _aid in range(1000):
+    for _aid in range(10):
       _ids.append(_aid)
       _lats.append(uniform(x_min, x_Max))
       _longs.append(uniform(y_min, y_Max))
@@ -62,7 +64,10 @@ class TestGeoSpace(unittest.TestCase):
         )
 
     gdf.crs = self.spacePandas.crs.crs.to_string()
-    AC = AgentCreator(GeoAgent, {"model":None})
+
+    model = MockModel()
+    model.grid = self.spacePandas
+    AC = AgentCreator(GeoAgent, {"model": model})
     self.agents = AC.from_GeoDataFrame(gdf)
 
     self.spaceRT.add_agents(self.agents)
@@ -72,6 +77,30 @@ class TestGeoSpace(unittest.TestCase):
     self.spacePandas.add_agents(self.agents)
     for _a in self.spacePandas.agents:
       self.assertTrue(_a in self.spaceRT.agents)
+
+  def testRemoval(self):
+
+    self.spacePandas.add_agents(self.agents)
+    _toDel = self.agents[0]
+    self.spacePandas.remove_agent(_toDel)
+    self.assertFalse(_toDel in self.spacePandas.agents)
+
+  def testUpdate(self):
+    self.spacePandas.add_agents(self.agents)
+    _toMove = self.agents[0]
+    oShape = _toMove.shape
+    newShape = Point(oShape.x + 1 , oShape.y + 1)
+    self.spacePandas.update_shape(_toMove, newShape)
+
+    _t = self.spacePandas._agents[id(_toMove)]
+    self.assertTrue(newShape == _t.shape)
+
+  def testGeoInterface(self):
+    self.spacePandas.add_agents(self.agents)
+    _g1 = self.spacePandas.__geo_interface__
+    _g2 = self.spaceRT.__geo_interface__
+
+    self.assertEqual(_g1, _g2)
 
 if __name__ == '__main__':
     unittest.main()

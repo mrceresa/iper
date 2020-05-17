@@ -57,14 +57,24 @@ class GeoSpacePandas(GeoSpace):
         else:
           raise AttributeError("GeoAgents must have a shape attribute")
       self._agdf = self._agdf.append(data, ignore_index=True)
-      self._agdf.crs = self.crs
+      #self._agdf.crs = self.crs
 
     def remove_agent(self, agent):
       """Remove an agent from the GeoSpace."""
       _aid = id(agent)
       if _aid in self._agents:
         del self._agents[_aid]
-        self._agdf = self._agdf.drop(index=self._agdf.loc[self._agdf['agentid']==_aid].index)
+        _idxToDel = self._agdf.loc[self._agdf['agentid']==_aid].index
+        self._agdf = self._agdf.drop(index=_idxToDel)
+
+    def update_shape(self, agent, newShape):
+      """Update an agent shape in the GeoSpace."""
+      _aid = id(agent)
+      if _aid in self._agents:
+        self._agents[_aid].shape = newShape
+        self._agdf.geometry[self._agdf['agentid']==_aid] =newShape
+      else:
+        raise ValueError("Agent %s is not in geospace"%(str(agent)))
 
     def get_relation(self, agent, relation):
       """Return a list of related agents.
@@ -121,9 +131,10 @@ class GeoSpacePandas(GeoSpace):
 
     @property
     def agents(self):
-      return self._agents.values()
+      return list(self._agents.values())
 
     @property
     def __geo_interface__(self):
       """Return a GeoJSON FeatureCollection."""
-      raise ValueError("Not implemented") 
+      features = [a.__geo_interface__() for a in self.agents]
+      return {"type": "FeatureCollection", "features": features}

@@ -18,9 +18,11 @@ def main(args):
   _log.info("Started BCN Mobility simulator with params %s"%str(args))
   model = BCNCovid2020(args.agents, args.basemap)
   
+  model.plotAll()
+  plt.savefig("start.png")
   model.run_model(args.steps)
   model.plotAll()
-  #plt.show()
+  plt.savefig("end.png")
   return model
 
 

@@ -8,8 +8,9 @@ Core Objects:
 import datetime
 import os, sys
 import logging
+from .space.Space import GeoSpacePandas
 
-__all__ = []
+__all__ = [GeoSpacePandas]
 
 __title__ = "iper"
 __version__ = "0.1"

@@ -2,7 +2,6 @@ from mesa import Agent, Model
 from mesa.time import RandomActivation
 
 from mesa_geo.geoagent import GeoAgent, AgentCreator
-from mesa_geo import GeoSpace
 
 import math
 import networkx as nx
@@ -21,7 +20,7 @@ import contextily as ctx
 from io import StringIO
 import json
 
-from iper.space import GeoSpaceQR
+from iper import GeoSpacePandas
 
 import logging
 _log = logging.getLogger(__name__)
@@ -35,13 +34,22 @@ class Human(GeoAgent):
     super().__init__(unique_id, model, shape)
     # Markov transition matrix
     self._trans = probs
+    self._vel1step = 0.4 #Km per hora
+
+  def place_at(self, newPos):
+    self.model.place_at(self, newPos)
+  
+  def get_pos(self):
+    return (self.shape.x, self.shape.y)
 
   def step(self):
-    _log.debug("*** Agent %d stepping"%self.unique_id)    
-    x = random.uniform(-1.0, 1.0)*self.model._xs["dx"]
-    y = random.uniform(-1.0, 1.0)*self.model._xs["dy"]
-    self.model.grid.place_agent(self, Point(x,y))
-    
+    _log.debug("*** Agent %d stepping"%self.unique_id) 
+    nx = random.uniform(-1.0, 1.0)*self._vel1step / self.model._xs["dx"]
+    ny = random.uniform(-1.0, 1.0)*self._vel1step / self.model._xs["dy"]
+    ox, oy = self.get_pos()
+    newPos = Point(ox + nx, oy + ny)
+
+    self.place_at(newPos)
     #neighbors = self.model.grid.get_neighbors(self)
 
   def __repr__(self):
@@ -54,7 +62,7 @@ class BCNCovid2020(Model):
     _log.info("Initalizing model")    
     
     self._basemap = basemap
-    self.grid = GeoSpaceQR()
+    self.grid = GeoSpacePandas()
     self.schedule = RandomActivation(self)
     self.initial_outbreak_size = 100
     self.virus = VirusInformation()
@@ -66,45 +74,23 @@ class BCNCovid2020(Model):
     _log.info("Initalizing agents")
     self.createAgents(N)   
 
+  def place_at(self, agent, loc):
+    if self._xs["bbox"].contains(loc):
+      self.grid.update_shape(agent, loc)
+
   def createAgents(self, N):
-  
-    _h = """
-    { 
-      "type": "FeatureCollection",
-      "crs": { 
-        "type": "name", 
-        "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } 
-      },
-      "features": []
-    }
-    """
-
-    _ioH = StringIO(_h)
-    _jsH = json.load(_ioH)
-
-    _ag0 = """
-          { "type": "Feature", "id": 0, "properties": {},
-            "geometry": { "type": "Point", 
-              "coordinates": [] 
-            } 
-          }"""
-    
-    
+      
     base = self._xs["centroid"]
-    
-    for i in range(N):
-      _ioAg = StringIO(_ag0)
-      _jsAg = json.load(_ioAg)
-      _jsAg["id"] = i 
-      _jsAg["geometry"]["coordinates"] = [
-          random.uniform(self._xs["n"],self._xs["s"]),
-          random.uniform(self._xs["w"],self._xs["e"])
-          ]
-
-      _jsH["features"].append( _jsAg )
-
     AC = AgentCreator(Human, {"model": self})
-    agents = AC.from_GeoJSON(_jsH)
+    agents = []
+    for i in range(N):
+      _a = AC.create_agent( 
+        Point( 
+          random.uniform(self._xs["w"],self._xs["e"]),
+          random.uniform(self._xs["n"],self._xs["s"])
+        ), i)
+      agents.append(_a)
+    
     _log.info("Adding %d agents..."%len(agents))
     self.grid.add_agents(agents)
     for agent in agents:
@@ -122,10 +108,7 @@ class BCNCovid2020(Model):
     plt.tight_layout()
 
     # Plot agents
-    agentFeatures = self.grid.__geo_interface__
-    gdf = gpd.GeoDataFrame.from_features(agentFeatures)   
-    print(gdf) 
-    gdf.plot(ax=ax1)
+    self.grid._agdf.plot(ax=ax1)
     
   def loadShapefiles(self):
 
@@ -144,9 +127,14 @@ class BCNCovid2020(Model):
           (self._xs["e"], self._xs["n"])
         )
       ).centroid
-      
-    self._xs["dx"] = 111.32; 
-    self._xs["dy"] = 40075 * math.cos( self._xs["centroid"].y ) / 360
+
+    self._xs["bbox"] = Polygon.from_bounds(
+          self._xs["w"], self._xs["s"],
+          self._xs["e"], self._xs["n"]
+        )
+
+    self._xs["dx"] = 111.32; #One degree in longitude is this in KM 
+    self._xs["dy"] = 40075 * math.cos( self._xs["centroid"].y ) / 360 
     _log.info("Arc amplitude at this latitude %f, %f"%(self._xs["dx"], self._xs["dy"]))
 
     path = os.getcwd()
