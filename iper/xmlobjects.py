@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from lxml import etree
+from lxml.dom import WrongDocumentErr
 
 def fromXml(xml_string):
     return etree.fromstring(xml_string)

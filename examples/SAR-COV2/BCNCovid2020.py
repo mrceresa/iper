@@ -59,6 +59,7 @@ class Human(GeoAgent):
 class BCNCovid2020(Model):
 
   def __init__(self, N, basemap):
+    super().__init__()
     _log.info("Initalizing model")    
     
     self._basemap = basemap

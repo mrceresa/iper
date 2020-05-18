@@ -223,7 +223,7 @@ class XAgent(Agent):
 
 class MultiEnvironmentWorld(Model):
   def __init__(self, config, output_dir="./" ):
-    World.__init__( self, config)
+    super().__init__()
     self.odir = output_dir
     self._aodir = os.path.join(self.odir, "agents")
     os.makedirs(self._aodir)    
@@ -278,7 +278,7 @@ class MultiEnvironmentWorld(Model):
     bag = []
     for i in range(_w):
       for j in range(_h):
-        for aid in self.getAgentIds(Point2DInt(i,j), "all"):
+        for aid in self.getAgentIds((i,j), "all"):
           self.l.info(aid)
           bag.append(aid)
         
@@ -288,7 +288,7 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
-    super(MultiEnvironmentWorld, self).addAgent(agent)
+    super().addAgent(agent)
     self._totCreated += 1
     self._agents.setdefault(type(agent),[]).append(agent)
 
@@ -371,7 +371,7 @@ class MultiEnvironmentWorld(Model):
     # Generate random position
     _x = random.randint(0, self.config.size._width-1)
     _y = random.randint(0, self.config.size._height-1)
-    agent.position = Point2DInt(_x, _y)
+    agent.position = (_x, _y)
     # Configure environments
     self._applyEnvRequir(agent)
     

@@ -12,6 +12,8 @@ from polisandbox.brains import BaseBrain
 from polisandbox import Action, Event, RewardRule
 from polisandbox.behaviours.behaviours import Harvest
 
+import shutil
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(message)s', 
           datefmt='%Y/%m/%d %I:%M:%S %p', 
           level=logging.DEBUG)
