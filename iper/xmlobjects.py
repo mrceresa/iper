@@ -2,7 +2,6 @@
 
 from copy import deepcopy
 from lxml import etree
-from lxml.dom import WrongDocumentErr
 
 def fromXml(xml_string):
     return etree.fromstring(xml_string)
@@ -99,7 +98,7 @@ class XMLObject(object):
         newEl = self.doc.createElement(name)
         try:
             r = el1.appendChild(newEl)
-        except WrongDocumentErr:
+        except:
             el1Doc = el1._get_ownerDocument()
             r = el1.appendChild(el1Doc.importNode(newEl,True))
         
