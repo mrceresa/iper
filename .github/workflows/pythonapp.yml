@@ -32,6 +32,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install -e git+https://github.com/bcn-medtech/iper-social-simulations.git#egg=iper
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
