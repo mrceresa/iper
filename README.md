@@ -1,3 +1,5 @@
+![Unit tests](https://github.com/bcn-medtech/iper-social-simulations/workflows/Unit%20tests/badge.svg)
+
 # iper - a Social policy explorer for Agent-Based Modeling
 
 This is the first release of iper. No functionality guaranteed, bugs included.
