@@ -5,7 +5,7 @@ import re
 from setuptools import setup, find_packages
 from codecs import open
 
-requires = ["mesa >= 0.8.6", "mesa-geo", "geopandas"]
+requires = ["mesa >= 0.8.6", "mesa-geo", "geopandas", "matplotlib", "coloredlogs","contextily","lxml"]
 
 version = ""
 with open("iper/__init__.py", "r") as fd:
