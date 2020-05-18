@@ -14,7 +14,6 @@ If you have some errors building C-extensions in the previous step, consider fir
 
 ```shell
 conda install fiona pyproj rtree shapely mesa mesa-geo
-pip install iper
 ```
 
 ## Getting started
