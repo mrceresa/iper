@@ -15,6 +15,8 @@ import argparse
 from random import random
 import gillespy2
 
+import csv
+
 # The original SIR model differential equations with mass action effect
 def derivOrig(y, t, N, beta, gamma):
     S, I, R = y
@@ -152,6 +154,10 @@ def main(args):
   sir_det = solveSIRdet(y0, t, N, mu, beta, gamma)
   sir_stoch = solveSIRstoch(y0, t, N, mu, beta, gamma, nits)
   sir_gill = solveGillespie(y0, t, N, mu, beta, gamma, nitg)
+
+  np.savetxt('sir_results.csv', np.column_stack( 
+    (t, sir_det["S"], sir_det["I"], sir_det["R"])
+  ), delimiter=', ' )
 
   xbound, ybound = (0.0, 1.0), (0.0, 1.0)
   gridsteps = 30; tmax=2e3; nsteps=1e2; tdir="forward"

@@ -77,14 +77,14 @@ def plotTrajectories(inits, axes, tmax, nsteps, tdir, N, mu):
   
   plt.savefig("ps_traj.png")
 
-def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100):
+def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100, sdfname='sir.png', sdstyle='-'):
   # Plot the data on three separate curves for S(t), I(t) and R(t)
   fig = plt.figure(figsize=(10, 6), dpi=300, facecolor='w')
   ax = fig.add_subplot(111, axisbelow=True)
 
-  ax.plot(tau, sd["S"], 'b', alpha=0.5, lw=2, label='Susceptible')
-  ax.plot(tau, sd["I"], 'r', alpha=0.5, lw=2, label='Infected')
-  ax.plot(tau, sd["R"], 'g', alpha=0.5, lw=2, label='Recovered')
+  ax.plot(tau, sd["S"], 'b'+sdstyle, alpha=0.5, lw=2, label='Susceptible')
+  ax.plot(tau, sd["I"], 'r'+sdstyle, alpha=0.5, lw=2, label='Infected')
+  ax.plot(tau, sd["R"], 'g'+sdstyle, alpha=0.5, lw=2, label='Recovered')
   plt.title(r"Adimensional SIR model")
   ax.set_xlabel(r'$\tau$')
   ax.set_ylabel(r'Ratio \(\%\)')
@@ -96,7 +96,7 @@ def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100):
   legend.get_frame().set_alpha(0.5)
   for spine in ('top', 'right', 'bottom', 'left'):
     ax.spines[spine].set_visible(False)
-  plt.savefig("sir.png")
+  plt.savefig(sdfname)
 
   if ss:
     Sm = np.mean(ss["S"], axis=1)
