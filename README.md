@@ -20,8 +20,9 @@ conda install fiona pyproj rtree shapely mesa mesa-geo
 
 ## Getting started
 
-After installing the package, clone the repository with
+After installing the package, install git lfs to automatically download the shapefile data and clone the repository with
 ```shell
+git lfs install
 git clone https://github.com/bcn-medtech/iper-social-simulations.git
 ```
 
