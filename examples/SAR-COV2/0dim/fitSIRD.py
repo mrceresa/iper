@@ -12,16 +12,19 @@ from scipy.integrate import odeint
 from scipy.optimize import minimize
 from functools import partial
 from SIRD import modello
+from sklearn.metrics import r2_score
 
 #dati_regione=pd.read_csv('C:\\Users\Enrico\\Desktop\\Dati_Covid\\dati_Covid_Italia\\dati-regioni\\dpc-covid19-ita-regioni.csv')
 dati_regione=pd.read_csv('dpc-covid19-ita-regioni.csv')
 regione='P.A. Trento'
 TRUEregione=dati_regione['denominazione_regione']==regione
-dati_regione1=dati_regione[TRUEregione]
+dati_regione_=dati_regione[TRUEregione]
+dati_regione1=dati_regione_[dati_regione_['totale_positivi']>300]
  
 
-N=5000
-
+N=4400
+#lombardia N=72000
+#trento N=4400
 I=np.array(dati_regione1['totale_positivi'])
 D=np.array(dati_regione1['deceduti'])
 R=np.array(dati_regione1['dimessi_guariti'])
@@ -39,7 +42,7 @@ S=N-I-D-R
 
 t=np.array([i+1 for i in range(len(I))])
 
-i0=25                              #infetti inziali                             
+i0=dati_regione1.iloc[0,11]        #infetti inziali                             
 r0=0                               #immuni iniziali
 s0=N-i0-r0                         #suscettibili iniziali
 d0=0     
@@ -55,9 +58,16 @@ y0=s0,i0,r0,d0
 #     return dzdt
 # =============================================================================
 
+
+def normalize(v):
+    normalized_v = np.array([(i-min(v))/(max(v)-min(v)) for i in v])
+    return normalized_v
+
+
 def residual(S, I, R, t, y0, N, param):   
     a, beta, l = param
-    Z = odeint(modello, y0, t, args=( N, a, beta, l)) 
+    Z = odeint(modello, y0, t, args=( N, a, beta, l))
+   
     return (sum((Z[:,0]-S)**2+(Z[:,1]-I)**2+(Z[:,2]-R)**2))
 
 res=residual(S, I, R, t, y0, N, [0.01,0.01,0.01])
@@ -71,6 +81,12 @@ residual2=partial(residual,S, I, R, t, y0, N)
 msol=minimize(residual2,params,method='Nelder-Mead')
 
 Zo=odeint(modello, y0, t, args=( N, msol.x[0], msol.x[1], msol.x[2])) 
+
+#calcolo di R-quadrato,coefficiente di determinazione--:
+
+Y_true=[S,I,R,D]
+Y_pred=[Zo[:,0],Zo[:,1],Zo[:,2],Zo[:,3]]
+r_sqr=r2_score(Y_true,Y_pred, multioutput='variance_weighted')
 
 
 ax=plt.subplot()          
@@ -90,3 +106,6 @@ plt.title("Covid19_ITA")
 plt.xlabel("day")
 plt.ylabel("population")  
 plt.show()
+
+
+
