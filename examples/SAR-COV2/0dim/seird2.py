@@ -68,10 +68,10 @@ def deriv(y, t, N, beta, gamma, delta, alpha, rho):
     return dSdt, dEdt, dIdt, dRdt, dDdt
 
 
-def solveSIRdet(y0, t, N, MAXR0, minR0, k, startLockdown, age_effect, gamma, delta, rho):
+def solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, gamma, delta, rho):
   # Lockdown effect
   def R_0(tau):
-    return ( MAXR0 - minR0 ) / (1 + np.exp(-k*(-tau+startLockdown))) + minR0
+    return ( r0_max - r0_min ) / (1 + np.exp(-k*(-tau+startLockdown))) + r0_min
   def beta(tau):
     return R_0(tau)*gamma
 
@@ -106,8 +106,8 @@ def doSim(args):
   t = np.linspace(0, args.days, args.days)
 
   # Lockdown effect
-  MAXR0 = 6.0; minR0 = 0.9
-  k = 0.5 # Transition parameter from max to min R0
+  r0_max = args.r0_max; r0_min = args.r0_min
+  k = args.k # Transition parameter from max to min R0
   # starting day of hard lockdown
   startLockdown = args.lock if args.lock > 0 else args.days 
 
@@ -116,7 +116,10 @@ def doSim(args):
 
   # Initial conditions vector
   y0 = S0, E0, I0, R0, D0
-  sir_det = solveSIRdet(y0, t, N, MAXR0, minR0, k, startLockdown, age_effect, gamma, delta, rho)
+  print("Average recovery time %.3f days"%(1/gamma))
+  print("Average incubation time %.3f days"%(1/delta))
+  print("average survival of criticals %.3f days"%(1/rho))
+  sir_det = solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, gamma, delta, rho)
 
   np.savetxt('seird_results.csv', np.column_stack( 
     (t, sir_det["S"], sir_det["E"], sir_det["I"], sir_det["R"], sir_det["D"])
@@ -153,8 +156,6 @@ def doFit(args):
     return res["D"]
 
   mod = Model(covid_deaths)
-  print(mod.param_names)
-  print(mod.independent_vars)
 
   mod.set_param_hint('r0_max',value=3.0,min=2.0,max=5.0)
   mod.set_param_hint('r0_min',value=0.9,min=0.3,max=3.5)
@@ -165,11 +166,11 @@ def doFit(args):
   mod.set_param_hint('rho',value=0.5,min=0.1,max=1.0)
 
   params=mod.make_params()
-  print(mod.eval(params, x=t))
 
-  result = mod.fit(D, params, method="least_squares", x=t)
-  result.fit_report()
+  result = mod.fit(D, params, method="least_squares", t=t)
+  print(result.fit_report())
   result.plot_fit(datafmt="-")
+  plt.savefig("best_fit.png")
   print("**** Estimated parameters:")
   print(result.best_values)
   
@@ -187,11 +188,16 @@ if __name__ == "__main__":
   sim.add_argument('--delta', type=float, default=1.0/2.0, help="Inverse of the incubation period" )     
   sim.add_argument('--rho', type=float, default=1.0/8.0, help="Inverse of days from critical to death" )  
   sim.add_argument('--lock', type=int, default=0, help="When to start the lockdown" )  
+  sim.add_argument('--r0_max', type=float, default=5.0, help="Maximum of the transmission parameter" )  
+  sim.add_argument('--r0_min', type=float, default=0.9, help="Minimum of the transmission parameter" )  
+  sim.add_argument('-k', type=float, default=2.5, help="Transition parameter of the lockdown")  
+
   sim.set_defaults(func=doSim)  
 
   fit = subparsers.add_parser('fit')
   fit.add_argument("--data", type=str, default="dpc-covid19-ita-regioni.csv", help="csv with data for fit")
   fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
+  fit.add_argument('-n','--agents', type=int, help="Initial population", required=True ) 
   fit.set_defaults(func=doFit)  
 
   args = parser.parse_args()  
