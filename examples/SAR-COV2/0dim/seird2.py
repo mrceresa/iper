@@ -132,7 +132,7 @@ def doFit(args):
   data = pd.read_csv(args.data)
   regione = 'P.A. Trento'
   r1 = data[data['denominazione_regione']==regione]
-  N = 5000 
+  N = args.agents
   I=np.array(r1['totale_positivi'])
   D=np.array(r1['deceduti'])
   R=np.array(r1['dimessi_guariti'])
