@@ -9,14 +9,15 @@ import math
 import seaborn as sns
 sns.set_style("darkgrid")
 
-from plotdf import plotdf
-
+import pandas as pd
 import argparse
 from random import random
-import gillespy2
 
 import csv
 from matplotlib.gridspec import GridSpec
+from lmfit import Parameters, Model
+from functools import partial
+
 
 def plotSEIRD(tau, sd, sdfname='sir.png', sdstyle='-'):
   # Plot the data on three separate curves for S(t), E(t), I(t) and R(t)
@@ -67,12 +68,29 @@ def deriv(y, t, N, beta, gamma, delta, alpha, rho):
     return dSdt, dEdt, dIdt, dRdt, dDdt
 
 
-def solveSIRdet(y0, t, N, beta, gamma, delta, alpha, rho):
+def solveSIRdet(y0, t, N, MAXR0, minR0, k, startLockdown, age_effect, gamma, delta, rho):
+  # Lockdown effect
+  def R_0(tau):
+    return ( MAXR0 - minR0 ) / (1 + np.exp(-k*(-tau+startLockdown))) + minR0
+  def beta(tau):
+    return R_0(tau)*gamma
+
+  # Effect of age on death rate
+  alpha_age = {"0-29": 0.01, "30-59": 0.05, "60-89": 0.2, "89+": 0.3}
+  demographic = {"0-29": 0.05, "30-59": 0.25, "60-89": 0.45, "89+": 0.25}
+  alpha_av = sum(alpha_age[i] * demographic[i] for i in list(alpha_age.keys()))
+  def alpha(tau, I, N):
+    return age_effect*I/N + alpha_av
+
   # Integrate the SEIR equations over the time grid, t
   ret = scint.odeint(deriv, y0, t, args=(N, beta, gamma, delta, alpha, rho))
   s, e, i, r, d = ret.T
 
-  return {"S":s, "E":e, "I":i, "R":r, "D":d}
+  res = {"S":s, "E":e, "I":i, "R":r, "D":d} 
+  res["R_0"] = list(map(R_0, t)) 
+  res["alpha"] = [alpha(tau, res["I"][tau], N) for tau in range(len(t))]
+
+  return res
 
 def doSim(args):
   print(args)
@@ -92,24 +110,13 @@ def doSim(args):
   k = 0.5 # Transition parameter from max to min R0
   # starting day of hard lockdown
   startLockdown = args.lock if args.lock > 0 else args.days 
-  def R_0(tau):
-    return ( MAXR0 - minR0 ) / (1 + np.exp(-k*(-tau+startLockdown))) + minR0
-  def beta(tau):
-    return R_0(tau)*gamma
 
-  # Effect of age on death rate
-  alpha_age = {"0-29": 0.01, "30-59": 0.05, "60-89": 0.2, "89+": 0.3}
-  demographic = {"0-29": 0.05, "30-59": 0.25, "60-89": 0.45, "89+": 0.25}
+  # Strenght of the age effect
   age_effect = 1.0
-  alpha_av = sum(alpha_age[i] * demographic[i] for i in list(alpha_age.keys()))
-  def alpha(tau, I, N):
-    return age_effect*I/N + alpha_av
 
   # Initial conditions vector
   y0 = S0, E0, I0, R0, D0
-  sir_det = solveSIRdet(y0, t, N, beta, gamma, delta, alpha, rho)
-  sir_det["R_0"] = list(map(R_0, t)) 
-  sir_det["alpha"] = [alpha(tau, sir_det["I"][tau], N) for tau in range(len(t))]
+  sir_det = solveSIRdet(y0, t, N, MAXR0, minR0, k, startLockdown, age_effect, gamma, delta, rho)
 
   np.savetxt('seird_results.csv', np.column_stack( 
     (t, sir_det["S"], sir_det["E"], sir_det["I"], sir_det["R"], sir_det["D"])
@@ -119,7 +126,53 @@ def doSim(args):
 
 def doFit(args):
   print(args)
+  data = pd.read_csv(args.data)
+  regione = 'P.A. Trento'
+  r1 = data[data['denominazione_regione']==regione]
+  N = 5000 
+  I=np.array(r1['totale_positivi'])
+  D=np.array(r1['deceduti'])
+  R=np.array(r1['dimessi_guariti'])
 
+  days = args.shift + len(r1["data"])
+  if args.shift:
+    I = np.concatenate((np.zeros(args.shift), I))
+    R = np.concatenate((np.zeros(args.shift), R))
+    D = np.concatenate((np.zeros(args.shift), D))
+
+  S = N-I-D-R
+  t = np.linspace(0, days-1, days, dtype=int)
+
+  i0=1; e0=0; r0=0; s0=N-i0-r0; d0=0     
+  y0=s0,e0,i0,r0,d0
+
+  age_effect = 1.0
+
+  def covid_deaths(t, r0_max, r0_min, k, startLockdown, gamma, delta, rho):   
+    res = solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, gamma, delta, rho)
+    return res["D"]
+
+  mod = Model(covid_deaths)
+  print(mod.param_names)
+  print(mod.independent_vars)
+
+  mod.set_param_hint('r0_max',value=3.0,min=2.0,max=5.0)
+  mod.set_param_hint('r0_min',value=0.9,min=0.3,max=3.5)
+  mod.set_param_hint('k',value=2.5,min=0.01,max=5.0)
+  mod.set_param_hint('startLockdown',value=90,min=0,max=days)
+  mod.set_param_hint('gamma',value=0.1,min=0.01,max=1.0)
+  mod.set_param_hint('delta',value=1.0/3.0,min=0.1,max=1.0)
+  mod.set_param_hint('rho',value=0.5,min=0.1,max=1.0)
+
+  params=mod.make_params()
+  print(mod.eval(params, x=t))
+
+  result = mod.fit(D, params, method="least_squares", x=t)
+  result.fit_report()
+  result.plot_fit(datafmt="-")
+  print("**** Estimated parameters:")
+  print(result.best_values)
+  
 
 if __name__ == "__main__":  
   parser = argparse.ArgumentParser()
@@ -132,12 +185,13 @@ if __name__ == "__main__":
   sim.add_argument('--r0', type=int, default=0, help="Initial recovered" )    
   sim.add_argument('--gamma', type=float, default=1.0/10.0, help="Mean recovery rate" ) 
   sim.add_argument('--delta', type=float, default=1.0/2.0, help="Inverse of the incubation period" )     
-  sim.add_argument('--rho', type=float, default=1.0/8.0, help="Days from critical to death" )  
+  sim.add_argument('--rho', type=float, default=1.0/8.0, help="Inverse of days from critical to death" )  
   sim.add_argument('--lock', type=int, default=0, help="When to start the lockdown" )  
   sim.set_defaults(func=doSim)  
 
   fit = subparsers.add_parser('fit')
-  fit.add_argument("--data", type=str, help="csv with data for fit")
+  fit.add_argument("--data", type=str, default="dpc-covid19-ita-regioni.csv", help="csv with data for fit")
+  fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
   fit.set_defaults(func=doFit)  
 
   args = parser.parse_args()  
