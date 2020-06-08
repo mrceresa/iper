@@ -33,6 +33,7 @@ def plotSEIRHD(tau, sd, sdfname='sir.png', sdstyle='-'):
   ax1.plot(tau, sd["R"], sdstyle, color="green", alpha=0.5, lw=2, label='Recovered')
   ax1.plot(tau, sd["H"], sdstyle, color="red", alpha=0.5, lw=2, label='Hospitalized')
   ax1.plot(tau, sd["D"], sdstyle, color="black", alpha=0.5, lw=2, label='Death')
+  ax1.plot(tau, sd["S"] + sd["E"] + sd["I"] + sd["R"] + sd["H"] + sd["D"], "--", color="blue", alpha=0.5, lw=2, label='Death')  
   fig.suptitle("SEIRHD model")
   ax1.set_xlabel('Time (days)')
   ax1.set_ylabel('Population')
@@ -75,14 +76,16 @@ def solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, rates):
   def R_0(tau):
     return ( r0_max - r0_min ) / (1 + np.exp(-k*(-tau+startLockdown))) + r0_min
   def beta(tau):
-    return R_0(tau)*1.0/rates["rir"]
+    return R_0(tau)*rates["rir"]
 
   # Effect of age on death rate
   alpha_age = {"0-29": 0.01, "30-59": 0.05, "60-89": 0.2, "89+": 0.3}
-  demographic = {"0-29": 0.05, "30-59": 0.25, "60-89": 0.45, "89+": 0.25}
+  demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
   alpha_av = sum(alpha_age[i] * demographic[i] for i in list(alpha_age.keys()))
+  print("Average alpha:", alpha_av)
   def alpha(tau, I, N):
-    return age_effect*I/N + alpha_av
+    #return age_effect*I/N + alpha_av
+    return alpha_av
 
   # Integrate the SEIR equations over the time grid, t
   ret = scint.odeint(deriv, y0, t, args=(N, beta, alpha, rates))
@@ -101,7 +104,7 @@ def doSim(args):
   # Initial number of infected and recovered individuals, I0 and R0.
   E0, I0, R0, H0, D0 = args.e0, args.i0, args.r0, args.h0, 0
   # Everyone else, S0, is susceptible to infection initially.
-  S0 = N - I0 - R0 - E0 - H0
+  S0 = N - I0 - R0 - E0 - H0 - D0
   # A grid of time points (in days)
   t = np.linspace(0, args.days, args.days)
 
@@ -134,6 +137,7 @@ def doFit(args):
   r1 = data[data['denominazione_regione']==regione]
   N = args.agents
   I=np.array(r1['totale_positivi'])
+  H=np.array(r1['totale_ospedalizzati'])
   D=np.array(r1['deceduti'])
   R=np.array(r1['dimessi_guariti'])
 
@@ -141,18 +145,21 @@ def doFit(args):
   if args.shift:
     I = np.concatenate((np.zeros(args.shift), I))
     R = np.concatenate((np.zeros(args.shift), R))
+    H = np.concatenate((np.zeros(args.shift), H))
     D = np.concatenate((np.zeros(args.shift), D))
 
-  S = N-I-D-R
+  S = N-I-D-R-H
   t = np.linspace(0, days-1, days, dtype=int)
 
-  i0=1; e0=0; r0=0; s0=N-i0-r0; d0=0     
-  y0=s0,e0,i0,r0,d0
+  i0=1; e0=0; r0=0; h0=0; s0=N-i0-r0-h0; d0=0
+  y0=s0,e0,i0,r0,h0,d0
 
   age_effect = 1.0
 
-  def covid_deaths(t, r0_max, r0_min, k, startLockdown, gamma, delta, rho):   
-    res = solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, gamma, delta, rho)
+  def covid_deaths(t, r0_max, r0_min, k, startLockdown, rse, rei, rih, rir, rhr, rhd):   
+    res = solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, {
+        "rse":1.0, "rei":1.0/2.0, "rih":1.0/10.0, "rir":1.0/10.0, "rhr":1.0/7.0, "rhd":1.0/8.0       
+      })
     return res["D"]
 
   mod = Model(covid_deaths)
@@ -161,9 +168,12 @@ def doFit(args):
   mod.set_param_hint('r0_min',value=0.9,min=0.3,max=3.5)
   mod.set_param_hint('k',value=2.5,min=0.01,max=5.0)
   mod.set_param_hint('startLockdown',value=90,min=0,max=days)
-  mod.set_param_hint('gamma',value=0.1,min=0.01,max=1.0)
-  mod.set_param_hint('delta',value=1.0/3.0,min=0.1,max=1.0)
-  mod.set_param_hint('rho',value=0.5,min=0.1,max=1.0)
+  mod.set_param_hint('rse',value=1.0,min=0.9,max=1.0)
+  mod.set_param_hint('rei',value=1.0/5.0,min=0.01,max=1.0)  
+  mod.set_param_hint('rir',value=1.0/15.0,min=0.01,max=1.0)
+  mod.set_param_hint('rih',value=1.0/10.0,min=0.01,max=1.0)
+  mod.set_param_hint('rhd',value=1.0/10.0,min=0.01,max=1.0)
+  mod.set_param_hint('rhr',value=1.0/10.0,min=0.01,max=1.0)
 
   params=mod.make_params()
 
@@ -179,7 +189,7 @@ class StoreDictKeyPair(argparse.Action):
    my_dict = {}
    for kv in values.split(","):
      k,v = kv.split("=")
-     my_dict[k] = v
+     my_dict[k] = float(v)
    setattr(namespace, self.dest, my_dict)
 
 if __name__ == "__main__":  
