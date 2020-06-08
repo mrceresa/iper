@@ -19,7 +19,7 @@ from lmfit import Parameters, Model
 from functools import partial
 
 
-def plotSEIRD(tau, sd, sdfname='sir.png', sdstyle='-'):
+def plotSEIRHD(tau, sd, sdfname='sir.png', sdstyle='-'):
   # Plot the data on three separate curves for S(t), E(t), I(t) and R(t)
   fig = plt.figure(figsize=(10, 8), dpi=300, facecolor='w')
   gs = GridSpec(2, 2, figure=fig)
@@ -27,12 +27,13 @@ def plotSEIRD(tau, sd, sdfname='sir.png', sdstyle='-'):
   ax3 = fig.add_subplot(gs[-1, 0])
   ax4 = fig.add_subplot(gs[-1, -1])
 
-  ax1.plot(tau, sd["S"], 'b'+sdstyle, alpha=0.5, lw=2, label='Susceptible')
-  ax1.plot(tau, sd["E"], 'y'+sdstyle, alpha=0.5, lw=2, label='Exposed')
-  ax1.plot(tau, sd["I"], 'r'+sdstyle, alpha=0.5, lw=2, label='Infected')
-  ax1.plot(tau, sd["R"], 'g'+sdstyle, alpha=0.5, lw=2, label='Recovered')
-  ax1.plot(tau, sd["D"], 'k'+sdstyle, alpha=0.5, lw=2, label='Death')
-  fig.suptitle("SEIRD model")
+  ax1.plot(tau, sd["S"], sdstyle, color="black", alpha=0.5, lw=2, label='Susceptible')
+  ax1.plot(tau, sd["E"], sdstyle, color="yellow", alpha=0.5, lw=2, label='Exposed')
+  ax1.plot(tau, sd["I"], sdstyle, color="orange", alpha=0.5, lw=2, label='Infected')
+  ax1.plot(tau, sd["R"], sdstyle, color="green", alpha=0.5, lw=2, label='Recovered')
+  ax1.plot(tau, sd["H"], sdstyle, color="red", alpha=0.5, lw=2, label='Hospitalized')
+  ax1.plot(tau, sd["D"], sdstyle, color="black", alpha=0.5, lw=2, label='Death')
+  fig.suptitle("SEIRHD model")
   ax1.set_xlabel('Time (days)')
   ax1.set_ylabel('Population')
   #ax.set_ylim(0,1.2)
@@ -58,22 +59,23 @@ def plotSEIRD(tau, sd, sdfname='sir.png', sdstyle='-'):
 
 
 # SEIR model with corrected incidence:
-def deriv(y, t, N, beta, gamma, delta, alpha, rho):
-    S, E, I, R, D = y
-    dSdt = -beta(t) * I * S / N
-    dEdt = beta(t) * I * S / N   - delta * E
-    dIdt = delta * E    - (1 - alpha(t, I, N) ) * gamma * I      - alpha(t, I, N) * rho * I
-    dRdt = (1 - alpha(t, I, N)) * gamma * I
-    dDdt = alpha(t, I, N) * rho * I
-    return dSdt, dEdt, dIdt, dRdt, dDdt
+def deriv(y, t, N, beta, alpha, rates,pHD=0.8):
+    S, E, I, R, H, D = y
+    dSdt = -rates["rse"]* S/N* beta(t)*I
+    dEdt =  rates["rse"]* S/N* beta(t)*I - rates["rei"]*1.0*E
+    dIdt =  rates["rei"]*1.0*E  - rates["rir"]*(1 - alpha(t, I, N) )*I  - rates["rih"]*alpha(t, I, N)*I
+    dHdt =  rates["rih"]*alpha(t, I, N)*I - rates["rhd"]*pHD*H - rates["rhr"]*(1-pHD)*H
+    dRdt =  rates["rih"]*(1 - alpha(t, I, N))*I + rates["rhr"]*(1-pHD)*H
+    dDdt =  rates["rhd"]*pHD*H
+    return dSdt, dEdt, dIdt, dRdt, dHdt, dDdt
 
 
-def solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, gamma, delta, rho):
+def solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, rates):
   # Lockdown effect
   def R_0(tau):
     return ( r0_max - r0_min ) / (1 + np.exp(-k*(-tau+startLockdown))) + r0_min
   def beta(tau):
-    return R_0(tau)*gamma
+    return R_0(tau)*1.0/rates["rir"]
 
   # Effect of age on death rate
   alpha_age = {"0-29": 0.01, "30-59": 0.05, "60-89": 0.2, "89+": 0.3}
@@ -83,10 +85,10 @@ def solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, gamma, d
     return age_effect*I/N + alpha_av
 
   # Integrate the SEIR equations over the time grid, t
-  ret = scint.odeint(deriv, y0, t, args=(N, beta, gamma, delta, alpha, rho))
-  s, e, i, r, d = ret.T
+  ret = scint.odeint(deriv, y0, t, args=(N, beta, alpha, rates))
+  s, e, i, r, h, d = ret.T
 
-  res = {"S":s, "E":e, "I":i, "R":r, "D":d} 
+  res = {"S":s, "E":e, "I":i, "R":r, "H":h, "D":d} 
   res["R_0"] = list(map(R_0, t)) 
   res["alpha"] = [alpha(tau, res["I"][tau], N) for tau in range(len(t))]
 
@@ -97,11 +99,9 @@ def doSim(args):
   # Total population, N.
   N = args.agents
   # Initial number of infected and recovered individuals, I0 and R0.
-  E0, I0, R0, D0 = args.e0, args.i0, args.r0, 0
+  E0, I0, R0, H0, D0 = args.e0, args.i0, args.r0, args.h0, 0
   # Everyone else, S0, is susceptible to infection initially.
-  S0 = N - I0 - R0 - E0
-  # Contact rate, beta, and mean recovery rate, gamma, (in 1/days).
-  gamma, delta, rho = args.gamma, args.delta, args.rho 
+  S0 = N - I0 - R0 - E0 - H0
   # A grid of time points (in days)
   t = np.linspace(0, args.days, args.days)
 
@@ -115,17 +115,17 @@ def doSim(args):
   age_effect = 1.0
 
   # Initial conditions vector
-  y0 = S0, E0, I0, R0, D0
-  print("Average recovery time %.3f days"%(1/gamma))
-  print("Average incubation time %.3f days"%(1/delta))
-  print("average survival of criticals %.3f days"%(1/rho))
-  sir_det = solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, gamma, delta, rho)
+  y0 = S0, E0, I0, R0, H0, D0
+  print("Average recovery time %.3f days"%(1/args.rates["rir"]))
+  print("Average incubation time %.3f days"%(1/args.rates["rei"]))
+  print("average survival of criticals %.3f days"%(1/args.rates["rhd"]))
+  sir_det = solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, args.rates)
 
   np.savetxt('seird_results.csv', np.column_stack( 
-    (t, sir_det["S"], sir_det["E"], sir_det["I"], sir_det["R"], sir_det["D"])
+    (t, sir_det["S"], sir_det["E"], sir_det["I"], sir_det["R"], sir_det["H"], sir_det["D"])
   ), delimiter=', ' )
 
-  plotSEIRD(t, sir_det, sdfname="seird.png")
+  plotSEIRHD(t, sir_det, sdfname="seirhd.png")
 
 def doFit(args):
   print(args)
@@ -174,6 +174,13 @@ def doFit(args):
   print("**** Estimated parameters:")
   print(result.best_values)
   
+class StoreDictKeyPair(argparse.Action):
+ def __call__(self, parser, namespace, values, option_string=None):
+   my_dict = {}
+   for kv in values.split(","):
+     k,v = kv.split("=")
+     my_dict[k] = v
+   setattr(namespace, self.dest, my_dict)
 
 if __name__ == "__main__":  
   parser = argparse.ArgumentParser()
@@ -183,14 +190,15 @@ if __name__ == "__main__":
   sim.add_argument('-n','--agents', type=int, default=50000000, help="Initial population" )  
   sim.add_argument('--e0', type=int, default=0, help="Initial exposed" )  
   sim.add_argument('--i0', type=int, default=1, help="Initial infected" ) 
-  sim.add_argument('--r0', type=int, default=0, help="Initial recovered" )    
-  sim.add_argument('--gamma', type=float, default=1.0/10.0, help="Mean recovery rate" ) 
-  sim.add_argument('--delta', type=float, default=1.0/2.0, help="Inverse of the incubation period" )     
-  sim.add_argument('--rho', type=float, default=1.0/8.0, help="Inverse of days from critical to death" )  
+  sim.add_argument('--r0', type=int, default=0, help="Initial recovered" )     
+  sim.add_argument('--h0', type=int, default=0, help="Initial hospitalized" )    
   sim.add_argument('--lock', type=int, default=0, help="When to start the lockdown" )  
   sim.add_argument('--r0_max', type=float, default=5.0, help="Maximum of the transmission parameter" )  
   sim.add_argument('--r0_min', type=float, default=0.9, help="Minimum of the transmission parameter" )  
   sim.add_argument('-k', type=float, default=2.5, help="Transition parameter of the lockdown")  
+  sim.add_argument("--rates", dest="rates", action=StoreDictKeyPair, default={
+    "rse":1.0, "rei":1.0/2.0, "rih":1.0/10.0, "rir":1.0/10.0, "rhr":1.0/7.0, "rhd":1.0/8.0 
+    }, metavar="rse=V1,rei=V2,...")
 
   sim.set_defaults(func=doSim)  
 
