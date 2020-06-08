@@ -33,7 +33,7 @@ def plotSEIRHD(tau, sd, sdfname='sir.png', sdstyle='-'):
   ax1.plot(tau, sd["R"], sdstyle, color="green", alpha=0.5, lw=2, label='Recovered')
   ax1.plot(tau, sd["H"], sdstyle, color="red", alpha=0.5, lw=2, label='Hospitalized')
   ax1.plot(tau, sd["D"], sdstyle, color="black", alpha=0.5, lw=2, label='Death')
-  ax1.plot(tau, sd["S"] + sd["E"] + sd["I"] + sd["R"] + sd["H"] + sd["D"], "--", color="blue", alpha=0.5, lw=2, label='Death')  
+  ax1.plot(tau, sd["S"] + sd["E"] + sd["I"] + sd["R"] + sd["H"] + sd["D"], "--", color="blue", alpha=0.5, lw=2, label='TOTAL')  
   fig.suptitle("SEIRHD model")
   ax1.set_xlabel('Time (days)')
   ax1.set_ylabel('Population')
@@ -66,7 +66,7 @@ def deriv(y, t, N, beta, alpha, rates,pHD=0.8):
     dEdt =  rates["rse"]* S/N* beta(t)*I - rates["rei"]*1.0*E
     dIdt =  rates["rei"]*1.0*E  - rates["rir"]*(1 - alpha(t, I, N) )*I  - rates["rih"]*alpha(t, I, N)*I
     dHdt =  rates["rih"]*alpha(t, I, N)*I - rates["rhd"]*pHD*H - rates["rhr"]*(1-pHD)*H
-    dRdt =  rates["rih"]*(1 - alpha(t, I, N))*I + rates["rhr"]*(1-pHD)*H
+    dRdt =  rates["rir"]*(1 - alpha(t, I, N))*I + rates["rhr"]*(1-pHD)*H
     dDdt =  rates["rhd"]*pHD*H
     return dSdt, dEdt, dIdt, dRdt, dHdt, dDdt
 
@@ -84,9 +84,8 @@ def solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, rates):
   alpha_av = sum(alpha_age[i] * demographic[i] for i in list(alpha_age.keys()))
   print("Average alpha:", alpha_av)
   def alpha(tau, I, N):
-    #return age_effect*I/N + alpha_av
-    return alpha_av
-
+    return age_effect*I/N + alpha_av
+ 
   # Integrate the SEIR equations over the time grid, t
   ret = scint.odeint(deriv, y0, t, args=(N, beta, alpha, rates))
   s, e, i, r, h, d = ret.T
