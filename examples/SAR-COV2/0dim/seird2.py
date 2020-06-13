@@ -60,34 +60,43 @@ def plotSEIRHD(tau, sd, sdfname='sir.png', sdstyle='-'):
 
 
 # SEIR model with corrected incidence:
-def deriv(y, t, N, beta, alpha, rates,pHD=0.8):
+def deriv(y, t, N, beta, alpha, rates,pHD):
     S, E, I, R, H, D = y
-    dSdt = -rates["rse"]* S/N* beta(t)*I
-    dEdt =  rates["rse"]* S/N* beta(t)*I - rates["rei"]*1.0*E
-    dIdt =  rates["rei"]*1.0*E  - rates["rir"]*(1 - alpha(t, I, N) )*I  - rates["rih"]*alpha(t, I, N)*I
+    eta=0.25 # (1-eta) =probabilità di contrarre il virus in maniera asintomatica
+    dSdt = -rates["rse"]* S/N* beta(t)*(I+E)
+    dEdt =  rates["rse"]* S/N* beta(t)*(I+E) - rates["rei"]*eta*E-rates["rir"]*(1-eta)*E
+    dIdt =  rates["rei"]*eta*E  - rates["rir"]*(1 - alpha(t, I, N) )*I  - rates["rih"]*alpha(t, I, N)*I
     dHdt =  rates["rih"]*alpha(t, I, N)*I - rates["rhd"]*pHD*H - rates["rhr"]*(1-pHD)*H
-    dRdt =  rates["rir"]*(1 - alpha(t, I, N))*I + rates["rhr"]*(1-pHD)*H
+    dRdt =  rates["rir"]*(1 - alpha(t, I, N))*I + rates["rhr"]*(1-pHD)*H + rates["rir"]*(1-eta)*E
     dDdt =  rates["rhd"]*pHD*H
     return dSdt, dEdt, dIdt, dRdt, dHdt, dDdt
 
 
 def solveSIRdet(y0, t, N, r0_max, r0_min, k, startLockdown, age_effect, rates):
+    
   # Lockdown effect
   def R_0(tau):
     return ( r0_max - r0_min ) / (1 + np.exp(-k*(-tau+startLockdown))) + r0_min
   def beta(tau):
     return R_0(tau)*rates["rir"]
 
-  # Effect of age on death rate
+  # probabilità di ricovero in H
   alpha_age = {"0-29": 0.01, "30-59": 0.05, "60-89": 0.2, "89+": 0.3}
   demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
   alpha_av = sum(alpha_age[i] * demographic[i] for i in list(alpha_age.keys()))
   print("Average alpha:", alpha_av)
   def alpha(tau, I, N):
     return age_effect*I/N + alpha_av
+  
+  # Effect of age on death rate
+  pHD_age = {"0-29": 0.01, "30-59": 0.05, "60-89": 0.2, "89+": 0.4}  
+  pHD_av = sum(pHD_age[i] * demographic[i] for i in list(pHD_age.keys()))
+  print("Average pHD:", pHD_av)
+  pHD=pHD_av
+
  
   # Integrate the SEIR equations over the time grid, t
-  ret = scint.odeint(deriv, y0, t, args=(N, beta, alpha, rates))
+  ret = scint.odeint(deriv, y0, t, args=(N, beta, alpha, rates,pHD))
   s, e, i, r, h, d = ret.T
 
   res = {"S":s, "E":e, "I":i, "R":r, "H":h, "D":d} 
@@ -218,4 +227,11 @@ if __name__ == "__main__":
   fit.set_defaults(func=doFit)  
 
   args = parser.parse_args()  
-  args.func(args)  
+  args.func(args)
+  
+#SIM  
+#python seird2.py sim --r0_max 2.86 --r0_min 0.3 -k 3.45 --days 500 -n 500000 --rates rse=1.0,rei=0.2,rih=0.1,rir=0.06,rhr=0.1,rhd=0.1
+  
+#FIT  
+# python seird2.py fit --shift 10 -n 500000
+  

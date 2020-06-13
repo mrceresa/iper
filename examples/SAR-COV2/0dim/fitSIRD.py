@@ -19,7 +19,7 @@ dati_regione=pd.read_csv('dpc-covid19-ita-regioni.csv')
 regione='P.A. Trento'
 TRUEregione=dati_regione['denominazione_regione']==regione
 dati_regione_=dati_regione[TRUEregione]
-dati_regione1=dati_regione_[dati_regione_['totale_positivi']>300]
+dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25]
  
 
 N=4400
@@ -42,7 +42,7 @@ S=N-I-D-R
 
 t=np.array([i+1 for i in range(len(I))])
 
-i0=dati_regione1.iloc[0,11]        #infetti inziali                             
+i0=dati_regione1.iloc[0,10]        #infetti inziali                             
 r0=0                               #immuni iniziali
 s0=N-i0-r0                         #suscettibili iniziali
 d0=0     
@@ -107,5 +107,6 @@ plt.xlabel("day")
 plt.ylabel("population")  
 plt.show()
 
+print(y0)
 
-
+print(msol)
