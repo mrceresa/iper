@@ -77,10 +77,8 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
   pEI_av    = sum(pEI_age[i] * demographic[i] for i in list(pEI_age.keys()))
   print("Average pEI:", pEI_av)
   def pEI(tau, I, N):
-    return pEI_av    
+    return pEI_av     
   
-  #pIH_age   = {"0-29": 0.01, "30-59": 0.05, "60-89": 0.2, "89+": 0.3}
-  #pIH_age   = {"0-29": 0.05, "30-59": 0.08, "60-89": 0.2, "89+": 0.3} 
   pIH_age   = {"0-29": 0.1, "30-59": 0.2, "60-89": 0.3, "89+": 0.4}
   pIH_av    = sum(pIH_age[i] * demographic[i] for i in list(pIH_age.keys()))
   print("Average pIH:", pIH_av)
@@ -142,24 +140,21 @@ def resid_(params,y0, t, N,age_effect,S,I,H,R,D):
     return  tot
 
 
-
 params2=Parameters()
 params2.add('r0_max',value=3.8,vary=True,min=2.0,max=5.0)
 params2.add('r0_min',value=2.3,vary=True,min=0.3,max=3.5)
 params2.add('k',value=4,vary=True,min=0.01,max=5.0)
 params2.add('startLockdown',value=31.673,vary=True,min=0,max=100)
-params2.add('rse',value=1.49,vary=True,min=0.9,max=1.5)
-params2.add('rei',value=1.2,vary=True,min=0.01,max=1.2)  
+params2.add('rse',value=1.49,vary=True,min=0.9,max=2)
+params2.add('rei',value=1.2,vary=True,min=0.01,max=2)  
 params2.add('rih',value=0.25,vary=True,min=0.01,max=2.0)
-params2.add('rir',value=0.019,vary=True,min=0.01,max=1.2)
-params2.add('rhd',value=0.2,vary=True,min=0.01,max=1.2)
-params2.add('rhr',value=0.1,vary=True,min=0.01,max=1.2)
+params2.add('rir',value=0.019,vary=True,min=0.01,max=2)
+params2.add('rhd',value=0.2,vary=True,min=0.01,max=2)
+params2.add('rhr',value=0.1,vary=True,min=0.01,max=2)
 
 
 res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D)
 out = minimize(resid_, params2, args=(y0, t, N,age_effect,S,I,H,R,D),method='differential_evolution')#method='differential_evolution',method='leastsq'
-
-
 
 
 rates_fit={"rse":out.params['rse'].value, "rei":out.params['rei'].value, "rih":out.params['rih'].value, "rir":out.params['rir'].value, "rhr":out.params['rhr'].value, "rhd":out.params['rhd'].value }
@@ -209,14 +204,12 @@ ax8.plot(t,seihrd_det_fit['R'],color="g")
 ax8.plot(t,R,label='Recovered',color="g",ls="--")
 ax8.plot(t,seihrd_det_fit['D'],color="black")
 ax8.plot(t,D,label='Dead',color="black",ls="--")
-#ax7.plot(t,seihrd_det_fit['H'],color="orange")
-#ax7.plot(t,H,label='Hosp',color="orange",ls="--")
+ax8.plot(t,seihrd_det_fit['H'],color="orange")
+ax8.plot(t,H,label='Hosp',color="orange",ls="--")
 plt.xlabel('day')
 plt.ylabel('people')
 
-#crea un dataframe e lo salva in un file csv con i dati del modello differenziale
-#fitSEIHRD=pd.DataFrame({"rse":out.params['rse'].value, "rei":out.params['rei'].value, "rih":out.params['rih'].value, "rir":out.params['rir'].value, "rhr":out.params['rhr'].value, "rhd":out.params['rhd'].value,'r0_max':out.params['r0_max'].value,'r0_min': out.params['r0_min'].value,'k': out.params['k'].value,'startLockdown': out.params['startLockdown'].value })
-#fitSEIHRD.to_csv(r'C:\Users\Enrico\Desktop\SIR\dfSIRD.csv',index=False)
+
 
 df_fitSEIHRD=pd.read_csv('df_fitSEIHRD.csv')
 
