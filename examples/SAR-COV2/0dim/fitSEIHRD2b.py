@@ -14,13 +14,13 @@ from scipy.integrate import odeint
 
 
 dati_regione=pd.read_csv('dpc-covid19-ita-regioni.csv')
-regione='P.A. Trento'
+regione='Sicilia'
 TRUEregione=dati_regione['denominazione_regione']==regione
 dati_regione_=dati_regione[TRUEregione]
 dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
  
 
-N=500000
+N=5000000
 age_effect=1
 demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
 
