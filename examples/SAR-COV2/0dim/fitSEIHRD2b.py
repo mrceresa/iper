@@ -10,12 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import odeint
-
-
-
-
-
-
+import os
 
 #========================================================================================================
 #======================================================================================================== 
@@ -33,16 +28,13 @@ def deriv(y, t, N, beta,pEI, pIH, rates,pHD):
     
     return dSdt, dEdt, dIdt, dRdt, dHdt, dDdt
 
-def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,demographic):
+def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,demographic, icu_beds):
     
   # Lockdown effect
   def R_0(tau):
     return ( r0_max - r0_min ) / (1 + np.exp(-k*(-tau+startLockdown))) + r0_min
   def beta(tau):
-    return R_0(tau)*rates["rir"]
-
-
-  
+    return R_0(tau)*rates["rir"]  
   
 #======================================================================================================  
 #pEI probabilità di passare da EaI, pIH da I a H, pHD da H a D 
@@ -89,13 +81,15 @@ def main():
     TRUEregione=dati_regione['denominazione_regione']==regione
     dati_regione_=dati_regione[TRUEregione]
     dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
-    
-    
+
+    N=500000
+    icu_beds = pd.read_csv("data/beds.csv", header=0)
+    icu_beds = dict(zip(icu_beds["Country"], icu_beds["ICU_Beds"]))
+    icu_beds = icu_beds["Italy"] * N / 100000 # Emergency life support beds per 100k citizens
+    print(icu_beds)
     #dati_regione1=pd.read_csv('dpc-covid19-ita-andamento-nazionale.csv')
     #regione='ITA' 
     
-    
-    N=500000
     age_effect=1
     demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
     
@@ -126,7 +120,7 @@ def main():
     y0=s0,e0,i0,r0,h0,d0 
     
     
-    def resid_(params,y0, t, N,age_effect,S,I,H,R,D):
+    def resid_(params,y0, t, N,age_effect,S,I,H,R,D,icu_beds):
         print(params)
         rates={"rse":0, "rei":0, "rih":0, "rir":0, "rhr":0, "rhd":0 }
            
@@ -140,7 +134,7 @@ def main():
         rates['rih']=params['rih'] 
         rates['rhd']=params['rhd']
         rates['rhr']=params['rhr']
-        seihrd_det=solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown,  rates,demographic)
+        seihrd_det=solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown,  rates,demographic, icu_beds)
         #return sum((seihrd_det['S']-S)**2+(seihrd_det['I']-I)**2+(seihrd_det['H']-H)**2+(seihrd_det['R']-R)**2+(seihrd_det['D']-D)**2)
         #er=np.array((((seihrd_det['S']-S)**2),((seihrd_det['I']-I)**2),((seihrd_det['H']-H)**2),((seihrd_det['R']-R)**2),((seihrd_det['D']-D)**2)))
         
@@ -171,13 +165,13 @@ def main():
     params2.add('rhr',value=0.1,vary=True,min=0.01,max=5)
     
     
-    res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D)
-    out = minimize(resid_, params2, args=(y0, t, N,age_effect,S,I,H,R,D),method='differential_evolution')#method='differential_evolution',method='leastsq'
+    res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D,icu_beds)
+    out = minimize(resid_, params2, args=(y0, t, N,age_effect,S,I,H,R,D,icu_beds),method='differential_evolution', verbose=False)#method='differential_evolution',method='leastsq'
     
     
     rates_fit={"rse":out.params['rse'].value, "rei":out.params['rei'].value, "rih":out.params['rih'].value, "rir":out.params['rir'].value, "rhr":out.params['rhr'].value, "rhd":out.params['rhd'].value }
     
-    seihrd_det_fit=solveSIRdet(y0, t, N,age_effect, out.params['r0_max'].value, out.params['r0_min'].value, out.params['k'].value, out.params['startLockdown'].value,  rates_fit,demographic)
+    seihrd_det_fit=solveSIRdet(y0, t, N,age_effect, out.params['r0_max'].value, out.params['r0_min'].value, out.params['k'].value, out.params['startLockdown'].value,  rates_fit,demographic,icu_beds)
     
     
     
@@ -245,7 +239,9 @@ def main():
     
     
     df_fitSEIHRD = pd.DataFrame(risult,columns=["regione", "rse", "rei","rih","rir","rhr","rhd","r0_max","r0_min","k","startLockdown"]).append(df_fitSEIHRD, ignore_index=True)
-    df_fitSEIHRD.to_csv(r'C:\Users\Enrico\Desktop\SIR\df_fitSEIHRD.csv',index=False)
+    fname = os.path.join(os.path.expanduser("~/Desktop"), "SIR")
+    fname = os.path.join(fname, "df_fitSEIHRD.csv")
+    df_fitSEIHRD.to_csv(fnane,index=False)
     saveFIG=regione+'.png'
     plt.savefig(saveFIG)
     
