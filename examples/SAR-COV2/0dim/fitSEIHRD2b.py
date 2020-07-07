@@ -239,9 +239,8 @@ def main():
     
     
     df_fitSEIHRD = pd.DataFrame(risult,columns=["regione", "rse", "rei","rih","rir","rhr","rhd","r0_max","r0_min","k","startLockdown"]).append(df_fitSEIHRD, ignore_index=True)
-    fname = os.path.join(os.path.expanduser("~/Desktop"), "SIR")
-    fname = os.path.join(fname, "df_fitSEIHRD.csv")
-    df_fitSEIHRD.to_csv(fnane,index=False)
+    fname = "df_fitSEIHRD.csv"
+    df_fitSEIHRD.to_csv(fname,index=False)
     saveFIG=regione+'.png'
     plt.savefig(saveFIG)
     
