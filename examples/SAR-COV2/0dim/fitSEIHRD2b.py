@@ -11,22 +11,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import odeint
 import os
+import inspect
+
+mainVars={}
 
 #========================================================================================================
 #======================================================================================================== 
 
 
-def deriv(y, t, N, beta,pEI, pIH, rates,pHD):
+def deriv(y, t, N, beta,pAI, pIH, rates,pHD):
     
-    S, E, I, R, H, D = y
-    dSdt = -rates["rse"]* S/N* beta(t)*(I+E)
-    dEdt =  rates["rse"]* S/N* beta(t)*(I+E) - rates["rei"]*pEI(t,I,N)*E-rates["rir"]*(1-pEI(t,I,N))*E
-    dIdt =  rates["rei"]*pEI(t,I,N)*E  - rates["rir"]*(1 - pIH(t, I, N) )*I  - rates["rih"]*pIH(t, I, N)*I
-    dHdt =  rates["rih"]*pIH(t, I, N)*I - rates["rhd"]*pHD(t, I, N)*H - rates["rhr"]*(1-pHD(t, I, N))*H
-    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H + rates["rir"]*(1-pEI(t,I,N))*E
+    S, A, I, R, H, D = y
+    dSdt = -rates["rsa"]* S/N* beta(t)*(I+A)
+    dAdt =  rates["rsa"]* S/N* beta(t)*(I+A) - rates["rai"]*pAI(t,I,N)*A-rates["rir"]*(1-pAI(t,I,N))*A
+    dIdt =  rates["rai"]*pAI(t,I,N)*A  - rates["rir"]*(1 - pIH(t, I, N) )*I  - rates["rih"]*pIH(t, I, N)*I
+    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H #+ rates["rir"]*(1-pAI(t,I,N))*A
+    dHdt =  rates["rih"]*pIH(t, I, N)*I - rates["rhd"]*pHD(t, I, N)*H - rates["rhr"]*(1-pHD(t, I, N))*H    
     dDdt =  rates["rhd"]*pHD(t, I, N)*H
     
-    return dSdt, dEdt, dIdt, dRdt, dHdt, dDdt
+    return dSdt, dAdt, dIdt, dRdt, dHdt, dDdt
 
 def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,demographic, icu_beds):
     
@@ -39,11 +42,11 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
 #======================================================================================================  
 #pEI probabilità di passare da EaI, pIH da I a H, pHD da H a D 
   
-  pEI_age   = {"0-29": 0.15, "30-59": 0.25, "60-89": 0.35, "89+": 0.45}   
-  pEI_av    = sum(pEI_age[i] * demographic[i] for i in list(pEI_age.keys()))
-  print("Average pEI:", pEI_av)
-  def pEI(tau, I, N):
-    return pEI_av     
+  pAI_age   = {"0-29": 0.15, "30-59": 0.25, "60-89": 0.35, "89+": 0.45}   
+  pAI_av    = sum(pAI_age[i] * demographic[i] for i in list(pAI_age.keys()))
+  print("Average pAI:", pAI_av)
+  def pAI(tau, I, N):
+    return pAI_av     
   
   pIH_age   = {"0-29": 0.1, "30-59": 0.2, "60-89": 0.3, "89+": 0.4}
   pIH_av    = sum(pIH_age[i] * demographic[i] for i in list(pIH_age.keys()))
@@ -60,10 +63,10 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
 #=======================================================================================================    
 # Integrate the SEIHR equations over the time grid, t
     
-  ret = odeint(deriv, y0, t, args=(N, beta,pEI, pIH, rates,pHD))
-  s, e, i, r, h, d = ret.T
+  ret = odeint(deriv, y0, t, args=(N, beta,pAI, pIH, rates,pHD))
+  s, a, i, r, h, d = ret.T
 
-  res = {"S":s, "E":e, "I":i, "R":r, "H":h, "D":d} 
+  res = {"S":s, "A":a, "I":i, "R":r, "H":h, "D":d} 
   res["R_0"] = list(map(R_0, t)) 
   res["pIH"] = [pIH(tau, res["I"][tau], N) for tau in range(len(t))]
 
@@ -74,9 +77,9 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
   
 def main():
     
+    global mainVars
     
-    
-    dati_regione=pd.read_csv('dpc-covid19-ita-regioni.csv')
+    dati_regione=pd.read_csv(os.path.join('data','dpc-covid19-ita-regioni.csv'))
     regione='P.A. Trento'
     TRUEregione=dati_regione['denominazione_regione']==regione
     dati_regione_=dati_regione[TRUEregione]
@@ -102,11 +105,11 @@ def main():
     t=np.array([i+1 for i in range(len(I))])
     
     i0=dati_regione1.iloc[0,10]        #infetti a t0 
-    e0=4*i0                            #asintomatici a t0
+    a0=4*i0                            #asintomatici a t0
     r0=dati_regione1.iloc[0,12]        #recovered a t0
     h0=dati_regione1.iloc[0,8]         #ospedaliz. a t0                         
     d0=dati_regione1.iloc[0,13]        #deceduti  t0
-    s0=N-i0-r0 -h0 -d0                     #suscettibili a t0
+    s0=N-i0-r0 -h0 -d0  -a0                   #suscettibili a t0
 #============================================================================ 
     #per l' Italia
 #    i0=dati_regione1.iloc[0,6]        #infetti a t0 
@@ -117,19 +120,19 @@ def main():
 #    s0=N-i0-r0 -h0  -d0                   #suscettibili a t0
 #     
 #============================================================================    
-    y0=s0,e0,i0,r0,h0,d0 
+    y0=s0,a0,i0,r0,h0,d0 
     
     
     def resid_(params,y0, t, N,age_effect,S,I,H,R,D,icu_beds):
         print(params)
-        rates={"rse":0, "rei":0, "rih":0, "rir":0, "rhr":0, "rhd":0 }
+        rates={"rsa":0, "rai":0, "rih":0, "rir":0, "rhr":0, "rhd":0 }
            
         r0_max = params['r0_max']
         r0_min = params['r0_min']
         k = params['k']
         startLockdown = params['startLockdown']
-        rates['rse']=params['rse']
-        rates['rei']=params['rei']
+        rates['rsa']=params['rsa']
+        rates['rai']=params['rai']
         rates['rir']=params['rir']
         rates['rih']=params['rih'] 
         rates['rhd']=params['rhd']
@@ -144,7 +147,7 @@ def main():
         d=np.array((R-seihrd_det['R'])**2)
         e=np.array((1.2*D-1.2*seihrd_det['D'])**2)
         
-        tot=np.concatenate((b,c,d,e))
+        tot=np.concatenate((b,d,c,e))
         
         #return er
         #er=er.flatten()
@@ -153,23 +156,23 @@ def main():
     
     
     params2=Parameters()
-    params2.add('r0_max',value=3.8,vary=True,min=2.0,max=8.0)
-    params2.add('r0_min',value=2.3,vary=True,min=0.3,max=3.5)
-    params2.add('k',value=4,vary=True,min=0.01,max=5.0)
-    params2.add('startLockdown',value=31.673,vary=True,min=0,max=100)
-    params2.add('rse',value=1.49,vary=True,min=0.9,max=5)
-    params2.add('rei',value=1.2,vary=True,min=0.01,max=5)  
-    params2.add('rih',value=0.25,vary=True,min=0.01,max=5.0)
-    params2.add('rir',value=0.019,vary=True,min=0.01,max=5)
-    params2.add('rhd',value=0.2,vary=True,min=0.01,max=5)
-    params2.add('rhr',value=0.1,vary=True,min=0.01,max=5)
+    params2.add('r0_max',value=3.8,vary=False,min=2.0,max=5.0)
+    params2.add('r0_min',value=2.3,vary=False,min=0.3,max=3.5)
+    params2.add('k',value=4,vary=False,min=0.01,max=2.0)
+    params2.add('startLockdown',value=31.673,vary=False,min=0,max=100)
+    params2.add('rsa',value=1.49,vary=False,min=0.9,max=2)
+    params2.add('rai',value=1.2,vary=False,min=0.01,max=2)  
+    params2.add('rih',value=0.25,vary=False,min=0.01,max=2.0)
+    params2.add('rir',value=0.019,vary=False,min=0.01,max=2)
+    params2.add('rhd',value=0.2,vary=False,min=0.01,max=2)
+    params2.add('rhr',value=0.1,vary=True,min=0.01,max=2)
     
     
     res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D,icu_beds)
     out = minimize(resid_, params2, args=(y0, t, N,age_effect,S,I,H,R,D,icu_beds),method='differential_evolution', verbose=False)#method='differential_evolution',method='leastsq'
     
     
-    rates_fit={"rse":out.params['rse'].value, "rei":out.params['rei'].value, "rih":out.params['rih'].value, "rir":out.params['rir'].value, "rhr":out.params['rhr'].value, "rhd":out.params['rhd'].value }
+    rates_fit={"rsa":out.params['rsa'].value, "rai":out.params['rai'].value, "rih":out.params['rih'].value, "rir":out.params['rir'].value, "rhr":out.params['rhr'].value, "rhd":out.params['rhd'].value }
     
     seihrd_det_fit=solveSIRdet(y0, t, N,age_effect, out.params['r0_max'].value, out.params['r0_min'].value, out.params['k'].value, out.params['startLockdown'].value,  rates_fit,demographic,icu_beds)
     
@@ -223,11 +226,11 @@ def main():
     
     
     
-    df_fitSEIHRD=pd.read_csv('df_fitSEIHRD.csv')
+    df_fitSAIHRD=pd.read_csv(os.path.join('fit','df_fitSAIHRD.csv'))
     
     risult=np.array([[regione,
-                      out.params['rse'].value,
-                      out.params['rei'].value,
+                      out.params['rsa'].value,
+                      out.params['rai'].value,
                       out.params['rih'].value,
                       out.params['rir'].value,
                       out.params['rhr'].value,
@@ -238,12 +241,13 @@ def main():
                       out.params['startLockdown'].value]])
     
     
-    df_fitSEIHRD = pd.DataFrame(risult,columns=["regione", "rse", "rei","rih","rir","rhr","rhd","r0_max","r0_min","k","startLockdown"]).append(df_fitSEIHRD, ignore_index=True)
-    fname = "df_fitSEIHRD.csv"
-    df_fitSEIHRD.to_csv(fname,index=False)
+    df_fitSAIHRD = pd.DataFrame(risult,columns=["regione", "rsa", "rai","rih","rir","rhr","rhd","r0_max","r0_min","k","startLockdown"]).append(df_fitSAIHRD, ignore_index=True)
+    fname = "df_fitSAIHRD.csv"
+    df_fitSAIHRD.to_csv(os.path.join('fit',fname),index=False)
     saveFIG=regione+'.png'
-    plt.savefig(saveFIG)
+    plt.savefig(os.path.join('fit',saveFIG))
     
+    mainVars=inspect.currentframe().f_locals
 if __name__ == "__main__":
     main()
 
