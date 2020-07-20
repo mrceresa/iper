@@ -84,49 +84,71 @@ def main():
     
     global mainVars
     
-    dati_regione=pd.read_csv(os.path.join('data','dpc-covid19-ita-regioni.csv'))
-    regione='P.A. Trento'
-    TRUEregione=dati_regione['denominazione_regione']==regione
-    dati_regione_=dati_regione[TRUEregione]
-    dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
+    N=350000
+         
+    age_effect=1
+    demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
     
-    N=500000
     icu_beds = pd.read_csv("data/beds.csv", header=0)
     icu_beds = dict(zip(icu_beds["Country"], icu_beds["ICU_Beds"]))
     icu_beds = icu_beds["Italy"] * N / 100000 # Emergency life support beds per 100k citizens
     print(icu_beds)
-    #dati_regione1=pd.read_csv('dpc-covid19-ita-andamento-nazionale.csv')
-    #regione='ITA' 
     
-    age_effect=1
-    demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
+#=================================================================================================  
+    #per le regioni
+#    dati_regione=pd.read_csv(os.path.join('data','dpc-covid19-ita-regioni.csv'))
+#    regione='Veneto'
+#    TRUEregione=dati_regione['denominazione_regione']==regione
+#    dati_regione_=dati_regione[TRUEregione]
+#    dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
+#    
+#    
+#    I=np.array(dati_regione1['totale_positivi'])
+#    D=np.array(dati_regione1['deceduti'])
+#    R=np.array(dati_regione1['dimessi_guariti'])
+#    H=np.array(dati_regione1['ricoverati_con_sintomi'])
+#    C=np.array(dati_regione1['terapia_intensiva'])
+#    S=N-I-D-H-R-C
+#    
+#   
+#    
+#    i0=dati_regione1.iloc[0,10]        #infetti a t0 
+#    a0=4*i0                            #asintomatici a t0
+#    r0=dati_regione1.iloc[0,12]        #recovered a t0
+#    h0=dati_regione1.iloc[0,6]
+#    c0=dati_regione1.iloc[0,7]         #ospedaliz.crit a t0                         
+#    d0=dati_regione1.iloc[0,13]        #deceduti  t0
+#    s0=N-i0-r0 -h0 -d0 -c0 -a0                   #suscettibili a t0
     
-    I=np.array(dati_regione1['totale_positivi'])
-    D=np.array(dati_regione1['deceduti'])
-    R=np.array(dati_regione1['dimessi_guariti'])
-    H=np.array(dati_regione1['ricoverati_con_sintomi'])
-    C=np.array(dati_regione1['terapia_intensiva'])
+#======================================================================================================    
+    
+    
+    
+#============================================================================ 
+#per le nazioni
+    regione='Iceland'
+    dati_regione1=pd.read_table(os.path.join('data','Iceland.tsv'),header=3)
+    dati_regione=dati_regione1[dati_regione1['cases']>25] #per stabilire il t0
+    I=dati_regione['cases']-dati_regione['recovered']
+    D=dati_regione['deaths']
+    R=dati_regione['recovered']
+    C=dati_regione['icu']
+    H=dati_regione['hospitalized']
     S=N-I-D-H-R-C
     
-    t=np.array([i+1 for i in range(len(I))])
     
-    i0=dati_regione1.iloc[0,10]        #infetti a t0 
+    i0=dati_regione.iloc[0,1]        #infetti a t0 
     a0=4*i0                            #asintomatici a t0
-    r0=dati_regione1.iloc[0,12]        #recovered a t0
-    h0=dati_regione1.iloc[0,6]
-    c0=dati_regione1.iloc[0,7]         #ospedaliz.crit a t0                         
-    d0=dati_regione1.iloc[0,13]        #deceduti  t0
-    s0=N-i0-r0 -h0 -d0 -c0 -a0                   #suscettibili a t0
-    #============================================================================ 
-    #per l' Italia
-    #    i0=dati_regione1.iloc[0,6]        #infetti a t0 
-    #    e0=4*i0                            #asintomatici a t0
-    #    r0=dati_regione1.iloc[0,9]        #recovered a t0
-    #    h0=dati_regione1.iloc[0,4]         #ospedaliz. a t0                     
-    #    d0=dati_regione1.iloc[0,10]        #deceduti  t0
-    #    s0=N-i0-r0 -h0  -d0                   #suscettibili a t0
-    #     
-    #============================================================================    
+    r0=dati_regione.iloc[0,5]        #recovered a t0
+    h0=dati_regione.iloc[0,3]         #ospedaliz. a t0
+    c0=dati_regione.iloc[0,4]- dati_regione.iloc[0,5]       #ospedaliz.crit a t0             
+    d0=dati_regione.iloc[0,2]        #deceduti  t0
+    s0=N-i0-r0 -h0 -d0 -c0 -a0                     #suscettibili a t0
+#     
+#============================================================================  
+
+    
+    t=np.array([i+1 for i in range(len(I))])
     y0=s0,a0,i0,r0,h0,c0,d0 
     
     
@@ -155,14 +177,14 @@ def main():
         #return sum((seihrd_det['S']-S)**2+(seihrd_det['I']-I)**2+(seihrd_det['H']-H)**2+(seihrd_det['R']-R)**2+(seihrd_det['D']-D)**2)
         #er=np.array((((seihrd_det['S']-S)**2),((seihrd_det['I']-I)**2),((seihrd_det['H']-H)**2),((seihrd_det['R']-R)**2),((seihrd_det['D']-D)**2)))
         
-        #a=np.array((S-seihrd_det['S'])**2)
+        a=np.array((S-seihrd_det['S'])**2)
         b=np.array((I-seihrd_det['I'])**2)
         c=np.array((H-seihrd_det['H'])**2)
         d=np.array((R-seihrd_det['R'])**2)
         e=np.array((1.2*D-1.2*seihrd_det['D'])**2)
-        f=np.array((C-seihrd_det['C'])**2)
+        f=np.array((1.5*C-1.5*seihrd_det['C'])**2)
         
-        tot=np.concatenate((b,d,c,e,f))
+        tot=np.concatenate((a,b,d,c,e,f))
         
         #return er
         #er=er.flatten()
@@ -251,7 +273,7 @@ def main():
     plt.xlabel('day')
     plt.ylabel('Critic.')
     
-    #df_fitSAIHRD=pd.read_csv('df_fitSAIHRD.csv')
+    df_fitSAIHRD=pd.read_csv('df_fitSAIHRD.csv')
     
     risult=np.array([[regione,
                       out.params['pAI'].value,
@@ -273,7 +295,7 @@ def main():
                       out.params['startLockdown'].value]])
     
     
-    df_fitSAIHRD = pd.DataFrame(risult,columns=["regione", "pAI","pIH","pHC","pCD", "rsa", "rai","rih","rir","rhr","rhc","rcd","rar","rcr","r0_max","r0_min","k","startLockdown"])#.append(df_fitSAIHRD, ignore_index=True)
+    df_fitSAIHRD = pd.DataFrame(risult,columns=["regione", "pAI","pIH","pHC","pCD", "rsa", "rai","rih","rir","rhr","rhc","rcd","rar","rcr","r0_max","r0_min","k","startLockdown"]).append(df_fitSAIHRD, ignore_index=True)
     fname = "df_fitSAIHRD.csv"
     df_fitSAIHRD.to_csv(fname,index=False)
     saveFIG=regione+'.png'
