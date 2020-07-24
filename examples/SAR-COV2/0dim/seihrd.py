@@ -12,6 +12,9 @@ import numpy as np
 from scipy.integrate import odeint
 import os
 import inspect
+import argparse
+import time
+from utils import StoreDictKeyPair
 
 mainVars={}
 
@@ -74,19 +77,26 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
 
 #========================================================================================================
 #========================================================================================================
-  
-def main():
-    
+
+def doSim(args):
+    args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)    
+
+def doFit(args):
+    args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)    
     global mainVars
     
-    dati_regione=pd.read_csv(os.path.join('data','dpc-covid19-ita-regioni.csv'))
+    dati_regione=pd.read_csv(args.data)
     regione='P.A. Trento'
     TRUEregione=dati_regione['denominazione_regione']==regione
     dati_regione_=dati_regione[TRUEregione]
     dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
 
-    N=500000
-    icu_beds = pd.read_csv("data/beds.csv", header=0)
+    N=args.agents
+    icu_beds = pd.read_csv(args.data_icu, header=0)
     icu_beds = dict(zip(icu_beds["Country"], icu_beds["ICU_Beds"]))
     icu_beds = icu_beds["Italy"] * N / 100000 # Emergency life support beds per 100k citizens
     print(icu_beds)
@@ -224,9 +234,7 @@ def main():
     plt.xlabel('day')
     plt.ylabel('people')
     
-    
-    
-    df_fitSAIHRD=pd.read_csv(os.path.join('fit','df_fitSAIHRD.csv'))
+    #df_fitSAIHRD=pd.read_csv(os.path.join('fit','df_fitSAIHRD.csv'))
     
     risult=np.array([[regione,
                       out.params['rsa'].value,
@@ -241,14 +249,44 @@ def main():
                       out.params['startLockdown'].value]])
     
     
-    df_fitSAIHRD = pd.DataFrame(risult,columns=["regione", "rsa", "rai","rih","rir","rhr","rhd","r0_max","r0_min","k","startLockdown"]).append(df_fitSAIHRD, ignore_index=True)
+    df_fitSAIHRD = pd.DataFrame(risult,columns=["regione", "rsa", "rai","rih","rir","rhr","rhd","r0_max","r0_min","k","startLockdown"])
     fname = "df_fitSAIHRD.csv"
-    df_fitSAIHRD.to_csv(os.path.join('fit',fname),index=False)
+    df_fitSAIHRD.to_csv(os.path.join(args.output_dir,fname),index=False)
     saveFIG=regione+'.png'
-    plt.savefig(os.path.join('fit',saveFIG))
+    plt.savefig(os.path.join(args.output_dir, saveFIG))
     
     mainVars=inspect.currentframe().f_locals
+
 if __name__ == "__main__":
-    main()
+  parser = argparse.ArgumentParser()
+  subparsers = parser.add_subparsers()
+  sim = subparsers.add_parser('simulate', aliases=['sim'])
+  sim.add_argument('-d','--days', type=int, default=150, help="Timesteps to run the model for" )          
+  sim.add_argument('-n','--agents', type=int, default=50000000, help="Initial population" )  
+  sim.add_argument('--e0', type=int, default=0, help="Initial exposed" )  
+  sim.add_argument('--i0', type=int, default=1, help="Initial infected" ) 
+  sim.add_argument('--r0', type=int, default=0, help="Initial recovered" )     
+  sim.add_argument('--h0', type=int, default=0, help="Initial hospitalized" )    
+  sim.add_argument('--lock', type=int, default=0, help="When to start the lockdown" )  
+  sim.add_argument('--r0_max', type=float, default=5.0, help="Maximum of the transmission parameter" )  
+  sim.add_argument('--r0_min', type=float, default=0.9, help="Minimum of the transmission parameter" )  
+  sim.add_argument('-k', type=float, default=2.5, help="Transition parameter of the lockdown")  
+  sim.add_argument("--rates", dest="rates", action=StoreDictKeyPair, default={
+    "rse":1.0, "rei":1.0/2.0, "rih":1.0/10.0, "rir":1.0/10.0, "rhr":1.0/7.0, "rhd":1.0/8.0 
+    }, metavar="rse=V1,rei=V2,...")
+  sim.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" )        
+  sim.set_defaults(func=doSim)  
+
+  fit = subparsers.add_parser('fit')
+  fit.add_argument("--data", type=str, default=os.path.join('data','dpc-covid19-ita-regioni.csv'), help="csv with data for fit")
+  fit.add_argument("--data-icu", type=str, default=os.path.join('data','beds.csv'), help="csv with data for fit")
+  fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
+  fit.add_argument('-n','--agents', type=int, help="Initial population", required=True ) 
+  fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" )          
+  fit.set_defaults(func=doFit)  
+
+  args = parser.parse_args()
+  args.func(args)
+
 
 

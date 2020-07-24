@@ -8,8 +8,18 @@ sns.set_style("darkgrid")
 
 from plotdf import plotdf
 import numpy as np
+import os
+import argparse
 
-def plotPhase(tau, xbound, ybound, gridsteps, tmax, nsteps, N, mu):
+class StoreDictKeyPair(argparse.Action):
+ def __call__(self, parser, namespace, values, option_string=None):
+   my_dict = {}
+   for kv in values.split(","):
+     k,v = kv.split("=")
+     my_dict[k] = float(v)
+   setattr(namespace, self.dest, my_dict)
+
+def plotPhase(tau, xbound, ybound, gridsteps, tmax, nsteps, N, mu, outdir="./"):
 
   from sir import deriv_adim
 
@@ -45,11 +55,11 @@ def plotPhase(tau, xbound, ybound, gridsteps, tmax, nsteps, N, mu):
   axes.set_ylabel(r'I')
   plt.xlim(xbound)
   plt.ylim(ybound)
-  plt.savefig("ps.png")
+  plt.savefig(os.path.join(outdir, "ps.png"))
 
   return axes
 
-def plotTrajectories(inits, axes, tmax, nsteps, tdir, N, mu):
+def plotTrajectories(inits, axes, tmax, nsteps, tdir, N, mu, outdir="./"):
   from sir import deriv_adim
 
   parameters = {"N":N,"mu":mu}
@@ -75,9 +85,9 @@ def plotTrajectories(inits, axes, tmax, nsteps, tdir, N, mu):
       traj = np.vstack((np.flipud(traj_b),traj_f))
     axes.plot(traj[:,0],traj[:,1])
   
-  plt.savefig("ps_traj.png")
+  plt.savefig(os.path.join(outdir,"ps_traj.png"))
 
-def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100, sdfname='sir.png', sdstyle='-'):
+def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100, sdfname='sir.png', sdstyle='-', outdir="./"):
   # Plot the data on three separate curves for S(t), I(t) and R(t)
   fig = plt.figure(figsize=(10, 6), dpi=300, facecolor='w')
   ax = fig.add_subplot(111, axisbelow=True)
@@ -96,7 +106,7 @@ def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100, sdfname='sir.png', s
   legend.get_frame().set_alpha(0.5)
   for spine in ('top', 'right', 'bottom', 'left'):
     ax.spines[spine].set_visible(False)
-  plt.savefig(sdfname)
+  plt.savefig(os.path.join(outdir,sdfname))
 
   if ss:
     Sm = np.mean(ss["S"], axis=1)
@@ -124,7 +134,7 @@ def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100, sdfname='sir.png', s
     legend.get_frame().set_alpha(0.5)
     for spine in ('top', 'right', 'bottom', 'left'):
       ax.spines[spine].set_visible(False)
-    plt.savefig("sir_alls.png")
+    plt.savefig(os.path.join(outdir,"sir_alls.png"))
 
 
   if sg:
@@ -154,4 +164,4 @@ def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100, sdfname='sir.png', s
     legend.get_frame().set_alpha(0.5)
     for spine in ('top', 'right', 'bottom', 'left'):
       ax.spines[spine].set_visible(False)
-    plt.savefig("sir_gill.png")
+    plt.savefig(os.path.join(outdir,"sir_gill.png"))

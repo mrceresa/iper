@@ -17,6 +17,7 @@ import gillespy2
 
 import csv
 import time
+import os
 
 # The original SIR model differential equations with mass action effect
 def derivOrig(y, t, N, beta, gamma):
@@ -183,7 +184,7 @@ if __name__ == "__main__":
   parser.add_argument('--gamma', type=float, default=0.05, help="Mean recovery rate" )   
   parser.add_argument('--nits', type=int, default=50, help="# of simulations for stochastic solver" ) 
   parser.add_argument('--nitg', type=int, default=5, help="# of simulations for gillespie solver" )  
-  parser.add_argument('--output_dir', type=str, default=os.path.joint("fit","sir"), help="Output directory" )        
+  parser.add_argument('--output_dir', type=str, default=os.path.join("results","sir"), help="Output directory" )        
   parser.set_defaults(func=main)  
   
   args = parser.parse_args()

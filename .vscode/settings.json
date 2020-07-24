@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/Users/mario/opt/anaconda3/bin/python",
+    "python.pythonPath": "/Users/mario/opt/anaconda3/envs/covid19sim/bin/python",
     "python.testing.unittestArgs": [
         "-v",
         "-s",
