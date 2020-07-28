@@ -15,6 +15,7 @@ import inspect
 import argparse
 import time
 from utils import StoreDictKeyPair
+from utils import plotSAIRHD
 
 mainVars={}
 
@@ -82,6 +83,7 @@ def doSim(args):
     args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)    
+  plotSAIRHD(t, sir_det, sdfname=os.path.join(args.output_dir,"sairhd.png"))
 
 def doFit(args):
     args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))

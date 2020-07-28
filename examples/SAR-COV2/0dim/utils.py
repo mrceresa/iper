@@ -10,6 +10,7 @@ from plotdf import plotdf
 import numpy as np
 import os
 import argparse
+from matplotlib.gridspec import GridSpec
 
 class StoreDictKeyPair(argparse.Action):
  def __call__(self, parser, namespace, values, option_string=None):
@@ -86,6 +87,45 @@ def plotTrajectories(inits, axes, tmax, nsteps, tdir, N, mu, outdir="./"):
     axes.plot(traj[:,0],traj[:,1])
   
   plt.savefig(os.path.join(outdir,"ps_traj.png"))
+
+def plotSAIRHD(tau, sd, sdfname='sairhd.png', sdstyle='-'):
+  # Plot the data on three separate curves for S(t), E(t), I(t) and R(t)
+  fig = plt.figure(figsize=(10, 8), dpi=300, facecolor='w')
+  gs = GridSpec(2, 2, figure=fig)
+  ax1 = fig.add_subplot(gs[0, :])
+  ax3 = fig.add_subplot(gs[-1, 0])
+  ax4 = fig.add_subplot(gs[-1, -1])
+
+  ax1.plot(tau, sd["S"], sdstyle, color="black", alpha=0.5, lw=2, label='Susceptible')
+  ax1.plot(tau, sd["A"], sdstyle, color="yellow", alpha=0.5, lw=2, label='Asymptomatics')
+  ax1.plot(tau, sd["I"], sdstyle, color="orange", alpha=0.5, lw=2, label='Infected')
+  ax1.plot(tau, sd["R"], sdstyle, color="green", alpha=0.5, lw=2, label='Recovered')
+  ax1.plot(tau, sd["H"], sdstyle, color="red", alpha=0.5, lw=2, label='Hospitalized')
+  ax1.plot(tau, sd["D"], sdstyle, color="black", alpha=0.5, lw=2, label='Death')
+  ax1.plot(tau, sd["S"] + sd["A"] + sd["I"] + sd["R"] + sd["H"] + sd["D"], "--", color="blue", alpha=0.5, lw=2, label='TOTAL')  
+  fig.suptitle("SAIRHD model")
+  ax1.set_xlabel('Time (days)')
+  ax1.set_ylabel('Population')
+  #ax.set_ylim(0,1.2)
+  ax1.yaxis.set_tick_params(length=0)
+  ax1.xaxis.set_tick_params(length=0)
+  ax1.grid(b=True, which='major', c='w', lw=2, ls='-')
+  legend = ax1.legend()
+  legend.get_frame().set_alpha(0.5)
+  for spine in ('top', 'right', 'bottom', 'left'):
+    ax1.spines[spine].set_visible(False)
+  
+  ax3.set_xlabel("Time (days)")
+  ax3.set_ylabel(r"$R_0$")
+  ax3.plot(tau, sd["R_0"], 'g'+sdstyle, alpha=0.5, lw=2, label='$R_0$')
+  ax3.legend()
+
+  ax4.set_xlabel("Time (days)")
+  ax4.set_ylabel("pIH")
+  ax4.plot(tau, sd["pIH"], 'k'+sdstyle, alpha=0.5, lw=2, label='pIH')
+  ax4.legend()
+
+  plt.savefig(sdfname)
 
 def plotAlls(tau, sd, ss=None, sg=None, nits=100, nitg=100, sdfname='sir.png', sdstyle='-', outdir="./"):
   # Plot the data on three separate curves for S(t), I(t) and R(t)
