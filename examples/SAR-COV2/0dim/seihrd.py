@@ -370,7 +370,6 @@ if __name__ == "__main__":
   fit.add_argument("--country", type=str, default="ITA", help="Country code to fit")
   fit.add_argument("--data-icu", type=str, default=os.path.join('data','beds.csv'), help="csv with data for fit")
   fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
-  fit.add_argument('-n','--agents', type=int, help="Initial population", required=True ) 
   fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" )          
   fit.set_defaults(func=doFit)  
 
