@@ -15,6 +15,7 @@ import inspect
 import argparse
 import time
 from utils import StoreDictKeyPair
+from covid19dh import covid19
 from utils import plotSAIRHD
 
 mainVars={}
@@ -296,6 +297,54 @@ def doFit(args):
     plt.savefig(os.path.join(args.output_dir, saveFIG))
     
     mainVars=inspect.currentframe().f_locals
+  
+  df = covid19(args.country)
+  df = df[df["confirmed"]>0] #Starts from first infections
+  #dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
+
+  N=df["population"].mean()
+  icu_beds = pd.read_csv(args.data_icu, header=0)
+  icu_beds = dict(zip(icu_beds["Country"], icu_beds["ICU_Beds"]))
+  icu_beds = icu_beds["Italy"] * N / 100000 # Emergency life support beds per 100k citizens
+  print("Maximum icy beds", icu_beds)
+  #dati_regione1=pd.read_csv('dpc-covid19-ita-andamento-nazionale.csv')
+  #regione='ITA' 
+  
+  age_effect=1
+  demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
+  
+  #I=np.array(dati_regione1['totale_positivi'])
+  #D=np.array(dati_regione1['deceduti'])
+  #R=np.array(dati_regione1['dimessi_guariti'])
+  #H=np.array(dati_regione1['totale_ospedalizzati'])
+  #S=N-I-D-H-R
+
+  df.plot(x="date", y=["tests"])
+  plt.savefig(os.path.join(args.output_dir, "test-%s.png"%args.country))
+
+  df.plot(x="date", y=["confirmed","recovered", "deaths"])
+  plt.savefig(os.path.join(args.output_dir, "confirmed-recovered-%s.png"%args.country))
+
+  df.plot(x="date", y=["deaths","hosp","vent","icu"])        
+  plt.savefig(os.path.join(args.output_dir, "test-%s.png"%args.country))
+
+  print("Maximum people in vent", df["vent"].max())
+  print("Maximum people in icu", df["icu"].max())
+  
+  I = df["confirmed"]
+  R = df["recovered"]
+  D = df["deaths"]
+  H = df["hosp"]
+  S = N - I - D - H - R
+
+  t=np.array([i+1 for i in range(len(I))])
+  i0=df["confirmed"].iloc[0]        #infetti a t0 
+  a0=i0                            #asintomatici a t0
+  r0=df["recovered"].iloc[0]        #recovered a t0
+  h0=df["hosp"].iloc[0]         #ospedaliz. a t0                         
+  d0=df["deaths"].iloc[0]        #deceduti  t0
+  s0=N-i0-r0 -h0 -d0  -a0                   #suscettibili a t0
+  y0=s0,a0,i0,r0,h0,d0 
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -318,7 +367,7 @@ if __name__ == "__main__":
   sim.set_defaults(func=doSim)  
 
   fit = subparsers.add_parser('fit')
-  fit.add_argument("--data", type=str, default=os.path.join('data','dpc-covid19-ita-regioni.csv'), help="csv with data for fit")
+  fit.add_argument("--country", type=str, default="ITA", help="Country code to fit")
   fit.add_argument("--data-icu", type=str, default=os.path.join('data','beds.csv'), help="csv with data for fit")
   fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
   fit.add_argument('-n','--agents', type=int, help="Initial population", required=True ) 
