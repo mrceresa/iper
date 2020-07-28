@@ -80,10 +80,48 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
 #========================================================================================================
 
 def doSim(args):
-    args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)    
+  args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))
+  if not os.path.exists(args.output_dir):
+      os.makedirs(args.output_dir)    
+
+  print(args)
+  # Total population, N.
+  N = args.agents
+  # Initial number of infected and recovered individuals, I0 and R0.
+  A0, I0, R0, H0, D0 = args.a0, args.i0, args.r0, args.h0, 0
+  # Everyone else, S0, is susceptible to infection initially.
+  S0 = N - I0 - R0 - A0 - H0 - D0
+  # A grid of time points (in days)
+  t = np.linspace(0, args.days, args.days)
+
+  # Lockdown effect
+  r0_max = args.r0_max; r0_min = args.r0_min
+  k = args.k # Transition parameter from max to min R0
+  # starting day of hard lockdown
+  startLockdown = args.lock if args.lock > 0 else args.days 
+
+  # Strenght of the age effect
+  age_effect = 1.0
+  demographic = {"0-29": 0.2, "30-59": 0.4, "60-89": 0.35, "89+": 0.05}
+
+  # Initial conditions vector
+  y0 = S0, A0, I0, R0, H0, D0
+
+  icu_beds = pd.read_csv(args.data_icu, header=0)
+  icu_beds = dict(zip(icu_beds["Country"], icu_beds["ICU_Beds"]))
+  icu_beds = icu_beds["Italy"] * N / 100000 # Emergency life support beds per 100k citizens
+  print("Maximum icy beds", icu_beds)  
+  print("Average recovery time %.3f days"%(1/args.rates["rir"]))
+  print("average survival of criticals %.3f days"%(1/args.rates["rhd"]))
+  sir_det = solveSIRdet(y0, t, N, age_effect, r0_max, r0_min, k, startLockdown, args.rates, demographic, icu_beds)
+
+  fname = os.path.join(args.output_dir, 'seird_results.csv')
+  np.savetxt(fname, np.column_stack( 
+    (t, sir_det["S"], sir_det["A"], sir_det["I"], sir_det["R"], sir_det["H"], sir_det["D"])
+  ), delimiter=', ' )
+
   plotSAIRHD(t, sir_det, sdfname=os.path.join(args.output_dir,"sairhd.png"))
+
 
 def doFit(args):
     args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))
