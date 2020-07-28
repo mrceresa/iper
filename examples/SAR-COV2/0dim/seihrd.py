@@ -27,10 +27,10 @@ def deriv(y, t, N, beta,pAI, pIH, rates,pHD):
     
     S, A, I, R, H, D = y
     dSdt = -rates["rsa"]* S/N* beta(t)*(I+A)
-    dAdt =  rates["rsa"]* S/N* beta(t)*(I+A) - rates["rai"]*pAI(t,I,N)*A-rates["rir"]*(1-pAI(t,I,N))*A
+    dAdt =  rates["rsa"]* S/N* beta(t)*(I+A) - rates["rai"]*pAI(t,I,N)*A-rates["rar"]*(1-pAI(t,I,N))*A
     dIdt =  rates["rai"]*pAI(t,I,N)*A  - rates["rir"]*(1 - pIH(t, I, N) )*I  - rates["rih"]*pIH(t, I, N)*I
-    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H #+ rates["rir"]*(1-pAI(t,I,N))*A
     dHdt =  rates["rih"]*pIH(t, I, N)*I - rates["rhd"]*pHD(t, I, N)*H - rates["rhr"]*(1-pHD(t, I, N))*H    
+    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H + rates["rar"]*(1-pAI(t,I,N))*A
     dDdt =  rates["rhd"]*pHD(t, I, N)*H
     
     return dSdt, dAdt, dIdt, dRdt, dHdt, dDdt
@@ -312,7 +312,7 @@ if __name__ == "__main__":
   sim.add_argument('--r0_min', type=float, default=0.9, help="Minimum of the transmission parameter" )  
   sim.add_argument('-k', type=float, default=2.5, help="Transition parameter of the lockdown")  
   sim.add_argument("--rates", dest="rates", action=StoreDictKeyPair, default={
-    "rse":1.0, "rei":1.0/2.0, "rih":1.0/10.0, "rir":1.0/10.0, "rhr":1.0/7.0, "rhd":1.0/8.0 
+    "rsa":1.0, "rai":1.0/2.0, "rar":1.0/10.0, "rih":1.0/10.0, "rir":1.0/10.0, "rhr":1.0/7.0, "rhd":1.0/8.0 
     }, metavar="rse=V1,rei=V2,...")
   sim.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" )        
   sim.set_defaults(func=doSim)  
