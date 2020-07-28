@@ -88,7 +88,89 @@ def plotTrajectories(inits, axes, tmax, nsteps, tdir, N, mu, outdir="./"):
   
   plt.savefig(os.path.join(outdir,"ps_traj.png"))
 
-def plotSAIRHD(tau, sd, sdfname='sairhd.png', sdstyle='-'):
+def plotSAIRHDfit(country, t, df, S, A, I, H, R, D, fitImage, resImage ):
+  plt.figure(figsize=(15, 12))
+  plt.suptitle(country)
+ 
+  ax6=plt.subplot(231)        
+  ax6.plot(t,df['S'],color="y")
+  ax6.plot(t,S,label='Susceptible',color="y",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Susceptible')
+ 
+  ax3=plt.subplot(232)
+  ax3.plot(t,df['I'],color="r")
+  ax3.plot(t,I,label='Infected',color="r",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Infected')
+  
+  ax7=plt.subplot(233)        
+  ax7.plot(t,df['H'],color="orange")
+  ax7.plot(t,H,label='Hosp',color="orange",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Hosp.')
+
+  ax5=plt.subplot(234)        
+  ax5.plot(t,df['R'],color="g")
+  ax5.plot(t,R,label='Recovered',color="g",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Recovered')
+
+  ax4=plt.subplot(235)        
+  ax4.plot(t,df['D'],color="black")
+  ax4.plot(t,D,label='Dead',color="black",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Dead')
+  
+  ax8=plt.subplot(236)        
+  ax8.plot(t,df['I'],color="r")
+  ax8.plot(t,I,label='Infected',color="r",ls="--")
+  ax8.plot(t,df['R'],color="g")
+  ax8.plot(t,R,label='Recovered',color="g",ls="--")
+  ax8.plot(t,df['D'],color="black")
+  ax8.plot(t,D,label='Dead',color="black",ls="--")
+  ax8.plot(t,df['H'],color="orange")
+  ax8.plot(t,H,label='Hosp',color="orange",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('people')
+
+  plt.savefig(fitImage)
+
+  plt.figure(figsize=(15, 12))
+  plt.suptitle(country)
+  
+  ax6=plt.subplot(231)        
+  ax6.plot(t,S-df['S'],label='Susceptible',color="y",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Susceptible')
+
+  ax3=plt.subplot(232)
+  ax3.plot(t,I-df['I'],label='Infected',color="r",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Infected')
+
+  ax7=plt.subplot(233)        
+  ax7.plot(t,H-df['H'],label='Hosp',color="orange",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Hosp.') 
+  
+  ax5=plt.subplot(234)        
+  ax5.plot(t,R-df['R'],label='Recovered',color="g",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Recovered')
+
+  ax4=plt.subplot(235)        
+  ax4.plot(t,D-df['D'],label='Dead',color="black",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Dead')
+  
+
+  
+  plt.savefig(resImage) 
+
+
+
+def plotSAIRHD(tau, sd, sdfname='sairhd.png', sdstyle='-', logy=False):
   # Plot the data on three separate curves for S(t), E(t), I(t) and R(t)
   fig = plt.figure(figsize=(10, 8), dpi=300, facecolor='w')
   gs = GridSpec(2, 2, figure=fig)
@@ -110,6 +192,7 @@ def plotSAIRHD(tau, sd, sdfname='sairhd.png', sdstyle='-'):
   ax1.yaxis.set_tick_params(length=0)
   ax1.xaxis.set_tick_params(length=0)
   ax1.grid(b=True, which='major', c='w', lw=2, ls='-')
+  if logy: ax1.set_yscale('log')
   legend = ax1.legend()
   legend.get_frame().set_alpha(0.5)
   for spine in ('top', 'right', 'bottom', 'left'):

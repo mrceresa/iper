@@ -16,7 +16,7 @@ import argparse
 import time
 from utils import StoreDictKeyPair
 from covid19dh import covid19
-from utils import plotSAIRHD
+from utils import plotSAIRHD, plotSAIRHDfit
 
 mainVars={}
 
