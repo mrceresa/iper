@@ -130,7 +130,8 @@ def doFit(args):
       os.makedirs(args.output_dir)    
   global mainVars
   
-  df = covid19(args.country)
+  df, _ = covid19(args.country)
+  #import ipdb; ipdb.set_trace()
   df = df[df["confirmed"]>0] #Starts from first infections
   #dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
 
@@ -152,13 +153,13 @@ def doFit(args):
   #S=N-I-D-H-R
 
   df.plot(x="date", y=["tests"])
-  plt.savefig(os.path.join(args.output_dir, "test-%s.png"%args.country))
+  plt.savefig(os.path.join(args.output_dir, "tests-%s.png"%args.country))
 
   df.plot(x="date", y=["confirmed","recovered", "deaths"])
   plt.savefig(os.path.join(args.output_dir, "confirmed-recovered-%s.png"%args.country))
 
   df.plot(x="date", y=["deaths","hosp","vent","icu"])        
-  plt.savefig(os.path.join(args.output_dir, "test-%s.png"%args.country))
+  plt.savefig(os.path.join(args.output_dir, "severity-%s.png"%args.country))
 
   print("Maximum people in vent", df["vent"].max())
   print("Maximum people in icu", df["icu"].max())
@@ -205,28 +206,31 @@ def doFit(args):
   
   
   params2=Parameters()
-  params2.add('r0_max',value=5.0,min=2.0,max=5.0,vary=False)
-  params2.add('r0_min',value=0.9,min=0.3,max=3.5,vary=False)
-  params2.add('k',value=2.5,min=0.1,max=4.0,vary=False)
+  params2.add('r0_max',value=5.0,min=2.0,max=5.0,vary=True)
+  params2.add('r0_min',value=0.9,min=0.3,max=3.5,vary=True)
+  params2.add('k',value=2.5,min=0.1,max=4.0,vary=True)
   params2.add('startLockdown',value=31.0, min=0,max=100, vary=False)
   params2.add('rsa',value=1.0, min=0.2,max=1.0, vary=True)
-  params2.add('rai',value=0.5,min=0.01,max=2,vary=False)  
-  params2.add('rar',value=0.1,min=0.01,max=2,vary=False)  
-  params2.add('rih',value=0.1,min=0.01,max=2.0,vary=False)
-  params2.add('rir',value=0.1,min=0.01,max=2,vary=False)
-  params2.add('rhr',value=0.142,min=0.01,max=2,vary=False)
-  params2.add('rhd',value=0.125,min=0.01,max=2,vary=False)
+  params2.add('rai',value=0.5,min=0.01,max=2,vary=True)  
+  params2.add('rar',value=0.1,min=0.01,max=2,vary=True)  
+  params2.add('rih',value=0.1,min=0.01,max=2.0,vary=True)
+  params2.add('rir',value=0.1,min=0.01,max=2,vary=True)
+  params2.add('rhr',value=0.142,min=0.01,max=2,vary=True)
+  params2.add('rhd',value=0.125,min=0.01,max=2,vary=True)
   
   res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D,icu_beds)
   out = minimize(resid_, params2, args=(y0, t, N,age_effect,S,I,H,R,D,icu_beds),
     method='leastsq')#method='differential_evolution',method='leastsq'
   print(fit_report(out))
 
+
   print(out.params.pretty_print())
-  out.plot_fit(datafmt="-")
-  plt.savefig(os.path.join(args.output_dir, "best_fit.png"))
+  #out.plot_fit(datafmt="-")
+  #plt.savefig(os.path.join(args.output_dir, "best_fit.png"))
+  #import ipdb; ipdb.set_trace()
+
   print("**** Estimated parameters:")
-  print(out.best_values)
+  print([out.params.items()])
   
   rates_fit={"rsa":out.params['rsa'].value, 
              "rai":out.params['rai'].value, 
