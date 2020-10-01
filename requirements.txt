@@ -8,3 +8,4 @@ cython
 -e git+https://github.com/Corvince/mesa-geo.git#egg=mesa-geo
 coloredlogs
 contextily
+lmfit V 1.0.0

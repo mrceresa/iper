@@ -17,6 +17,7 @@ import time
 from utils import StoreDictKeyPair
 from covid19dh import covid19
 from utils import plotSAIRHD
+from datetime import date
 
 mainVars={}
 
@@ -132,7 +133,9 @@ def doFit(args):
   
   df, _ = covid19(args.country)
   #import ipdb; ipdb.set_trace()
-  df = df[df["confirmed"]>0] #Starts from first infections
+  df = df[df["date"]>args.start]
+  df = df[df["date"]<args.stop]
+  df = df[df["confirmed"]>0]#Starts from first infections
   #dati_regione1=dati_regione_[dati_regione_['totale_positivi']>25] #per stabilire il t0
 
   N=df["population"].mean()
@@ -172,7 +175,7 @@ def doFit(args):
 
   t=np.array([i+1 for i in range(len(I))])
   i0=df["confirmed"].iloc[0]        #infetti a t0 
-  a0=i0                            #asintomatici a t0
+  a0=4*i0                            #asintomatici a t0
   r0=df["recovered"].iloc[0]        #recovered a t0
   h0=df["hosp"].iloc[0]         #ospedaliz. a t0                         
   d0=df["deaths"].iloc[0]        #deceduti  t0
@@ -208,9 +211,9 @@ def doFit(args):
   params2=Parameters()
   params2.add('r0_max',value=5.0,min=2.0,max=5.0,vary=True)
   params2.add('r0_min',value=0.9,min=0.3,max=3.5,vary=True)
-  params2.add('k',value=2.5,min=0.1,max=4.0,vary=True)
+  params2.add('k',value=2.5,min=0.01,max=5.0,vary=True)
   params2.add('startLockdown',value=31.0, min=0,max=100, vary=False)
-  params2.add('rsa',value=1.0, min=0.2,max=1.0, vary=True)
+  params2.add('rsa',value=1.0, min=0.01 ,max=2.0, vary=True)
   params2.add('rai',value=0.5,min=0.01,max=2,vary=True)  
   params2.add('rar',value=0.1,min=0.01,max=2,vary=True)  
   params2.add('rih',value=0.1,min=0.01,max=2.0,vary=True)
@@ -220,7 +223,7 @@ def doFit(args):
   
   res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D,icu_beds)
   out = minimize(resid_, params2, args=(y0, t, N,age_effect,S,I,H,R,D,icu_beds),
-    method='leastsq')#method='differential_evolution',method='leastsq'
+    method='differential_evolution')#method='differential_evolution',method='leastsq'
   print(fit_report(out))
 
 
@@ -338,7 +341,9 @@ if __name__ == "__main__":
   fit.add_argument("--country", type=str, default="ITA", help="Country code to fit")
   fit.add_argument("--data-icu", type=str, default=os.path.join('data','beds.csv'), help="csv with data for fit")
   fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
-  fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" )          
+  fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" ) 
+  fit.add_argument('--start', type=str, default="2020-03-01", help="day start fit")
+  fit.add_argument('--stop', type=str, default="2020-06-01", help="day stop fit")      
   fit.set_defaults(func=doFit)  
 
   args = parser.parse_args()

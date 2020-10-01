@@ -17,6 +17,6 @@ Results for each run are in the results folder, in a subfolder with the name of 
 
 * SEIHRD
 
-'python seihrd.py fit -n 500000'
+'python seihrd.py fit 
 
 * SEIHCRD 
