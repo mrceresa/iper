@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/Users/mario/opt/anaconda3/envs/covid19sim/bin/python",
+    "python.pythonPath": "C:\\Users\\Enrico\\anaconda3\\python.exe",
     "python.testing.unittestArgs": [
         "-v",
         "-s",
