@@ -7,6 +7,8 @@ _log = logging.getLogger(__name__)
 
 from BCNCovid2020 import BCNCovid2020
 import argparse
+import geopy
+geopy.geocoders.options.default_user_agent = "iper-social"
 
 def main(args):
 

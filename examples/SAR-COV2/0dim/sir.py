@@ -16,6 +16,8 @@ from random import random
 import gillespy2
 
 import csv
+import time
+import os
 
 # The original SIR model differential equations with mass action effect
 def derivOrig(y, t, N, beta, gamma):
@@ -155,20 +157,21 @@ def main(args):
   sir_stoch = solveSIRstoch(y0, t, N, mu, beta, gamma, nits)
   sir_gill = solveGillespie(y0, t, N, mu, beta, gamma, nitg)
 
-  np.savetxt('sir_results.csv', np.column_stack( 
+  fname = os.path.join(args.output_dir, 'sir_results.csv')
+  np.savetxt(fname, np.column_stack( 
     (t, sir_det["S"], sir_det["I"], sir_det["R"])
   ), delimiter=', ' )
 
   xbound, ybound = (0.0, 1.0), (0.0, 1.0)
   gridsteps = 30; tmax=2e3; nsteps=1e2; tdir="forward"
 
-  axes = plotPhase(tau, xbound, ybound, gridsteps, tmax, nsteps, N, mu)
+  axes = plotPhase(tau, xbound, ybound, gridsteps, tmax, nsteps, N, mu, outdir=args.output_dir)
 
   inits=[(0.9, 0.7, 0.0),(0.9, 0.6, 0.0),
          (0.9, 0.4, 0.0), (0.9, 0.2, 0.0)]  
-  plotTrajectories(inits, axes, tmax*4, nsteps*4, tdir, N, mu)
+  plotTrajectories(inits, axes, tmax*4, nsteps*4, tdir, N, mu, outdir=args.output_dir)
 
-  plotAlls(t, sir_det, sir_stoch, sir_gill, nits, nitg)
+  plotAlls(t, sir_det, sir_stoch, sir_gill, nits, nitg, outdir=args.output_dir)
 
 
 if __name__ == "__main__":  
@@ -180,8 +183,13 @@ if __name__ == "__main__":
   parser.add_argument('--beta', type=float, default=0.09, help="Contact rate" )
   parser.add_argument('--gamma', type=float, default=0.05, help="Mean recovery rate" )   
   parser.add_argument('--nits', type=int, default=50, help="# of simulations for stochastic solver" ) 
-  parser.add_argument('--nitg', type=int, default=5, help="# of simulations for gillespie solver" )      
+  parser.add_argument('--nitg', type=int, default=5, help="# of simulations for gillespie solver" )  
+  parser.add_argument('--output_dir', type=str, default=os.path.join("results","sir"), help="Output directory" )        
   parser.set_defaults(func=main)  
   
-  args = parser.parse_args()  
+  args = parser.parse_args()
+  args.output_dir = os.path.join(args.output_dir, time.strftime("%Y%m%d%H%M"))
+  if not os.path.exists(args.output_dir):
+    os.makedirs(args.output_dir)
+
   args.func(args)  
