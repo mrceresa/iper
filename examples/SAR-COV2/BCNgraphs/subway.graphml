@@ -1,0 +1,1696 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d29" for="edge" attr.name="osmid" attr.type="string"/>
+<key id="d28" for="edge" attr.name="length" attr.type="string"/>
+<key id="d27" for="edge" attr.name="geometry" attr.type="string"/>
+<key id="d26" for="edge" attr.name="oneway" attr.type="string"/>
+<key id="d25" for="edge" attr.name="voltage" attr.type="string"/>
+<key id="d24" for="edge" attr.name="tracks" attr.type="string"/>
+<key id="d23" for="edge" attr.name="name" attr.type="string"/>
+<key id="d22" for="edge" attr.name="gauge" attr.type="string"/>
+<key id="d21" for="edge" attr.name="railway" attr.type="string"/>
+<key id="d20" for="edge" attr.name="electrifie" attr.type="string"/>
+<key id="d19" for="edge" attr.name="osm_type" attr.type="string"/>
+<key id="d18" for="edge" attr.name="osm_id" attr.type="string"/>
+<key id="d17" for="edge" attr.name="full_id" attr.type="string"/>
+<key id="d16" for="node" attr.name="wheelchair" attr.type="string"/>
+<key id="d15" for="node" attr.name="osmid" attr.type="string"/>
+<key id="d14" for="node" attr.name="x" attr.type="string"/>
+<key id="d13" for="node" attr.name="y" attr.type="string"/>
+<key id="d12" for="node" attr.name="lon" attr.type="string"/>
+<key id="d11" for="node" attr.name="lat" attr.type="string"/>
+<key id="d10" for="node" attr.name="geometry" attr.type="string"/>
+<key id="d9" for="node" attr.name="operator" attr.type="string"/>
+<key id="d8" for="node" attr.name="network" attr.type="string"/>
+<key id="d7" for="node" attr.name="tram" attr.type="string"/>
+<key id="d6" for="node" attr.name="railway" attr.type="string"/>
+<key id="d5" for="node" attr.name="public_tra" attr.type="string"/>
+<key id="d4" for="node" attr.name="name" attr.type="string"/>
+<key id="d3" for="node" attr.name="osm_type" attr.type="string"/>
+<key id="d2" for="node" attr.name="osm_id" attr.type="string"/>
+<key id="d1" for="node" attr.name="full_id" attr.type="string"/>
+<key id="d0" for="graph" attr.name="crs" attr.type="string"/>
+<graph edgedefault="directed"><data key="d0">+proj=utm +zone=31 +ellps=WGS84 +datum=WGS84 +units=m +no_defs +type=crs</data>
+<node id="0">
+  <data key="d1">n3394604126</data>
+  <data key="d2">3394604126</data>
+  <data key="d3">node</data>
+  <data key="d4">Alfons el Magnànim</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434276.4229447866 4585366.946949101)</data>
+  <data key="d11">41.4171697</data>
+  <data key="d12">2.2135446</data>
+  <data key="d13">4585366.946949101</data>
+  <data key="d14">434276.4229447866</data>
+  <data key="d15">0</data>
+</node>
+<node id="1">
+  <data key="d1">n3394604127</data>
+  <data key="d2">3394604127</data>
+  <data key="d3">node</data>
+  <data key="d4">Alfons el Magnànim</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434279.981647509 4585369.523792301)</data>
+  <data key="d11">41.4171932</data>
+  <data key="d12">2.2135869</data>
+  <data key="d13">4585369.523792301</data>
+  <data key="d14">434279.98164750903</data>
+  <data key="d15">1</data>
+</node>
+<node id="2">
+  <data key="d1">n3394604128</data>
+  <data key="d2">3394604128</data>
+  <data key="d3">node</data>
+  <data key="d4">Auditori/Teatre Nacional</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432025.8034427353 4583208.854519342)</data>
+  <data key="d11">41.3975452</data>
+  <data key="d12">2.1868584</data>
+  <data key="d13">4583208.854519342</data>
+  <data key="d14">432025.8034427353</data>
+  <data key="d15">2</data>
+</node>
+<node id="3">
+  <data key="d1">n3394604129</data>
+  <data key="d2">3394604129</data>
+  <data key="d3">node</data>
+  <data key="d4">Auditori/Teatre Nacional</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432029.4418159029 4583209.03132617)</data>
+  <data key="d11">41.3975471</data>
+  <data key="d12">2.1869019</data>
+  <data key="d13">4583209.03132617</data>
+  <data key="d14">432029.44181590294</data>
+  <data key="d15">3</data>
+</node>
+<node id="4">
+  <data key="d1">n3394604130</data>
+  <data key="d2">3394604130</data>
+  <data key="d3">node</data>
+  <data key="d4">Besòs</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (433950.9892773314 4585695.521836778)</data>
+  <data key="d11">41.4201024</data>
+  <data key="d12">2.2096149</data>
+  <data key="d13">4585695.521836778</data>
+  <data key="d14">433950.98927733145</data>
+  <data key="d15">4</data>
+</node>
+<node id="5">
+  <data key="d1">n3394604131</data>
+  <data key="d2">3394604131</data>
+  <data key="d3">node</data>
+  <data key="d4">Besòs</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (433948.3019421297 4585696.84539423)</data>
+  <data key="d11">41.4201141</data>
+  <data key="d12">2.2095826</data>
+  <data key="d13">4585696.8453942295</data>
+  <data key="d14">433948.30194212974</data>
+  <data key="d15">5</data>
+</node>
+<node id="6">
+  <data key="d1">n3394604132</data>
+  <data key="d2">3394604132</data>
+  <data key="d3">node</data>
+  <data key="d4">Ca l’Aranyó</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d16">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432422.0897426431 4583962.447956765)</data>
+  <data key="d11">41.404366</data>
+  <data key="d12">2.1915144</data>
+  <data key="d13">4583962.447956765</data>
+  <data key="d14">432422.08974264306</data>
+  <data key="d15">6</data>
+</node>
+<node id="7">
+  <data key="d1">n3394604133</data>
+  <data key="d2">3394604133</data>
+  <data key="d3">node</data>
+  <data key="d4">Ca l’Aranyó</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d16">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432416.0106616986 4583979.269982094)</data>
+  <data key="d11">41.404517</data>
+  <data key="d12">2.1914398</data>
+  <data key="d13">4583979.269982094</data>
+  <data key="d14">432416.0106616986</data>
+  <data key="d15">7</data>
+</node>
+<node id="8">
+  <data key="d1">n3394604134</data>
+  <data key="d2">3394604134</data>
+  <data key="d3">node</data>
+  <data key="d4">Can Jaumandreu</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432604.2238449671 4584373.742580738)</data>
+  <data key="d11">41.4080857</data>
+  <data key="d12">2.1936474</data>
+  <data key="d13">4584373.742580738</data>
+  <data key="d14">432604.2238449671</data>
+  <data key="d15">8</data>
+</node>
+<node id="9">
+  <data key="d1">n3394604135</data>
+  <data key="d2">3394604135</data>
+  <data key="d3">node</data>
+  <data key="d4">Can Jaumandreu</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432598.0131578752 4584377.331102351)</data>
+  <data key="d11">41.4081175</data>
+  <data key="d12">2.1935727</data>
+  <data key="d13">4584377.331102351</data>
+  <data key="d14">432598.01315787516</data>
+  <data key="d15">9</data>
+</node>
+<node id="10">
+  <data key="d1">n3394604140</data>
+  <data key="d2">3394604140</data>
+  <data key="d3">node</data>
+  <data key="d4">Ciutadella/Vila Olímpica</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432436.4025242868 4582102.902673373)</data>
+  <data key="d11">41.3876188</data>
+  <data key="d12">2.1918931</data>
+  <data key="d13">4582102.902673373</data>
+  <data key="d14">432436.4025242868</data>
+  <data key="d15">10</data>
+</node>
+<node id="11">
+  <data key="d1">n3394604141</data>
+  <data key="d2">3394604141</data>
+  <data key="d3">node</data>
+  <data key="d4">Ciutadella/Vila Olímpica</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432439.0752584508 4582105.275954977)</data>
+  <data key="d11">41.3876404</data>
+  <data key="d12">2.1919248</data>
+  <data key="d13">4582105.275954977</data>
+  <data key="d14">432439.07525845076</data>
+  <data key="d15">11</data>
+</node>
+<node id="12">
+  <data key="d1">n3394604142</data>
+  <data key="d2">3394604142</data>
+  <data key="d3">node</data>
+  <data key="d4">El Maresme</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434445.6532757282 4584620.759015297)</data>
+  <data key="d11">41.4104628</data>
+  <data key="d12">2.2156503</data>
+  <data key="d13">4584620.759015297</data>
+  <data key="d14">434445.6532757282</data>
+  <data key="d15">12</data>
+</node>
+<node id="13">
+  <data key="d1">n3394604143</data>
+  <data key="d2">3394604143</data>
+  <data key="d3">node</data>
+  <data key="d4">El Maresme</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434444.3539794908 4584627.73222745)</data>
+  <data key="d11">41.4105255</data>
+  <data key="d12">2.215634</data>
+  <data key="d13">4584627.73222745</data>
+  <data key="d14">434444.35397949076</data>
+  <data key="d15">13</data>
+</node>
+<node id="14">
+  <data key="d1">n3394604146</data>
+  <data key="d2">3394604146</data>
+  <data key="d3">node</data>
+  <data key="d4">Espronceda</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432965.5234185256 4584732.462657273)</data>
+  <data key="d11">41.4113468</data>
+  <data key="d12">2.19793</data>
+  <data key="d13">4584732.462657273</data>
+  <data key="d14">432965.5234185256</data>
+  <data key="d15">14</data>
+</node>
+<node id="15">
+  <data key="d1">n3394604147</data>
+  <data key="d2">3394604147</data>
+  <data key="d3">node</data>
+  <data key="d4">Espronceda</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432964.9298965018 4584736.065471823)</data>
+  <data key="d11">41.4113792</data>
+  <data key="d12">2.1979225</data>
+  <data key="d13">4584736.065471823</data>
+  <data key="d14">432964.9298965018</data>
+  <data key="d15">15</data>
+</node>
+<node id="16">
+  <data key="d1">n3394604150</data>
+  <data key="d2">3394604150</data>
+  <data key="d3">node</data>
+  <data key="d4">Fluvià</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (433548.0127269611 4584325.958611978)</data>
+  <data key="d11">41.4077339</data>
+  <data key="d12">2.2049435</data>
+  <data key="d13">4584325.958611978</data>
+  <data key="d14">433548.01272696105</data>
+  <data key="d15">16</data>
+</node>
+<node id="17">
+  <data key="d1">n3394604151</data>
+  <data key="d2">3394604151</data>
+  <data key="d3">node</data>
+  <data key="d4">Fluvià</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (433542.5685409363 4584342.984778627)</data>
+  <data key="d11">41.4078868</data>
+  <data key="d12">2.2048765</data>
+  <data key="d13">4584342.984778627</data>
+  <data key="d14">433542.56854093634</data>
+  <data key="d15">17</data>
+</node>
+<node id="18">
+  <data key="d1">n3394604152</data>
+  <data key="d2">3394604152</data>
+  <data key="d3">node</data>
+  <data key="d4">Fòrum</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434800.9500801509 4584768.348250131)</data>
+  <data key="d11">41.411821</data>
+  <data key="d12">2.2198851</data>
+  <data key="d13">4584768.348250131</data>
+  <data key="d14">434800.95008015085</data>
+  <data key="d15">18</data>
+</node>
+<node id="19">
+  <data key="d1">n3394604153</data>
+  <data key="d2">3394604153</data>
+  <data key="d3">node</data>
+  <data key="d4">Fòrum</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434795.5806145682 4584771.683035761)</data>
+  <data key="d11">41.4118506</data>
+  <data key="d12">2.2198205</data>
+  <data key="d13">4584771.683035761</data>
+  <data key="d14">434795.5806145682</data>
+  <data key="d15">19</data>
+</node>
+<node id="20">
+  <data key="d1">n3394604154</data>
+  <data key="d2">3394604154</data>
+  <data key="d3">node</data>
+  <data key="d4">Glòries</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d16">yes</data>
+  <data key="d8">Tramvia del Besòs</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432035.1314055897 4583668.280290697)</data>
+  <data key="d11">41.4016839</data>
+  <data key="d12">2.1869184</data>
+  <data key="d13">4583668.280290697</data>
+  <data key="d14">432035.1314055897</data>
+  <data key="d15">20</data>
+</node>
+<node id="21">
+  <data key="d1">n3394604155</data>
+  <data key="d2">3394604155</data>
+  <data key="d3">node</data>
+  <data key="d4">Glòries</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d16">yes</data>
+  <data key="d8">Tramvia del Besòs</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432031.7543716407 4583668.311986945)</data>
+  <data key="d11">41.4016839</data>
+  <data key="d12">2.186878</data>
+  <data key="d13">4583668.311986945</data>
+  <data key="d14">432031.7543716407</data>
+  <data key="d15">21</data>
+</node>
+<node id="22">
+  <data key="d1">n3394604160</data>
+  <data key="d2">3394604160</data>
+  <data key="d3">node</data>
+  <data key="d4">La Farinera</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432178.6295203579 4583946.215826385)</data>
+  <data key="d11">41.4041993</data>
+  <data key="d12">2.1886038</data>
+  <data key="d13">4583946.215826385</data>
+  <data key="d14">432178.6295203579</data>
+  <data key="d15">22</data>
+</node>
+<node id="23">
+  <data key="d1">n3394604161</data>
+  <data key="d2">3394604161</data>
+  <data key="d3">node</data>
+  <data key="d4">La Farinera</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432175.655873568 4583947.353964574)</data>
+  <data key="d11">41.4042093</data>
+  <data key="d12">2.1885681</data>
+  <data key="d13">4583947.353964574</data>
+  <data key="d14">432175.65587356803</data>
+  <data key="d15">23</data>
+</node>
+<node id="24">
+  <data key="d1">n3394604164</data>
+  <data key="d2">3394604164</data>
+  <data key="d3">node</data>
+  <data key="d4">Marina</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432029.0296798375 4582822.123618044)</data>
+  <data key="d11">41.3940623</data>
+  <data key="d12">2.1869404</data>
+  <data key="d13">4582822.123618044</data>
+  <data key="d14">432029.0296798375</data>
+  <data key="d15">24</data>
+</node>
+<node id="25">
+  <data key="d1">n3394604165</data>
+  <data key="d2">3394604165</data>
+  <data key="d3">node</data>
+  <data key="d4">Marina</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432025.462576523 4582822.434663119)</data>
+  <data key="d11">41.3940648</data>
+  <data key="d12">2.1868977</data>
+  <data key="d13">4582822.434663119</data>
+  <data key="d14">432025.46257652296</data>
+  <data key="d15">25</data>
+</node>
+<node id="26">
+  <data key="d1">n3394604168</data>
+  <data key="d2">3394604168</data>
+  <data key="d3">node</data>
+  <data key="d4">Pere IV</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432985.66131155 4584145.758181379)</data>
+  <data key="d11">41.4060642</data>
+  <data key="d12">2.1982359</data>
+  <data key="d13">4584145.758181379</data>
+  <data key="d14">432985.66131155</data>
+  <data key="d15">26</data>
+</node>
+<node id="27">
+  <data key="d1">n3394604169</data>
+  <data key="d2">3394604169</data>
+  <data key="d3">node</data>
+  <data key="d4">Pere IV</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d16">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432987.7461680067 4584164.191777403)</data>
+  <data key="d11">41.4062304</data>
+  <data key="d12">2.1982588</data>
+  <data key="d13">4584164.191777403</data>
+  <data key="d14">432987.74616800674</data>
+  <data key="d15">27</data>
+</node>
+<node id="28">
+  <data key="d1">n3394604172</data>
+  <data key="d2">3394604172</data>
+  <data key="d3">node</data>
+  <data key="d4">Sant Martí de Provençals</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (433541.2023787331 4585294.864061803)</data>
+  <data key="d11">41.41646</data>
+  <data key="d12">2.2047556</data>
+  <data key="d13">4585294.864061803</data>
+  <data key="d14">433541.2023787331</data>
+  <data key="d15">28</data>
+</node>
+<node id="29">
+  <data key="d1">n3394604173</data>
+  <data key="d2">3394604173</data>
+  <data key="d3">node</data>
+  <data key="d4">Sant Martí de Provençals</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (433539.5874318664 4585299.208993108)</data>
+  <data key="d11">41.416499</data>
+  <data key="d12">2.2047358</data>
+  <data key="d13">4585299.208993108</data>
+  <data key="d14">433539.58743186644</data>
+  <data key="d15">29</data>
+</node>
+<node id="30">
+  <data key="d1">n3394604176</data>
+  <data key="d2">3394604176</data>
+  <data key="d3">node</data>
+  <data key="d4">Selva de Mar</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434010.1874695794 4584474.761073817)</data>
+  <data key="d11">41.4091122</data>
+  <data key="d12">2.2104564</data>
+  <data key="d13">4584474.7610738175</data>
+  <data key="d14">434010.1874695794</data>
+  <data key="d15">30</data>
+</node>
+<node id="31">
+  <data key="d1">n3394604177</data>
+  <data key="d2">3394604177</data>
+  <data key="d3">node</data>
+  <data key="d4">Selva de Mar</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (434006.3389520519 4584492.716068524)</data>
+  <data key="d11">41.4092736</data>
+  <data key="d12">2.2104084</data>
+  <data key="d13">4584492.716068524</data>
+  <data key="d14">434006.3389520519</data>
+  <data key="d15">31</data>
+</node>
+<node id="32">
+  <data key="d1">n3394604178</data>
+  <data key="d2">3394604178</data>
+  <data key="d3">node</data>
+  <data key="d4">Wellington</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432159.3757484591 4582385.8486214)</data>
+  <data key="d11">41.3901439</data>
+  <data key="d12">2.1885483</data>
+  <data key="d13">4582385.8486214</data>
+  <data key="d14">432159.37574845913</data>
+  <data key="d15">32</data>
+</node>
+<node id="33">
+  <data key="d1">n3394604179</data>
+  <data key="d2">3394604179</data>
+  <data key="d3">node</data>
+  <data key="d4">Wellington</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (432161.815316512 4582388.323910417)</data>
+  <data key="d11">41.3901664</data>
+  <data key="d12">2.1885772</data>
+  <data key="d13">4582388.323910417</data>
+  <data key="d14">432161.815316512</data>
+  <data key="d15">33</data>
+</node>
+<node id="34">
+  <data key="d1">n3395373883</data>
+  <data key="d2">3395373883</data>
+  <data key="d3">node</data>
+  <data key="d4">Avinguda de Xile</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (425988.8094506848 4581400.623858077)</data>
+  <data key="d11">41.3807263</data>
+  <data key="d12">2.1148697</data>
+  <data key="d13">4581400.623858077</data>
+  <data key="d14">425988.8094506848</data>
+  <data key="d15">34</data>
+</node>
+<node id="35">
+  <data key="d1">n3395373884</data>
+  <data key="d2">3395373884</data>
+  <data key="d3">node</data>
+  <data key="d4">Avinguda de Xile</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (425982.8390876197 4581403.94912257)</data>
+  <data key="d11">41.3807557</data>
+  <data key="d12">2.1147979</data>
+  <data key="d13">4581403.94912257</data>
+  <data key="d14">425982.83908761974</data>
+  <data key="d15">35</data>
+</node>
+<node id="36">
+  <data key="d1">n3395373891</data>
+  <data key="d2">3395373891</data>
+  <data key="d3">node</data>
+  <data key="d4">Ernest Lluch</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (425641.8277213174 4580956.25786509)</data>
+  <data key="d11">41.3766921</data>
+  <data key="d12">2.110775</data>
+  <data key="d13">4580956.25786509</data>
+  <data key="d14">425641.82772131736</data>
+  <data key="d15">36</data>
+</node>
+<node id="37">
+  <data key="d1">n3395373892</data>
+  <data key="d2">3395373892</data>
+  <data key="d3">node</data>
+  <data key="d4">Ernest Lluch</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (425651.1584598455 4580954.385658864)</data>
+  <data key="d11">41.3766761</data>
+  <data key="d12">2.1108868</data>
+  <data key="d13">4580954.385658864</data>
+  <data key="d14">425651.15845984546</data>
+  <data key="d15">37</data>
+</node>
+<node id="38">
+  <data key="d1">n3395374193</data>
+  <data key="d2">3395374193</data>
+  <data key="d3">node</data>
+  <data key="d4">Francesc Macià</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (428371.1861024489 4582648.303645669)</data>
+  <data key="d11">41.3921793</data>
+  <data key="d12">2.1432109</data>
+  <data key="d13">4582648.3036456695</data>
+  <data key="d14">428371.1861024489</data>
+  <data key="d15">38</data>
+</node>
+<node id="39">
+  <data key="d1">n3395374194</data>
+  <data key="d2">3395374194</data>
+  <data key="d3">node</data>
+  <data key="d4">Francesc Macià</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (428369.004279014 4582655.10912383)</data>
+  <data key="d11">41.3922404</data>
+  <data key="d12">2.143184</data>
+  <data key="d13">4582655.10912383</data>
+  <data key="d14">428369.00427901396</data>
+  <data key="d15">39</data>
+</node>
+<node id="40">
+  <data key="d1">n3395374197</data>
+  <data key="d2">3395374197</data>
+  <data key="d3">node</data>
+  <data key="d4">L’Illa</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (427811.0355254388 4582466.890261752)</data>
+  <data key="d11">41.3904953</data>
+  <data key="d12">2.136533</data>
+  <data key="d13">4582466.890261752</data>
+  <data key="d14">427811.03552543884</data>
+  <data key="d15">40</data>
+</node>
+<node id="41">
+  <data key="d1">n3395374198</data>
+  <data key="d2">3395374198</data>
+  <data key="d3">node</data>
+  <data key="d4">L’Illa</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (427810.1467432 4582469.996846505)</data>
+  <data key="d11">41.3905232</data>
+  <data key="d12">2.136522</data>
+  <data key="d13">4582469.9968465045</data>
+  <data key="d14">427810.14674319996</data>
+  <data key="d15">41</data>
+</node>
+<node id="42">
+  <data key="d1">n3395374199</data>
+  <data key="d2">3395374199</data>
+  <data key="d3">node</data>
+  <data key="d4">Maria Cristina</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (426970.3003344981 4582193.245474154)</data>
+  <data key="d11">41.3879548</data>
+  <data key="d12">2.1265109</data>
+  <data key="d13">4582193.245474154</data>
+  <data key="d14">426970.3003344981</data>
+  <data key="d15">42</data>
+</node>
+<node id="43">
+  <data key="d1">n3395374200</data>
+  <data key="d2">3395374200</data>
+  <data key="d3">node</data>
+  <data key="d4">Maria Cristina</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (426969.4025049081 4582196.252332404)</data>
+  <data key="d11">41.3879818</data>
+  <data key="d12">2.1264998</data>
+  <data key="d13">4582196.252332404</data>
+  <data key="d14">426969.4025049081</data>
+  <data key="d15">43</data>
+</node>
+<node id="44">
+  <data key="d1">n3395374203</data>
+  <data key="d2">3395374203</data>
+  <data key="d3">node</data>
+  <data key="d4">Numància</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (427428.6106718845 4582342.027717505)</data>
+  <data key="d11">41.3893363</data>
+  <data key="d12">2.1319742</data>
+  <data key="d13">4582342.027717505</data>
+  <data key="d14">427428.6106718845</data>
+  <data key="d15">44</data>
+</node>
+<node id="45">
+  <data key="d1">n3395374204</data>
+  <data key="d2">3395374204</data>
+  <data key="d3">node</data>
+  <data key="d4">Numància</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (427427.5457957897 4582345.069498096)</data>
+  <data key="d11">41.3893636</data>
+  <data key="d12">2.1319611</data>
+  <data key="d13">4582345.069498096</data>
+  <data key="d14">427427.5457957897</data>
+  <data key="d15">45</data>
+</node>
+<node id="46">
+  <data key="d1">n3395374205</data>
+  <data key="d2">3395374205</data>
+  <data key="d3">node</data>
+  <data key="d4">Palau Reial</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (426296.4513057432 4581973.612313734)</data>
+  <data key="d11">41.3859152</data>
+  <data key="d12">2.1184788</data>
+  <data key="d13">4581973.612313734</data>
+  <data key="d14">426296.4513057432</data>
+  <data key="d15">46</data>
+</node>
+<node id="47">
+  <data key="d1">n3395374206</data>
+  <data key="d2">3395374206</data>
+  <data key="d3">node</data>
+  <data key="d4">Palau Reial</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (426295.5701067985 4581976.58578202)</data>
+  <data key="d11">41.3859419</data>
+  <data key="d12">2.1184679</data>
+  <data key="d13">4581976.58578202</data>
+  <data key="d14">426295.5701067985</data>
+  <data key="d15">47</data>
+</node>
+<node id="48">
+  <data key="d1">n3395374207</data>
+  <data key="d2">3395374207</data>
+  <data key="d3">node</data>
+  <data key="d4">Pius XII</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (426559.5449377549 4582058.909853328)</data>
+  <data key="d11">41.3867075</data>
+  <data key="d12">2.1216148</data>
+  <data key="d13">4582058.909853328</data>
+  <data key="d14">426559.54493775486</data>
+  <data key="d15">48</data>
+</node>
+<node id="49">
+  <data key="d1">n3395374208</data>
+  <data key="d2">3395374208</data>
+  <data key="d3">node</data>
+  <data key="d4">Pius XII</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (426558.654719552 4582061.827864175)</data>
+  <data key="d11">41.3867337</data>
+  <data key="d12">2.1216038</data>
+  <data key="d13">4582061.827864175</data>
+  <data key="d14">426558.65471955197</data>
+  <data key="d15">49</data>
+</node>
+<node id="50">
+  <data key="d1">n3395374211</data>
+  <data key="d2">3395374211</data>
+  <data key="d3">node</data>
+  <data key="d4">Zona Universitària</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (425954.6167983736 4581793.620260249)</data>
+  <data key="d11">41.3842627</data>
+  <data key="d12">2.1144128</data>
+  <data key="d13">4581793.620260249</data>
+  <data key="d14">425954.61679837364</data>
+  <data key="d15">50</data>
+</node>
+<node id="51">
+  <data key="d1">n3395374212</data>
+  <data key="d2">3395374212</data>
+  <data key="d3">node</data>
+  <data key="d4">Zona Universitària</data>
+  <data key="d5">stop_position</data>
+  <data key="d6">tram_stop</data>
+  <data key="d7">yes</data>
+  <data key="d8">Tranvía de Barcelona</data>
+  <data key="d9">Tram</data>
+  <data key="d10">POINT (425957.669821999 4581794.521715351)</data>
+  <data key="d11">41.3842711</data>
+  <data key="d12">2.1144492</data>
+  <data key="d13">4581794.521715351</data>
+  <data key="d14">425957.66982199904</data>
+  <data key="d15">51</data>
+</node>
+<node id="52">
+  <data key="d1">b1</data>
+  <data key="d2">b1</data>
+  <data key="d4">Bifurcació Glòries nord</data>
+  <data key="d5">bifurcació</data>
+  <data key="d10">POINT (432155.9738265937 4583855.753663763)</data>
+  <data key="d11">41.4033826228652</data>
+  <data key="d12">2.1883429189537256</data>
+  <data key="d13">4583855.753663763</data>
+  <data key="d14">432155.97382659366</data>
+  <data key="d15">52</data>
+</node>
+<node id="53">
+  <data key="d1">b2</data>
+  <data key="d2">b2</data>
+  <data key="d4">Bifurcació Glòries sud</data>
+  <data key="d5">bifurcació</data>
+  <data key="d10">POINT (432159.7471785999 4583848.967926844)</data>
+  <data key="d11">41.403321824181624</data>
+  <data key="d12">2.1883888178978266</data>
+  <data key="d13">4583848.967926844</data>
+  <data key="d14">432159.7471785999</data>
+  <data key="d15">53</data>
+</node>
+<edge source="1" target="5" id="0.0">
+  <data key="d17">w332345209</data>
+  <data key="d18">332345209</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (434279.981647509 4585369.523792301, 434241.4485655085 4585408.622584504, 434215.0623667805 4585435.16492468, 434120.0555157313 4585531.846384335, 434057.3583272286 4585595.226011736, 434052.8342927009 4585599.51961382, 434048.5365023733 4585603.877773961, 434046.111332425 4585608.296590134, 434044.2794927811 4585612.709999717, 434043.1990517146 4585617.038841903, 434042.5645117827 4585620.775171112, 434043.3577371479 4585626.197218522, 434044.3753781905 4585631.483986969, 434046.9812354798 4585637.722226225, 434051.4668166232 4585645.719787002, 434053.8264348818 4585650.616831872, 434060.3609189843 4585661.515768046, 434063.1907015486 4585668.484758432, 434065.1236874454 4585675.173247391, 434066.6088503051 4585682.243312653, 434067.4909167995 4585689.163433466, 434069.0154202309 4585700.552136326, 434071.2777931883 4585718.629115618, 434075.0896610239 4585751.758502391, 434075.0566636555 4585764.649173537, 434072.3598279441 4585772.26806909, 434067.2636239186 4585778.876264233, 434065.2636985132 4585781.348208676, 434058.7163478038 4585784.616581232, 434050.8788202082 4585786.619893476, 434042.7147603449 4585785.806074558, 434035.5865178001 4585783.10644642, 434030.0971178728 4585779.581379215, 434004.8206918454 4585755.296823167, 433981.0447872881 4585731.531598962, 433969.9522995735 4585719.364186642, 433948.3019421297 4585696.84539423, 433948.3019421297 4585696.84539423)</data>
+  <data key="d28">670.7556989398637</data>
+  <data key="d29">7</data>
+</edge>
+<edge source="2" target="25" id="0.0">
+  <data key="d17">w332345188</data>
+  <data key="d18">332345188</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432025.8034427353 4583208.854519342, 432025.0553421429 4583151.415459293, 432024.4436354488 4583108.508736758, 432024.1373014351 4583087.449531742, 432023.5702766404 4583015.452966603, 432023.1872999829 4582980.882334732, 432023.4960025249 4582946.07205373, 432023.9055181379 4582938.92908857, 432024.5624412792 4582929.640954849, 432024.6034758465 4582923.323057742, 432025.2832190363 4582916.466230594, 432025.581942964 4582902.862457084, 432026.1431134262 4582894.951973979, 432026.0738299461 4582887.569240646, 432025.8750441711 4582866.38690246, 432025.7508304022 4582854.041719146, 432025.462576523 4582822.434663119, 432025.462576523 4582822.434663119)</data>
+  <data key="d28">386.5320702509377</data>
+  <data key="d29">42</data>
+</edge>
+<edge source="3" target="20" id="0.0">
+  <data key="d17">w337820288</data>
+  <data key="d18">337820288</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432029.4418159029 4583209.03132617, 432029.4418159029 4583209.03132617, 432029.5704178712 4583236.987065692, 432029.8601448535 4583253.605295869, 432030.3328024574 4583263.882088639, 432030.3883280089 4583277.815630433, 432030.4981464182 4583289.516992287, 432030.423521085 4583305.616809843, 432030.9597520981 4583341.374024511, 432032.1601597422 4583434.537800119, 432032.5608638114 4583466.543533132, 432032.8811536069 4583489.090400347, 432033.2011074526 4583512.492190421, 432033.211557338 4583524.294414739, 432033.2838223736 4583577.420844286, 432034.0775022543 4583605.869985741, 432034.457072679 4583623.153552834, 432035.1314055897 4583668.280290697)</data>
+  <data key="d28">459.3025005204864</data>
+  <data key="d29">31</data>
+</edge>
+<edge source="4" target="0" id="0.0">
+  <data key="d17">w332345210</data>
+  <data key="d18">332345210</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (433950.9892773314 4585695.521836778, 433950.9892773314 4585695.521836778, 433969.5451531221 4585714.127370729, 433980.4411938522 4585725.830256254, 433983.3975996861 4585729.267365482, 433987.7747722392 4585733.624152444, 434014.5661848356 4585759.982166609, 434030.4150551687 4585775.037427966, 434035.4566464135 4585778.944073255, 434041.7671676697 4585781.784388311, 434047.0078646281 4585782.780288286, 434055.3088893361 4585782.116189176, 434061.1931810644 4585779.453407425, 434065.1296969162 4585776.730657454, 434068.1680204596 4585773.571980303, 434070.6588465921 4585768.108906488, 434071.8748286316 4585762.14671827, 434071.6428897679 4585753.199960737, 434070.48766821 4585741.064003597, 434068.7808941249 4585726.179573279, 434065.1512069182 4585697.456348465, 434064.2671159159 4585690.314189943, 434063.4572606648 4585683.98186076, 434061.9100972789 4585677.445296155, 434059.0535490896 4585668.455837601, 434056.6824073176 4585662.293175074, 434047.4111340566 4585646.378504718, 434045.507163203 4585642.876264019, 434042.3136057673 4585636.343605562, 434039.7748592816 4585629.216530962, 434038.9842623885 4585624.083133122, 434039.2415930744 4585619.306576915, 434040.1661463877 4585614.379602838, 434041.7655721923 4585609.224421746, 434043.5331282226 4585606.010701462, 434045.2949597547 4585603.085707024, 434047.5191449713 4585600.456275491, 434055.0037309846 4585592.71602522, 434117.6257103398 4585529.33706236, 434160.5251564037 4585485.279308102, 434187.2084879144 4585458.36766442, 434212.4758002365 4585432.879052309, 434217.5956791352 4585427.913971038, 434222.7769719895 4585422.348783864, 434228.1157432428 4585416.637833002, 434239.0849125106 4585406.034901576, 434276.4229447866 4585366.946949101)</data>
+  <data key="d28">663.6719974541431</data>
+  <data key="d29">5</data>
+</edge>
+<edge source="5" target="29" id="0.0">
+  <data key="d17">w332345209</data>
+  <data key="d18">332345209</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (433948.3019421297 4585696.84539423, 433930.5460773653 4585677.999450088, 433898.645453562 4585647.735799228, 433863.3378733945 4585615.071901628, 433828.8808093368 4585583.144283676, 433796.0874312827 4585552.223065292, 433786.9489304803 4585543.590953342, 433738.6111308263 4585497.257167509, 433688.2456938625 4585448.610679865, 433640.199970933 4585399.632383413, 433587.5622434965 4585346.688411403, 433539.5874318664 4585299.208993108, 433539.5874318664 4585299.208993108)</data>
+  <data key="d28">570.3277978865952</data>
+  <data key="d29">54</data>
+</edge>
+<edge source="6" target="26" id="0.0">
+  <data key="d17">w332345199</data>
+  <data key="d18">332345199</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432422.0897426431 4583962.447956765, 432422.0897426431 4583962.447956765, 432476.5221282888 4583979.960046603, 432565.5563019917 4584008.541708485, 432646.0807122545 4584033.606289048, 432766.0002441627 4584073.816483294, 432848.7676778875 4584100.239212269, 432927.8213832107 4584126.486323597, 432985.66131155 4584145.758181379)</data>
+  <data key="d28">592.6518011013769</data>
+  <data key="d29">44</data>
+</edge>
+<edge source="7" target="52" id="0.0">
+  <data key="d17">w332345200</data>
+  <data key="d18">332345200</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432416.0106616986 4583979.269982094, 432416.0106616986 4583979.269982094, 432351.5023883507 4583958.788089516, 432324.5010837946 4583949.791739738, 432307.247469677 4583944.446011033, 432211.9552544303 4583913.727710284, 432174.4905506202 4583900.588590757, 432169.8070772402 4583897.679105623, 432166.0656790253 4583893.606101913, 432164.5653819756 4583891.399588001, 432162.8212345201 4583886.3641333, 432160.7410800055 4583878.478395714, 432158.7256532957 4583866.79487917, 432155.9722185099 4583855.751140143)</data>
+  <data key="d28">304.4628783207279</data>
+  <data key="d29">11</data>
+</edge>
+<edge source="8" target="14" id="0.0">
+  <data key="d17">w332345210</data>
+  <data key="d18">332345210</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432604.2238449671 4584373.742580738, 432598.7769077623 4584367.786652398, 432604.2238449671 4584373.742580738, 432621.7889119808 4584391.132676379, 432622.3909164392 4584392.048609401, 432625.0105726949 4584395.999046235, 432628.384638617 4584401.074953162, 432636.6619658743 4584409.380574166, 432645.3615183407 4584418.148595387, 432659.2464149532 4584431.720333297, 432678.0564661575 4584449.987207972, 432716.2023252288 4584487.360028788, 432733.9486559921 4584507.224636288, 432758.5323033125 4584534.287031855, 432798.1310635241 4584572.49059178, 432827.9235571178 4584602.458218831, 432860.3744992103 4584634.299893466, 432903.0634993526 4584674.162981345, 432916.2823733025 4584685.420877705, 432965.5234185256 4584732.462657273)</data>
+  <data key="d28">525.7199086389296</data>
+  <data key="d29">21</data>
+</edge>
+<edge source="9" target="23" id="0.0">
+  <data key="d17">w332345209</data>
+  <data key="d18">332345209</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432598.0131578752 4584377.331102351, 432572.7242781028 4584352.751735953, 432555.8900108777 4584336.6650832, 432551.1460862068 4584333.500556506, 432545.9481038438 4584329.152259315, 432542.2882775349 4584326.610499743, 432539.4393004813 4584324.07228937, 432535.6629712908 4584321.587132829, 432531.0846406927 4584318.254533271, 432524.8479369172 4584313.671668265, 432519.6869791413 4584309.711643808, 432515.4658653272 4584306.142564745, 432492.8899768412 4584283.914189363, 432428.0877361974 4584219.977879788, 432383.5040326054 4584177.403903441, 432356.9237505835 4584150.749993903, 432335.713655579 4584129.584749279, 432326.858853188 4584120.664660107, 432308.0681431066 4584102.864808875, 432283.4090967482 4584078.802367561, 432258.6884690875 4584054.429704116, 432246.7154957032 4584042.550658194, 432244.4711331954 4584040.328885308, 432242.0578318411 4584037.919945667, 432238.3451533125 4584034.224134114, 432231.3508522295 4584027.339212942, 432227.7186312597 4584023.309568245, 432224.6633566241 4584019.296730495, 432221.0105510051 4584013.06891824, 432219.3759334513 4584010.797033727, 432216.7212981105 4584007.613162207, 432212.8407955992 4584003.852317311, 432202.2917056652 4583993.181325205, 432194.1059148274 4583984.042614786, 432190.307975721 4583979.281752247, 432187.5582294706 4583973.978138133, 432184.8631426282 4583968.263207779, 432175.655873568 4583947.353964574)</data>
+  <data key="d28">605.8736654631109</data>
+  <data key="d29">15</data>
+</edge>
+<edge source="11" target="33" id="0.0">
+  <data key="d17">w337820288</data>
+  <data key="d18">337820288</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432439.0752584508 4582105.275954977, 432439.0752584508 4582105.275954977, 432429.350389863 4582115.092705316, 432393.0628495855 4582151.981674934, 432371.0185930355 4582174.903764134, 432161.815316512 4582388.323910417)</data>
+  <data key="d28">396.2203479040465</data>
+  <data key="d29">65</data>
+</edge>
+<edge source="12" target="18" id="0.0">
+  <data key="d17">w332345199</data>
+  <data key="d18">332345199</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (434445.6532757282 4584620.759015297, 434445.6532757282 4584620.759015297, 434504.6916438148 4584640.376188139, 434504.9682560315 4584640.4625078, 434599.1219268863 4584670.432600761, 434599.5997258178 4584670.583723082, 434694.1562682101 4584700.828966846, 434695.2040937364 4584701.163700242, 434729.7835815538 4584712.354311196, 434762.4270656411 4584723.906718389, 434769.1996175499 4584727.86489248, 434773.5674916204 4584731.178573094, 434776.8077688178 4584734.580135326, 434783.9084731267 4584743.420587884, 434785.8589520055 4584746.533999091, 434800.9500801509 4584768.348250131)</data>
+  <data key="d28">392.7234620607843</data>
+  <data key="d29">27</data>
+</edge>
+<edge source="13" target="31" id="0.0">
+  <data key="d17">w332345200</data>
+  <data key="d18">332345200</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (434444.3539794908 4584627.73222745, 434444.3539794908 4584627.73222745, 434406.9013410023 4584615.958342915, 434352.798176922 4584598.639891561, 434346.3276627852 4584596.68896594, 434340.5918341561 4584594.642560167, 434336.0317468664 4584593.207250326, 434331.6834249287 4584592.080900438, 434324.8992266902 4584590.565847964, 434317.3757025685 4584588.635603758, 434310.0564913293 4584587.114316519, 434303.7004508968 4584585.806351588, 434295.3223940271 4584583.661829213, 434287.4841761515 4584582.056452869, 434283.9838179714 4584581.344340268, 434267.7589538329 4584576.65082616, 434079.2251332929 4584516.389347304, 434006.3389520519 4584492.716068524)</data>
+  <data key="d28">458.54711404452866</data>
+  <data key="d29">59</data>
+</edge>
+<edge source="14" target="28" id="0.0">
+  <data key="d17">w332345210</data>
+  <data key="d18">332345210</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432965.5234185256 4584732.462657273, 432965.5234185256 4584732.462657273, 433002.7502582698 4584770.2007428, 433046.3187688915 4584814.053530304, 433101.0022293639 4584870.449966339, 433143.5909988798 4584912.424894388, 433200.0581444193 4584967.539858582, 433276.05418279 4585041.350013106, 433345.6481508833 4585102.640389224, 433402.3881130725 4585159.575236099, 433461.5262339005 4585218.364844906, 433513.2804396882 4585267.729831683, 433541.2023787331 4585294.864061803)</data>
+  <data key="d28">804.9843732436215</data>
+  <data key="d29">50</data>
+</edge>
+<edge source="15" target="9" id="0.0">
+  <data key="d17">w332345209</data>
+  <data key="d18">332345209</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432964.9298965018 4584736.065471823, 432932.2762439334 4584705.70189791, 432917.2370486057 4584691.929395162, 432892.0554514758 4584668.769116241, 432864.9446284277 4584643.095366847, 432825.86923644 4584604.464688641, 432775.3857371903 4584556.136336116, 432726.6927627044 4584507.169927283, 432692.7220698405 4584471.123884202, 432675.3810669992 4584452.621254436, 432659.3767754026 4584436.748706831, 432624.0520435501 4584402.580847682, 432620.1343048202 4584399.264251307, 432615.6747061997 4584394.309480079, 432604.3497744527 4584383.678450138, 432598.0131578752 4584377.331102351, 432598.0131578752 4584377.331102351)</data>
+  <data key="d28">513.3000374819569</data>
+  <data key="d29">23</data>
+</edge>
+<edge source="16" target="30" id="0.0">
+  <data key="d17">w332345199</data>
+  <data key="d18">332345199</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (433548.0127269611 4584325.958611978, 433548.0127269611 4584325.958611978, 433589.3945407847 4584339.279767478, 433696.4484785901 4584374.127311284, 433782.8154786109 4584401.90436695, 433868.266709326 4584429.246693273, 433881.2790235217 4584433.568961737, 433931.5701405069 4584449.653003193, 434010.1874695794 4584474.761073817)</data>
+  <data key="d28">485.54017326750676</data>
+  <data key="d29">56</data>
+</edge>
+<edge source="17" target="27" id="0.0">
+  <data key="d17">w332345200</data>
+  <data key="d18">332345200</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (433542.5685409363 4584342.984778627, 433542.5685409363 4584342.984778627, 433486.4429493831 4584325.269380296, 433456.6725159422 4584315.705854561, 433434.4556396359 4584308.56002653, 433337.0517733353 4584277.102633324, 433293.4399776026 4584263.170589201, 433230.0977407651 4584242.57029902, 433190.8371191379 4584230.075413497, 433170.8923961404 4584223.731026346, 433056.1921427901 4584186.952244265, 433019.3661745398 4584174.757748026, 432987.7461680067 4584164.191777403)</data>
+  <data key="d28">582.9244147121434</data>
+  <data key="d29">47</data>
+</edge>
+<edge source="19" target="13" id="0.0">
+  <data key="d17">w332345200</data>
+  <data key="d18">332345200</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (434795.5806145682 4584771.683035761, 434795.5806145682 4584771.683035761, 434780.7116339977 4584749.478196967, 434778.751740092 4584747.175374636, 434771.1543806264 4584737.018171842, 434769.5569093858 4584735.977802761, 434767.6361416737 4584734.307489057, 434765.3003879747 4584732.962896071, 434761.5780040371 4584730.786989142, 434759.6619356627 4584729.638465674, 434727.5140329232 4584719.280702719, 434714.676574511 4584714.766608498, 434692.9992327644 4584707.845258367, 434691.8676301845 4584707.489075559, 434597.1273925731 4584677.256625365, 434596.9513773678 4584677.202701705, 434502.7029350688 4584646.911515003, 434444.3539794908 4584627.73222745)</data>
+  <data key="d28">387.4971852050106</data>
+  <data key="d29">29</data>
+</edge>
+<edge source="20" target="53" id="0.0">
+  <data key="d17">w337820288</data>
+  <data key="d18">337820288</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432035.1314055897 4583668.280290697, 432035.1314055897 4583668.280290697, 432035.7612924902 4583706.890077902, 432035.7078742346 4583711.886860224, 432037.2516963247 4583718.722827001, 432039.3087107895 4583723.233482729, 432041.2431994351 4583726.268610301, 432044.8711900737 4583729.820782264, 432047.5333419279 4583732.005266445, 432054.8766442297 4583735.944487668, 432070.7064161148 4583743.601273897, 432088.4768920243 4583754.071118637, 432102.6388081537 4583763.95308167, 432112.1240812781 4583771.669448826, 432116.8331186631 4583775.511297645, 432121.3177479203 4583781.276045238, 432128.5833734368 4583789.424045935, 432136.4027812126 4583799.576478534, 432143.7063807584 4583810.888448764, 432147.5891632572 4583818.446409994, 432151.468468191 4583826.526239516, 432154.4956202529 4583833.770239108, 432157.2174436997 4583841.439008717, 432159.7456574072 4583848.965256248)</data>
+  <data key="d28">235.70272788504843</data>
+  <data key="d29">32</data>
+</edge>
+<edge source="21" target="2" id="0.0">
+  <data key="d17">w332345188</data>
+  <data key="d18">332345188</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432031.7543716407 4583668.311986945, 432031.3919074667 4583623.459892876, 432030.9896137195 4583603.756118875, 432030.7794761362 4583592.055692848, 432030.8519495291 4583577.510286289, 432030.4372787434 4583555.597163885, 432029.9846085274 4583524.291393225, 432029.7150189645 4583512.491601048, 432029.0683737794 4583466.753957686, 432028.7665066383 4583434.591857077, 432027.4586338653 4583341.562323804, 432027.1400491496 4583317.416636695, 432027.0191735423 4583292.958215361, 432026.8490191461 4583274.828875761, 432026.1772973473 4583237.107733896, 432025.8034427353 4583208.854519342, 432025.8034427353 4583208.854519342)</data>
+  <data key="d28">459.5022141048219</data>
+  <data key="d29">34</data>
+</edge>
+<edge source="22" target="8" id="0.0">
+  <data key="d17">w332345210</data>
+  <data key="d18">332345210</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432178.6295203579 4583946.215826385, 432178.6295203579 4583946.215826385, 432188.0277833197 4583966.990050294, 432192.2985353589 4583975.821228437, 432196.7718810405 4583982.185680022, 432204.5559797301 4583990.384412578, 432212.0342658495 4583998.064182529, 432216.2004351706 4584003.765350761, 432218.571562754 4584007.917823683, 432221.0105510051 4584013.06891824, 432224.6633566241 4584019.296730495, 432227.7186312597 4584023.309568245, 432231.3508522295 4584027.339212942, 432238.3451533125 4584034.224134114, 432242.0578318411 4584037.919945667, 432244.4711331954 4584040.328885308, 432246.7154957032 4584042.550658194, 432258.6884690875 4584054.429704116, 432283.4090967482 4584078.802367561, 432308.0681431066 4584102.864808875, 432326.858853188 4584120.664660107, 432335.7110295509 4584129.586333956, 432356.9237505835 4584150.749993903, 432383.5040326054 4584177.403903441, 432428.0877361974 4584219.977879788, 432492.8899768412 4584283.914189363, 432515.4658653272 4584306.142564745, 432519.6869791413 4584309.711643808, 432524.8479369172 4584313.671668265, 432531.0846406927 4584318.254533271, 432535.6629712908 4584321.587132829, 432539.4393004813 4584324.07228937, 432542.7894403925 4584325.673191535, 432548.5782356565 4584327.93975088, 432553.9358968921 4584329.688497663, 432560.3028503853 4584332.105119973, 432563.7772355216 4584334.482073171, 432566.9441222587 4584337.050640357, 432581.0612976268 4584351.297342788, 432604.2238449671 4584373.742580738)</data>
+  <data key="d28">608.6509722728692</data>
+  <data key="d29">13</data>
+</edge>
+<edge source="23" target="52" id="0.0">
+  <data key="d17">w332345203</data>
+  <data key="d18">332345203</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432175.655873568 4583947.353964574, 432175.655873568 4583947.353964574, 432169.1514037053 4583932.092967075, 432167.3917606171 4583928.079118229, 432164.257763083 4583921.024862641, 432163.1091984487 4583917.993443232, 432161.2652713385 4583913.014437839, 432160.0955894414 4583907.729338991, 432158.9190409262 4583901.711516843, 432158.6353145522 4583895.518787119, 432158.0159318004 4583885.620851836, 432157.8102416398 4583879.727167965, 432156.8919553848 4583869.15475991, 432156.7281994736 4583862.383558516, 432155.9722185099 4583855.751140143)</data>
+  <data key="d28">94.86154040960969</data>
+  <data key="d29">39</data>
+</edge>
+<edge source="24" target="3" id="0.0">
+  <data key="d17">w337820288</data>
+  <data key="d18">337820288</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432029.0296798375 4582822.123618044, 432029.0296798375 4582822.123618044, 432029.1101698998 4582853.865857499, 432029.2081777082 4582865.200928967, 432029.3406741142 4582887.338732626, 432029.3694279679 4582890.40284449, 432029.2324731506 4582899.86374284, 432028.9346232022 4582908.215867951, 432028.4890306983 4582915.96982669, 432027.9718220126 4582925.001283426, 432027.25392872 4582935.811076977, 432026.8231101702 4582946.02972658, 432026.8247614191 4582954.223602127, 432026.225260742 4582961.612612548, 432026.3549892451 4582967.418177091, 432026.206269654 4582975.624566957, 432027.7737559404 4583087.415403132, 432027.9033743839 4583104.79012494, 432028.0327607237 4583123.030870635, 432028.6733782958 4583151.203857918, 432029.0589044199 4583176.248240307, 432029.4418159029 4583209.03132617)</data>
+  <data key="d28">387.02703941631404</data>
+  <data key="d29">40</data>
+</edge>
+<edge source="25" target="32" id="0.0">
+  <data key="d17">w332345188</data>
+  <data key="d18">332345188</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432025.462576523 4582822.434663119, 432025.8402672847 4582762.897740877, 432024.0896875859 4582733.158584731, 432022.6942779449 4582726.121383057, 432023.9223875247 4582703.748759714, 432023.4560041495 4582681.669609645, 432022.0012807315 4582578.327036669, 432021.9418154396 4582560.407632251, 432022.0756038103 4582552.390135988, 432022.4426998714 4582546.069182904, 432022.9267889495 4582541.523584263, 432023.7326330832 4582537.407976625, 432024.9638120092 4582533.177349671, 432026.9302053924 4582527.996083977, 432028.1743050702 4582525.142086863, 432030.2509228054 4582521.014556419, 432033.5823754548 4582515.176520898, 432038.3947581536 4582509.446724362, 432040.695184236 4582506.893698699, 432159.3757484591 4582385.8486214, 432159.3757484591 4582385.8486214)</data>
+  <data key="d28">490.2235347570303</data>
+  <data key="d29">63</data>
+</edge>
+<edge source="26" target="16" id="0.0">
+  <data key="d17">w332345199</data>
+  <data key="d18">332345199</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432985.66131155 4584145.758181379, 432985.66131155 4584145.758181379, 433024.9218391136 4584158.152045483, 433068.1060250659 4584172.719308226, 433179.621100123 4584207.629095461, 433232.2477517584 4584224.630524792, 433306.3105866616 4584248.407403407, 433349.7041064617 4584262.23050732, 433446.9975159767 4584293.478134952, 433470.9085033712 4584301.23019171, 433491.5665503543 4584307.935235769, 433548.0127269611 4584325.958611978)</data>
+  <data key="d28">590.5267299005433</data>
+  <data key="d29">45</data>
+</edge>
+<edge source="27" target="7" id="0.0">
+  <data key="d17">w332345200</data>
+  <data key="d18">332345200</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432987.7461680067 4584164.191777403, 432987.7461680067 4584164.191777403, 432894.7903320459 4584134.175766941, 432810.7017024917 4584106.743322416, 432752.2887708492 4584087.966693131, 432749.8238442721 4584087.179080699, 432685.3330087151 4584066.560855732, 432625.897393998 4584047.550478846, 432579.0058730618 4584031.821235195, 432457.3995557307 4583992.895561107, 432416.0106616986 4583979.269982094)</data>
+  <data key="d28">600.9024989255479</data>
+  <data key="d29">48</data>
+</edge>
+<edge source="28" target="4" id="0.0">
+  <data key="d17">w332345210</data>
+  <data key="d18">332345210</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (433541.2023787331 4585294.864061803, 433541.2023787331 4585294.864061803, 433604.65118748 4585358.245101999, 433683.031348218 4585438.665916535, 433780.3537038278 4585532.504063061, 433808.9224121711 4585559.300292392, 433868.2592724815 4585614.949208015, 433943.3869927603 4585687.597195589, 433950.9892773314 4585695.521836778)</data>
+  <data key="d28">573.1816014362071</data>
+  <data key="d29">51</data>
+</edge>
+<edge source="29" target="15" id="0.0">
+  <data key="d17">w332345209</data>
+  <data key="d18">332345209</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (433539.5874318664 4585299.208993108, 433507.2415894767 4585266.330837592, 433457.0884415326 4585216.573677007, 433404.2736967122 4585164.665187669, 433352.0899797576 4585112.384868192, 433294.7148959442 4585063.705659198, 433250.2237623514 4585022.802180986, 433200.0510740638 4584973.11354503, 433141.3432285763 4584916.109590067, 433100.3629292785 4584876.340375994, 433048.5713600159 4584824.447153351, 432995.834151292 4584771.608199015, 432964.9298965018 4584736.065471823, 432964.9298965018 4584736.065471823)</data>
+  <data key="d28">804.987203010054</data>
+  <data key="d29">53</data>
+</edge>
+<edge source="30" target="12" id="0.0">
+  <data key="d17">w332345199</data>
+  <data key="d18">332345199</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (434010.1874695794 4584474.761073817, 434010.1874695794 4584474.761073817, 434084.7753440196 4584498.951834231, 434245.4765153416 4584550.139869235, 434293.1493329586 4584566.183556888, 434303.0229839599 4584570.102053408, 434317.0264428036 4584574.094119757, 434323.0954079001 4584578.768845761, 434329.9962272688 4584582.081490505, 434337.9604073381 4584585.595449674, 434344.8657450264 4584588.486161436, 434350.2737062852 4584590.324590959, 434354.7354103522 4584591.971754836, 434408.9472712315 4584609.289236564, 434445.6532757282 4584620.759015297)</data>
+  <data key="d28">459.89476008123046</data>
+  <data key="d29">57</data>
+</edge>
+<edge source="31" target="17" id="0.0">
+  <data key="d17">w332345200</data>
+  <data key="d18">332345200</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (434006.3389520519 4584492.716068524, 434006.3389520519 4584492.716068524, 433918.6720560697 4584464.248772105, 433856.3093812576 4584444.333607245, 433824.4868436558 4584434.198888552, 433784.9049488032 4584421.070898667, 433764.17574101 4584414.743175385, 433758.0651059358 4584412.878299178, 433719.6588989108 4584400.372764063, 433542.5685409363 4584342.984778627)</data>
+  <data key="d28">487.34812492408093</data>
+  <data key="d29">60</data>
+</edge>
+<edge source="32" target="10" id="0.0">
+  <data key="d17">w332345188</data>
+  <data key="d18">332345188</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432159.3757484591 4582385.8486214, 432374.06857445 4582165.737682669, 432376.2303093859 4582163.530251418, 432426.7297880432 4582112.929894339, 432436.4025242868 4582102.902673373, 432436.4025242868 4582102.902673373)</data>
+  <data key="d28">395.98683925832967</data>
+  <data key="d29">62</data>
+</edge>
+<edge source="33" target="24" id="0.0">
+  <data key="d17">w337820288</data>
+  <data key="d18">337820288</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432161.815316512 4582388.323910417, 432161.815316512 4582388.323910417, 432035.0995188649 4582520.03642701, 432033.1021537126 4582522.80866768, 432030.5308953531 4582527.684727738, 432027.6879417018 4582535.683232298, 432026.6884275689 4582540.544546063, 432025.9047198269 4582545.23729261, 432025.3636435928 4582550.838194295, 432025.4112518408 4582555.911739221, 432025.2575099665 4582563.585235002, 432025.31936366 4582578.195974541, 432026.7480217054 4582681.438866284, 432027.6938439756 4582735.900470388, 432029.1328729672 4582762.733609242, 432029.0296798375 4582822.123618044)</data>
+  <data key="d28">486.88038274553867</data>
+  <data key="d29">66</data>
+</edge>
+<edge source="34" target="51" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (425988.8094506848 4581400.623858077, 425988.8094506848 4581400.623858077, 425998.9329247224 4581428.933081656, 426000.4565866725 4581433.192182334, 426007.2305450926 4581453.696894838, 426015.8163992993 4581479.668002829, 426025.6537234804 4581509.456884577, 426031.9872815431 4581528.611547605, 426032.9104357527 4581532.210603819, 426033.5922133193 4581535.101531114, 426034.0909188584 4581537.261528265, 426034.4013640855 4581539.001532566, 426034.679860306 4581541.707825168, 426034.9041317576 4581544.836585794, 426034.9916722777 4581547.678063727, 426034.933804671 4581551.020661509, 426034.8075718303 4581554.219617955, 426034.5971331642 4581556.54229585, 426034.2357340642 4581558.822102617, 426033.7509522901 4581561.303023092, 426032.5299779412 4581566.211915432, 426018.2161218788 4581609.870756074, 426013.139413124 4581625.355781655, 425990.626775205 4581694.002474478, 425985.8178360388 4581708.674268729, 425957.669821999 4581794.521715351)</data>
+  <data key="d28">413.4933520775437</data>
+  <data key="d29">99</data>
+</edge>
+<edge source="35" target="36" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (425982.8390876197 4581403.94912257, 425982.8390876197 4581403.94912257, 425966.6952775044 4581369.172850714, 425962.1420925059 4581360.603429889, 425960.1888005844 4581356.859464974, 425951.3875960521 4581342.582092955, 425944.968906451 4581333.954023535, 425938.0429349557 4581324.787096279, 425931.5327232016 4581317.026008643, 425923.1942542183 4581307.940150061, 425914.1169735277 4581298.573175297, 425904.5802608015 4581290.07694397, 425885.4736281203 4581274.750309459, 425829.9848490123 4581236.957086521, 425823.0743025176 4581230.954466536, 425817.1358848584 4581225.152859182, 425812.3728506226 4581218.983927632, 425806.9797742952 4581211.72225063, 425693.9721816882 4581041.960197636, 425692.6043675006 4581039.875751332, 425688.1526090861 4581033.09304052, 425686.283685069 4581030.258728329, 425683.4291558948 4581025.913409687, 425673.7406303068 4581011.645458869, 425664.2611214991 4580997.375376621, 425662.7525498343 4580994.615095356, 425660.3148493718 4580990.143376894, 425654.186624145 4580978.914469086, 425641.8277213174 4580956.25786509)</data>
+  <data key="d28">569.8401675216036</data>
+  <data key="d29">70</data>
+</edge>
+<edge source="37" target="34" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (425651.1584598455 4580954.385658864, 425651.1584598455 4580954.385658864, 425664.2661401285 4580979.1108623, 425667.6944642398 4580985.58206806, 425669.9800482875 4580989.899906741, 425671.4127892189 4580992.605452055, 425681.3784645895 4581011.878018576, 425691.0452586926 4581028.921956227, 425692.7912533385 4581032.001796342, 425696.9390727623 4581039.320570757, 425698.3443178538 4581041.793239688, 425809.9649488375 4581209.237923664, 425814.9085260491 4581216.704058422, 425819.7168445545 4581222.395098406, 425825.1876775507 4581228.268111738, 425831.9116498037 4581234.017273827, 425887.8703674329 4581271.150627884, 425907.699565381 4581285.170828619, 425918.1939547466 4581294.090291603, 425927.6307581021 4581302.631973652, 425935.9165602821 4581311.474109251, 425943.4036608154 4581319.9025015, 425950.7357599945 4581329.531610397, 425957.5369969174 4581339.588064827, 425966.2021361646 4581353.644773852, 425968.2206185341 4581357.22152915, 425972.9438682654 4581366.066791693, 425981.1449751281 4581383.003938237, 425988.8094506848 4581400.623858077)</data>
+  <data key="d28">568.1186935798536</data>
+  <data key="d29">72</data>
+</edge>
+<edge source="39" target="41" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (428369.004279014 4582655.10912383, 428369.004279014 4582655.10912383, 428303.1076359297 4582633.65507228, 428293.9294404481 4582630.503858515, 428282.3967373037 4582625.999200404, 428271.3253726812 4582621.645433512, 428245.2731890784 4582612.45483522, 428174.5220608688 4582589.72877349, 428083.4901711321 4582559.810136965, 427947.721162232 4582515.204124755, 427891.5507235694 4582496.743654755, 427867.6598077805 4582488.89854663, 427840.6397836807 4582480.018799893, 427810.1467432 4582469.996846505)</data>
+  <data key="d28">588.7631913038847</data>
+  <data key="d29">78</data>
+</edge>
+<edge source="40" target="38" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (427811.0355254388 4582466.890261752, 427811.0355254388 4582466.890261752, 427841.9728967781 4582477.029925807, 427869.8567063853 4582486.167548082, 427892.2963047696 4582493.527476335, 427948.6759966176 4582512.008077187, 428083.9995359698 4582556.374265644, 428175.4082300126 4582586.344688031, 428210.7988270562 4582597.951754348, 428272.7112193183 4582618.05655974, 428283.843981888 4582621.010748804, 428295.9015279744 4582624.477639424, 428304.8816207169 4582627.042359999, 428371.1861024489 4582648.303645669)</data>
+  <data key="d28">588.8273118745333</data>
+  <data key="d29">76</data>
+</edge>
+<edge source="41" target="45" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (427810.1467432 4582469.996846505, 427810.1467432 4582469.996846505, 427503.4479296153 4582369.84638168, 427453.6518872816 4582353.590479464, 427427.5457957897 4582345.069498096)</data>
+  <data key="d28">402.480220155529</data>
+  <data key="d29">85</data>
+</edge>
+<edge source="42" target="44" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (426970.3003344981 4582193.245474154, 426970.3003344981 4582193.245474154, 426997.3047169289 4582202.011148209, 427018.4869884278 4582208.881442791, 427123.7772458494 4582243.062431655, 427131.1846550538 4582245.463888758, 427380.2747941125 4582326.335040041, 427428.6106718845 4582342.027717505)</data>
+  <data key="d28">481.8552923442258</data>
+  <data key="d29">82</data>
+</edge>
+<edge source="43" target="49" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (426969.4025049081 4582196.252332404, 426969.4025049081 4582196.252332404, 426623.2629457291 4582082.968434589, 426608.270841813 4582078.068420848, 426586.2732791601 4582070.863376991, 426558.654719552 4582061.827864175)</data>
+  <data key="d28">432.18477830408995</data>
+  <data key="d29">93</data>
+</edge>
+<edge source="44" target="40" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (427428.6106718845 4582342.027717505, 427428.6106718845 4582342.027717505, 427454.7000517118 4582350.548870237, 427504.8400062388 4582366.912368216, 427811.0355254388 4582466.890261752)</data>
+  <data key="d28">402.2927094467566</data>
+  <data key="d29">83</data>
+</edge>
+<edge source="45" target="43" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (427427.5457957897 4582345.069498096, 427427.5457957897 4582345.069498096, 427379.226656835 4582329.376660275, 427130.3040461023 4582248.526067669, 427122.8210582799 4582246.092062829, 427017.5306158945 4582211.88888448, 426996.3146853518 4582204.99672603, 426969.4025049081 4582196.252332404)</data>
+  <data key="d28">481.7071980399227</data>
+  <data key="d29">86</data>
+</edge>
+<edge source="46" target="48" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (426296.4513057432 4581973.612313734, 426296.4513057432 4581973.612313734, 426426.1448852165 4582015.662508233, 426509.5610247841 4582042.706664816, 426559.5449377549 4582058.909853328)</data>
+  <data key="d28">276.5753595244017</data>
+  <data key="d29">90</data>
+</edge>
+<edge source="47" target="50" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (426295.5701067985 4581976.58578202, 426295.5701067985 4581976.58578202, 426265.8034850575 4581966.89593785, 426196.1771415361 4581944.232995959, 426160.7471687738 4581932.702652445, 426146.3754063431 4581928.01931926, 425963.7112251146 4581868.561546095, 425961.1483652967 4581867.344195724, 425958.5012122765 4581866.061089488, 425956.1788957851 4581864.652531392, 425953.8703508829 4581862.95515471, 425951.7447294996 4581861.155982106, 425949.8585175896 4581859.054581734, 425948.1576119987 4581857.084524225, 425946.5271905052 4581854.647419784, 425945.0709910961 4581852.075298763, 425944.1604235058 4581849.708558647, 425943.0692777151 4581846.855131333, 425942.388623692 4581844.075229687, 425941.9328136025 4581841.204205783, 425941.8339963229 4581839.717410829, 425941.7455827205 4581838.430363942, 425941.9167485714 4581835.5418287, 425942.1980853673 4581832.796506709, 425942.6039683927 4581830.782711218, 425943.1916422833 4581828.556100287, 425944.2557211326 4581824.670269975, 425954.6167983736 4581793.620260249)</data>
+  <data key="d28">435.3700676798504</data>
+  <data key="d29">96</data>
+</edge>
+<edge source="48" target="42" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (426559.5449377549 4582058.909853328, 426559.5449377549 4582058.909853328, 426587.3703928601 4582067.732316249, 426625.7739660288 4582079.911884338, 426970.3003344981 4582193.245474154)</data>
+  <data key="d28">432.167736824461</data>
+  <data key="d29">91</data>
+</edge>
+<edge source="49" target="47" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (426558.654719552 4582061.827864175, 426558.654719552 4582061.827864175, 426425.0955175976 4582018.54884351, 426295.5701067985 4581976.58578202)</data>
+  <data key="d28">276.54968108911703</data>
+  <data key="d29">94</data>
+</edge>
+<edge source="50" target="35" id="0.0">
+  <data key="d17">w405215272</data>
+  <data key="d18">405215272</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (425954.6167983736 4581793.620260249, 425954.6167983736 4581793.620260249, 425982.6148431886 4581707.829848159, 425987.4801515264 4581692.946518554, 426009.9085822662 4581624.245160211, 426014.8873279137 4581608.994295804, 426025.7447906366 4581575.718741689, 426029.055053799 4581564.948334442, 426029.769082949 4581561.987643823, 426030.4945093964 4581558.504995302, 426030.8326360014 4581556.403074107, 426031.1717581826 4581553.579446874, 426031.297674009 4581551.168807548, 426031.3109634286 4581545.916946377, 426030.9777392767 4581541.945468949, 426030.7321212078 4581539.183325773, 426030.2837860778 4581536.223397672, 426029.6961375038 4581533.542467048, 426028.6132057445 4581529.856218115, 426020.7491683968 4581508.230107461, 426010.9833291742 4581481.34949151, 426001.647972883 4581455.685823719, 425992.8373543153 4581431.460200161, 425982.8390876197 4581403.94912257)</data>
+  <data key="d28">410.0343234221057</data>
+  <data key="d29">97</data>
+</edge>
+<edge source="51" target="46" id="0.0">
+  <data key="d17">w338057515</data>
+  <data key="d18">338057515</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T1, T2, T3</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (425957.669821999 4581794.521715351, 425957.669821999 4581794.521715351, 425947.5605906938 4581825.669073753, 425946.7045974866 4581828.642329051, 425946.2230084804 4581830.612485936, 425945.8221169649 4581833.114763148, 425945.5877689373 4581835.548720105, 425945.5794003325 4581838.00257349, 425945.7148740553 4581840.621502071, 425946.1833202662 4581843.092688234, 425946.7099541026 4581845.529970664, 425947.5873035204 4581847.91925662, 425948.6309683257 4581850.218018731, 425949.825247184 4581852.526344732, 425951.1757781066 4581854.577704543, 425952.7848239583 4581856.55980454, 425954.5260593455 4581858.385111675, 425958.3805825048 4581861.621113389, 425961.1495581352 4581863.369301689, 425963.1339107444 4581864.437121057, 425965.0820955904 4581865.238837993, 426147.489077427 4581924.888019972, 426161.6848098342 4581929.528737325, 426197.1993117613 4581941.147048785, 426266.7680576894 4581963.899411246, 426296.4513057432 4581973.612313734)</data>
+  <data key="d28">429.4422102559999</data>
+  <data key="d29">100</data>
+</edge>
+<edge source="52" target="21" id="0.0">
+  <data key="d17">w332345188</data>
+  <data key="d18">332345188</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432155.9722185099 4583855.751140143, 432153.5477852555 4583845.026302012, 432149.8449013773 4583833.469627778, 432145.7344325656 4583823.915286873, 432142.2849213741 4583817.097156905, 432136.9078450563 4583807.976598711, 432131.8592130741 4583800.007661842, 432125.4358683116 4583791.64080881, 432117.9360508969 4583781.69634572, 432107.2608817674 4583771.892689775, 432096.933334407 4583764.39518119, 432087.1260993039 4583757.114864023, 432071.7123409346 4583749.243186126, 432062.9957274328 4583744.162136459, 432054.277722104 4583739.825000835, 432040.2268348418 4583731.096784372, 432037.9756455653 4583728.164555035, 432034.7571798926 4583722.820984364, 432033.1126093462 4583716.829780025, 432032.3343312554 4583706.944448559, 432031.7543716407 4583668.311986945, 432031.7543716407 4583668.311986945)</data>
+  <data key="d28">242.04337934707138</data>
+  <data key="d29">35</data>
+</edge>
+<edge source="53" target="6" id="0.0">
+  <data key="d17">w332345199</data>
+  <data key="d18">332345199</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T4</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432159.7456574072 4583848.965256248, 432164.1412836275 4583862.191975043, 432165.8242200165 4583866.939329431, 432167.5852298036 4583871.097502025, 432169.7948024096 4583874.951696236, 432172.9816832098 4583879.618346943, 432176.9751343807 4583882.933999846, 432180.8794197256 4583884.762708807, 432187.4736169997 4583887.287912674, 432218.1312157293 4583896.582617148, 432313.1091094756 4583927.637026066, 432364.5761177533 4583944.43211553, 432422.0897426431 4583962.447956765)</data>
+  <data key="d28">296.51595535136084</data>
+  <data key="d29">9</data>
+</edge>
+<edge source="53" target="22" id="0.0">
+  <data key="d17">w332345206</data>
+  <data key="d18">332345206</data>
+  <data key="d19">way</data>
+  <data key="d20">contact_line</data>
+  <data key="d21">tram</data>
+  <data key="d22">1435</data>
+  <data key="d23">T5, T6</data>
+  <data key="d24">1</data>
+  <data key="d25">750</data>
+  <data key="d26">yes</data>
+  <data key="d27">LINESTRING (432159.7456574072 4583848.965256248, 432161.4917815055 4583856.887431338, 432161.8143974479 4583860.093131084, 432162.0060431159 4583864.488062302, 432162.3691562044 4583871.12416188, 432162.7182276151 4583876.261508959, 432162.5448579482 4583881.847864441, 432163.2987405444 4583890.934032127, 432163.4053797022 4583894.286092455, 432163.6124173675 4583900.324100889, 432164.0178901902 4583903.451304724, 432164.5138802195 4583908.20977893, 432165.5922095429 4583911.774793123, 432166.9095354516 4583916.758732801, 432168.1460152337 4583921.143876399, 432169.8332391864 4583925.458180658, 432171.5920495244 4583929.383215098, 432178.6295203579 4583946.215826385)</data>
+  <data key="d28">100.1817835411362</data>
+  <data key="d29">37</data>
+</edge>
+</graph></graphml>
