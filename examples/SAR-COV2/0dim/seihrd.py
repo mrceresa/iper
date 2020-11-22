@@ -28,16 +28,15 @@ mainVars={}
 
 def deriv(y, t, N, beta,pAI, pIH, rates,pHD):
     
-    S, A, I, R, Ra, H, D = y
+    S, A, I, R, H, D = y
     dSdt = -rates["rsa"]* S/N* beta(t)*(I+A)
     dAdt =  rates["rsa"]* S/N* beta(t)*(I+A) - rates["rai"]*pAI(t,I,N)*A-rates["rar"]*(1-pAI(t,I,N))*A
     dIdt =  rates["rai"]*pAI(t,I,N)*A  - rates["rir"]*(1 - pIH(t, I, N) )*I  - rates["rih"]*pIH(t, I, N)*I
     dHdt =  rates["rih"]*pIH(t, I, N)*I - rates["rhd"]*pHD(t, I, N)*H - rates["rhr"]*(1-pHD(t, I, N))*H    
-    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H 
-    dRadt=  rates["rar"]*(1-pAI(t,I,N))*A
+    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H + rates["rar"]*(1-pAI(t,I,N))*A
     dDdt =  rates["rhd"]*pHD(t, I, N)*H
     
-    return dSdt, dAdt, dIdt, dRdt,dRadt ,dHdt, dDdt
+    return dSdt, dAdt, dIdt, dRdt, dHdt, dDdt
 
 def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,demographic, icu_beds):
     
@@ -72,9 +71,9 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
 # Integrate the SEIHR equations over the time grid, t
     
   ret = odeint(deriv, y0, t, args=(N, beta,pAI, pIH, rates,pHD))
-  s, a, i, r, ra, h, d = ret.T
+  s, a, i, r, h, d = ret.T
 
-  res = {"S":s, "A":a, "I":i, "R":r, "Ra":ra, "H":h, "D":d} 
+  res = {"S":s, "A":a, "I":i, "R":r, "H":h, "D":d} 
   res["R_0"] = list(map(R_0, t)) 
   res["pIH"] = [pIH(tau, res["I"][tau], N) for tau in range(len(t))]
 
@@ -133,11 +132,7 @@ def doFit(args):
       os.makedirs(args.output_dir)    
   global mainVars
   
-  #if args.country=="ESP":
-    #df=pd.read_csv('/home/enrico/iper-social-simulations/examples/SAR-COV2/0dim/data/dfESP.csv')
-  #else:
   df, _ = covid19(args.country)
-  #df, _ = covid19(args.country)
   #import ipdb; ipdb.set_trace()
   df = df[df["date"]>args.start]
   df = df[df["date"]<args.stop]
@@ -172,61 +167,23 @@ def doFit(args):
 
   print("Maximum people in vent", df["vent"].max())
   print("Maximum people in icu", df["icu"].max())
-
-  #x1=df.copy(deep=True)
-  #Iday=x1.iloc[:,3]
-  #Iday.fillna(0,inplace=True,axis=0)
-  #Iday=Iday.values
-
-  #for i in range(len(Iday)-1,1,-1): 
-    #Iday[i]=Iday[i]-Iday[i-1]
-
-  #if args.country=="ESP":
-   # df1=pd.read_csv('https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19.csv')
-   # df1 = df1[df1["fecha"]>args.start]
-   # df1 = df1[df1["fecha"]<args.stop]
-   # x1=df1.copy(deep=True)
-   # Hday=x1.iloc[:,3]
-   # Hday.fillna(0,inplace=True,axis=0)
-   # Hday=Hday.values
-
-  if args.country=='ESP':
-    I = df["confirmed"]# in questo caso rappresenta il totale degli individui che si sono infettati
-    #R = df["recovered"]# totale recovered
-    D = df["deaths"]   # Totale morti
-    #H = df["hosp"]
-    S = N - I 
-
-    t=np.array([i+1 for i in range(len(I))])
-    i0=df["confirmed"].iloc[0]  #  35708    #infetti a t0 
-    a0=2*i0
-    r0=0
-    ra0=0
-    h0=0                                           
-    d0=df["deaths"].iloc[0] # 35587      #deceduti  t0
-    s0=N-i0#-a0                   #suscettibili a t0
-    y0=s0,a0,i0,r0,ra0,h0,d0 
-
-
-
-  else:
-    I = df["confirmed"]-df["recovered"]-df["hosp"]-df["deaths"]
-    R = df["recovered"]
-    D = df["deaths"]
-    H = df["hosp"]
-    S = N - df["confirmed"]
-
-    t=np.array([i+1 for i in range(len(I))])
-    i0=df["confirmed"].iloc[0]- df["recovered"].iloc[0]-df["deaths"].iloc[0]  #  35708    #infetti a t0 
-    a0=2*i0                            #asintomatici a t0
-    r0=df["recovered"].iloc[0] # 211885      #recovered a t0
-    ra0=2*r0
-    h0=df["hosp"].iloc[0]   # 2000    #ospedaliz. a t0                         
-    d0=df["deaths"].iloc[0] # 35587      #deceduti  t0
-    s0=N-i0-r0 -h0 -d0  -a0 -ra0                  #suscettibili a t0
-    y0=s0,a0,i0,r0,ra0,h0,d0 
   
-  def resid_ESP(params,y0, t, N,age_effect,S,I,D,icu_beds):
+  I = df["confirmed"]
+  R = df["recovered"]
+  D = df["deaths"]
+  H = df["hosp"]
+  S = N - I - D - H - R
+
+  t=np.array([i+1 for i in range(len(I))])
+  i0=df["confirmed"].iloc[0]        #infetti a t0 
+  a0=4*i0                            #asintomatici a t0
+  r0=df["recovered"].iloc[0]        #recovered a t0
+  h0=df["hosp"].iloc[0]         #ospedaliz. a t0                         
+  d0=df["deaths"].iloc[0]        #deceduti  t0
+  s0=N-i0-r0 -h0 -d0  -a0                   #suscettibili a t0
+  y0=s0,a0,i0,r0,h0,d0 
+  
+  def resid_(params,y0, t, N,age_effect,S,I,H,R,D,icu_beds):
       print(params)
       rates={"rsa":0, "rai":0, "rih":0, "rir":0, "rhr":0, "rhd":0 }
          
@@ -238,87 +195,36 @@ def doFit(args):
       #return sum((seihrd_det['S']-S)**2+(seihrd_det['I']-I)**2+(seihrd_det['H']-H)**2+(seihrd_det['R']-R)**2+(seihrd_det['D']-D)**2)
       #er=np.array((((seihrd_det['S']-S)**2),((seihrd_det['I']-I)**2),((seihrd_det['H']-H)**2),((seihrd_det['R']-R)**2),((seihrd_det['D']-D)**2)))
       
-      a=np.array((S-(seihrd_det['S']+seihrd_det['A']))**2)
-
-      b=np.array((I-(seihrd_det['I']+seihrd_det['R']+seihrd_det['H']+seihrd_det['D']))**2)
-       #b=np.array((Iday-seihrd_det['I'])**2)
-       #c=np.array((H-seihrd_det['H'])**2)
-       #d=np.array((R-seihrd_det['R'])**2)
-      e=np.array((1.2*D-1.2*seihrd_det['D'])**2)
-
-      tot=np.concatenate((b,e))
-
-      
-      #return er
-      #er=er.flatten()
-      #er2= np.array((seihrd_det['S']-S)**2,(seihrd_det['I']-I)**2,(seihrd_det['H']-H)**2,(seihrd_det['R']-R)**2,(seihrd_det['D']-D)**2)
-      return  tot
-
-  def resid_ALL(params,y0, t, N,age_effect,S,I,H,R,D,icu_beds):
-      print(params)
-      rates={"rsa":0, "rai":0, "rih":0, "rir":0, "rhr":0, "rhd":0 }
-         
-      r0_max = params['r0_max']
-      r0_min = params['r0_min']
-      k = params['k']
-      startLockdown = params['startLockdown']
-      seihrd_det=solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown,  params, demographic, icu_beds)
-      #return sum((seihrd_det['S']-S)**2+(seihrd_det['I']-I)**2+(seihrd_det['H']-H)**2+(seihrd_det['R']-R)**2+(seihrd_det['D']-D)**2)
-      #er=np.array((((seihrd_det['S']-S)**2),((seihrd_det['I']-I)**2),((seihrd_det['H']-H)**2),((seihrd_det['R']-R)**2),((seihrd_det['D']-D)**2)))
-   
-      a=np.array((S-(seihrd_det['S']+seihrd_det['A']))**2) 
+      #a=np.array((S-seihrd_det['S'])**2)
       b=np.array((I-seihrd_det['I'])**2)
       c=np.array((H-seihrd_det['H'])**2)
       d=np.array((R-seihrd_det['R'])**2)
-      e=np.array(1.44*(D-seihrd_det['D'])**2)#mettere fuori 1.2
-
-      tot=np.concatenate((a,b,e,c,d))
-   
+      e=np.array((1.2*D-1.2*seihrd_det['D'])**2)
+      
+      tot=np.concatenate((b,d,c,e))
+      
       #return er
       #er=er.flatten()
       #er2= np.array((seihrd_det['S']-S)**2,(seihrd_det['I']-I)**2,(seihrd_det['H']-H)**2,(seihrd_det['R']-R)**2,(seihrd_det['D']-D)**2)
       return  tot
-
-  if args.country=='ESP':
-
-    params2=Parameters()
-    params2.add('r0_max',value=5.0,min=2.0,max=5.0,vary=True)
-    params2.add('r0_min',value=0.9,min=0.3,max=3.5,vary=True)
-    params2.add('k',value=2.5,min=0.01,max=5.0,vary=True)
-    params2.add('startLockdown',value=31.0, min=0,max=100, vary=True)
-    params2.add('rsa',value=1.0, min=0.01 ,max=2.0, vary=True)
-    params2.add('rai',value=0.5,min=0.01,max=2,vary=True)  
-    params2.add('rar',value=0.010080807956200328,min=0.01,max=2,vary=False)  
-    params2.add('rih',value=0.15376988655220583,min=0.01,max=2.0,vary=False)
-    params2.add('rir',value=0.012084665739583795,min=0.01,max=2,vary=False)
-    params2.add('rhr',value=0.012,min=0.01,max=2,vary=False)#0.0743636663768294
-    params2.add('rhd',value=0.125,min=0.01,max=2,vary=True)#
-
-    out = minimize(resid_ESP, params2, args=(y0, t, N,age_effect,S,I,D,icu_beds),
-     method='differential_evolution')#method='differential_evolution',method='leastsq'
-
-  else:
-
-    params2=Parameters()
-    params2.add('r0_max',value=5.0,min=2.0,max=5.0,vary=True)
-    params2.add('r0_min',value=0.9,min=0.3,max=3.5,vary=True)
-    params2.add('k',value=2.5,min=0.01,max=5.0,vary=True)
-    params2.add('startLockdown',value=31.0, min=0,max=100, vary=True)
-    params2.add('rsa',value=1.0, min=0.01 ,max=2.0, vary=True)
-    params2.add('rai',value=0.5,min=0.01,max=2,vary=True)  
-    params2.add('rar',value=0.1,min=0.01,max=2,vary=True)  
-    params2.add('rih',value=0.1,min=0.01,max=2.0,vary=True)
-    params2.add('rir',value=0.1,min=0.01,max=2,vary=True)
-    params2.add('rhr',value=0.142,min=0.01,max=2,vary=True)
-    params2.add('rhd',value=0.125,min=0.01,max=2,vary=True)
-
-    
-   
   
-  #res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D,icu_beds)
-    out = minimize(resid_ALL, params2, args=(y0, t, N,age_effect,S,I,H,R,D,icu_beds),
-     method='differential_evolution')#method='differential_evolution',method='leastsq'
-
+  
+  params2=Parameters()
+  params2.add('r0_max',value=5.0,min=2.0,max=5.0,vary=True)
+  params2.add('r0_min',value=0.9,min=0.3,max=3.5,vary=True)
+  params2.add('k',value=2.5,min=0.01,max=5.0,vary=True)
+  params2.add('startLockdown',value=31.0, min=0,max=100, vary=False)
+  params2.add('rsa',value=1.0, min=0.01 ,max=2.0, vary=True)
+  params2.add('rai',value=0.5,min=0.01,max=2,vary=True)  
+  params2.add('rar',value=0.1,min=0.01,max=2,vary=True)  
+  params2.add('rih',value=0.1,min=0.01,max=2.0,vary=True)
+  params2.add('rir',value=0.1,min=0.01,max=2,vary=True)
+  params2.add('rhr',value=0.142,min=0.01,max=2,vary=True)
+  params2.add('rhd',value=0.125,min=0.01,max=2,vary=True)
+  
+  res3=resid_(params2,y0, t, N,age_effect,S,I,H,R,D,icu_beds)
+  out = minimize(resid_, params2, args=(y0, t, N,age_effect,S,I,H,R,D,icu_beds),
+    method='differential_evolution')#method='differential_evolution',method='leastsq'
   print(fit_report(out))
 
 
@@ -344,91 +250,49 @@ def doFit(args):
   
   plt.figure(figsize=(15, 12))
   plt.suptitle(args.country)
-
-  if args.country=='ESP':
-    I_tot=seihrd_det_fit['I']+seihrd_det_fit['R']+seihrd_det_fit['D']+seihrd_det_fit['H']
-    ax3=plt.subplot(331)
-    ax3.plot(t,I_tot,color="r")
-    ax3.plot(t,I,label='Infected-cumulative',color="r",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Infected')
   
-    ax4=plt.subplot(332)        
-    ax4.plot(t,seihrd_det_fit['D'],color="black")
-    ax4.plot(t,D,label='Dead',color="black",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Dead')
+  ax3=plt.subplot(331)
+  ax3.plot(t,seihrd_det_fit['I'],color="r")
+  ax3.plot(t,I,label='Infected',color="r",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Infected')
   
-    ax5=plt.subplot(333)        
-    ax5.plot(t,seihrd_det_fit['R'],color="g")
-    plt.xlabel('day')
-    plt.ylabel('Recovered-seihrd')
+  ax4=plt.subplot(332)        
+  ax4.plot(t,seihrd_det_fit['D'],color="black")
+  ax4.plot(t,D,label='Dead',color="black",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Dead')
   
-    #ax6=plt.subplot(334)        
-    #ax6.plot(t,seihrd_det_fit['S'],color="y")
-    #ax6.plot(t,S,label='Susceptible',color="y",ls="--")
-    #plt.xlabel('day')
-    #plt.ylabel('Susceptible')
+  ax5=plt.subplot(333)        
+  ax5.plot(t,seihrd_det_fit['R'],color="g")
+  ax5.plot(t,R,label='Recovered',color="g",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Recovered')
   
-    ax7=plt.subplot(335)        
-    ax7.plot(t,seihrd_det_fit['H'],color="orange")
-    plt.xlabel('day')
-    plt.ylabel('Hosp-seihrd')
+  ax6=plt.subplot(334)        
+  ax6.plot(t,seihrd_det_fit['S'],color="y")
+  ax6.plot(t,S,label='Susceptible',color="y",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Susceptible')
   
-  
-    ax8=plt.subplot(336)        
-    ax8.plot(t,I_tot,color="r")
-    ax8.plot(t,I,label='Infected-cumulative',color="r",ls="--")
-    ax8.plot(t,seihrd_det_fit['R'],color="g")
-    ax8.plot(t,seihrd_det_fit['D'],color="black")
-    ax8.plot(t,D,label='Dead',color="black",ls="--")
-    ax8.plot(t,seihrd_det_fit['H'],color="orange")
-    plt.xlabel('day')
-    plt.ylabel('people')
-  
-  else:
-    ax3=plt.subplot(331)
-    ax3.plot(t,seihrd_det_fit['I'],color="r")
-    ax3.plot(t,I,label='Infected',color="r",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Infected')
-  
-    ax4=plt.subplot(332)        
-    ax4.plot(t,seihrd_det_fit['D'],color="black")
-    ax4.plot(t,D,label='Dead',color="black",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Dead')
-  
-    ax5=plt.subplot(333)        
-    ax5.plot(t,seihrd_det_fit['R'],color="g")
-    ax5.plot(t,R,label='Recovered',color="g",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Recovered')
-  
-    ax6=plt.subplot(334)        
-    ax6.plot(t,((seihrd_det_fit['S']+seihrd_det_fit['A'])),color="y")
-    ax6.plot(t,S,label='Susceptible',color="y",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Susceptible')
-  
-    ax7=plt.subplot(335)        
-    ax7.plot(t,seihrd_det_fit['H'],color="orange")
-    ax7.plot(t,H,label='Hosp',color="orange",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Hosp.')
+  ax7=plt.subplot(335)        
+  ax7.plot(t,seihrd_det_fit['H'],color="orange")
+  ax7.plot(t,H,label='Hosp',color="orange",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('Hosp.')
   
   
-    ax8=plt.subplot(336)        
-    ax8.plot(t,seihrd_det_fit['I'],color="r")
-    ax8.plot(t,I,label='Infected',color="r",ls="--")
-    ax8.plot(t,seihrd_det_fit['R'],color="g")
-    ax8.plot(t,R,label='Recovered',color="g",ls="--")
-    ax8.plot(t,seihrd_det_fit['D'],color="black")
-    ax8.plot(t,D,label='Dead',color="black",ls="--")
-    ax8.plot(t,seihrd_det_fit['H'],color="orange")
-    ax8.plot(t,H,label='Hosp',color="orange",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('people')
+  ax8=plt.subplot(336)        
+  ax8.plot(t,seihrd_det_fit['I'],color="r")
+  ax8.plot(t,I,label='Infected',color="r",ls="--")
+  ax8.plot(t,seihrd_det_fit['R'],color="g")
+  ax8.plot(t,R,label='Recovered',color="g",ls="--")
+  ax8.plot(t,seihrd_det_fit['D'],color="black")
+  ax8.plot(t,D,label='Dead',color="black",ls="--")
+  ax8.plot(t,seihrd_det_fit['H'],color="orange")
+  ax8.plot(t,H,label='Hosp',color="orange",ls="--")
+  plt.xlabel('day')
+  plt.ylabel('people')
   
   #df_fitSAIHRD=pd.read_csv(os.path.join('fit','df_fitSAIHRD.csv'))
   
@@ -478,8 +342,8 @@ if __name__ == "__main__":
   fit.add_argument("--country", type=str, default="ITA", help="Country code to fit")
   fit.add_argument("--data-icu", type=str, default=os.path.join('data','beds.csv'), help="csv with data for fit")
   fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
-  fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" ) 
-  fit.add_argument('--start', type=str, default="2020-03-04", help="day start fit")
+  fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd","new_understanding"), help="Output directory" )
+  fit.add_argument('--start', type=str, default="2020-03-01", help="day start fit")
   fit.add_argument('--stop', type=str, default="2020-06-01", help="day stop fit")      
   fit.set_defaults(func=doFit)  
 
