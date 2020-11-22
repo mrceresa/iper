@@ -342,7 +342,7 @@ if __name__ == "__main__":
   fit.add_argument("--country", type=str, default="ITA", help="Country code to fit")
   fit.add_argument("--data-icu", type=str, default=os.path.join('data','beds.csv'), help="csv with data for fit")
   fit.add_argument('--shift', type=int, default=0, help="How many days before the outbrek started" )  
-  fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd"), help="Output directory" ) 
+  fit.add_argument('--output_dir', type=str, default=os.path.join("results","seihrd","new_understanding"), help="Output directory" )
   fit.add_argument('--start', type=str, default="2020-03-01", help="day start fit")
   fit.add_argument('--stop', type=str, default="2020-06-01", help="day stop fit")      
   fit.set_defaults(func=doFit)  

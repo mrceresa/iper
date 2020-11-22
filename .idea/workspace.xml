@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="65008231-1577-4d00-8686-78e34aa09284" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/iper-social-simulations.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/data/2020_seguiment-covid19-bcn.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/BCN.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/confirmed-recovered-BCN.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/df_fitSAIHRD.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/severity-BCN.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/tests-BCN.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/seihrd_bcn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/ITA.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/confirmed-recovered-ITA.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/df_fitSAIHRD.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/severity-ITA.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/tests-ITA.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/seihrd.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/seihrd.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1jkJfGhnJEsPMyQNHVFPP0PpI4D" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples/SAR-COV2/0dim/data" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="65008231-1577-4d00-8686-78e34aa09284" name="Default Changelist" comment="" />
+      <created>1604342268842</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1604342268842</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="779" y="311" width="424" height="491" key="FileChooserDialogImpl" timestamp="1604342363465">
+      <screen x="72" y="27" width="1848" height="1053" />
+    </state>
+    <state x="779" y="311" width="424" height="491" key="FileChooserDialogImpl/72.27.1848.1053@72.27.1848.1053" timestamp="1604342363465" />
+    <state x="721" y="467" width="540" height="179" key="vcs.readOnlyHandler.ReadOnlyStatusDialog" timestamp="1606063672304">
+      <screen x="72" y="27" width="1848" height="1053" />
+    </state>
+    <state x="721" y="467" width="540" height="179" key="vcs.readOnlyHandler.ReadOnlyStatusDialog/72.27.1848.1053@72.27.1848.1053" timestamp="1606063672304" />
+  </component>
+</project>
