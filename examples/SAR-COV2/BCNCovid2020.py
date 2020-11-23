@@ -24,7 +24,8 @@ from iper import GeoSpacePandas
 
 import logging
 _log = logging.getLogger(__name__)
-
+import mapclassify
+import geoplot
 class VirusInformation(object):
   def __init__(self):
     self.r0 = 2.5
@@ -98,6 +99,15 @@ class BCNCovid2020(Model):
       self.schedule.add(agent)
      
   def plotAll(self):
+    
+    tot_people =self._blocks["density"]
+    scheme = mapclassify.Quantiles(tot_people, k=5) 
+ 
+    geoplot.choropleth(
+    self._blocks, hue=tot_people, scheme=scheme,
+    cmap='Oranges', figsize=(12, 8)
+    )
+
 
     fig = plt.figure(figsize=(15, 15))
     ax1 = plt.gca()
@@ -105,7 +115,10 @@ class BCNCovid2020(Model):
     ctx.plot_map(self._loc, ax=ax1)
     _c = ["red", "blue"]
     for i, _r in enumerate(self._roads):
-      _r.plot(ax=ax1, facecolor='none', edgecolor=_c[i])    
+      _r.plot(ax=ax1, facecolor='none', edgecolor=_c[i])
+    self._blocks.plot(ax=ax1,facecolor='none', edgecolor="black")  
+    
+
     plt.tight_layout()
 
     # Plot agents
@@ -142,7 +155,9 @@ class BCNCovid2020(Model):
     _log.info("Loading geo data from path:"+path)
     roads_1 = gpd.read_file(os.path.join(path, "shapefiles","1","roads-line.shp"))
     roads_2 = gpd.read_file(os.path.join(path, "shapefiles","2","roads-line.shp"))
+    blocks = gpd.read_file(os.path.join(path, "shapefiles","quartieriBarca1.shp"))
     self._roads = [roads_1, roads_2]
+    self._blocks= blocks
 
   def step(self):
     self.schedule.step()
