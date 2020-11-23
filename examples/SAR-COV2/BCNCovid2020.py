@@ -98,16 +98,18 @@ class BCNCovid2020(Model):
     for agent in agents:
       self.schedule.add(agent)
      
-  def plotAll(self):
+  def plotAll(self,figname):
+    fig = plt.figure(figsize=(15, 15))
+    ax1 = plt.gca()
     
     tot_people =self._blocks["density"]
     scheme = mapclassify.Quantiles(tot_people, k=5) 
  
     geoplot.choropleth(
     self._blocks, hue=tot_people, scheme=scheme,
-    cmap='Oranges', figsize=(12, 8)
+    cmap='Oranges', figsize=(12, 8), ax=ax1
     )
-
+    plt.savefig('density-'+figname)
 
     fig = plt.figure(figsize=(15, 15))
     ax1 = plt.gca()
@@ -123,6 +125,7 @@ class BCNCovid2020(Model):
 
     # Plot agents
     self.grid._agdf.plot(ax=ax1)
+    plt.savefig('agents-'+figname)
     
   def loadShapefiles(self):
 
