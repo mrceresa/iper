@@ -19,29 +19,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="65008231-1577-4d00-8686-78e34aa09284" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/iper-social-simulations.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/data/2020_seguiment-covid19-bcn.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/BCN.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/confirmed-recovered-BCN.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/df_fitSAIHRD.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/severity-BCN.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/BCN/202011221806/tests-BCN.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/seihrd_bcn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/ITA.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/confirmed-recovered-ITA.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/df_fitSAIHRD.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/severity-ITA.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/results/seihrd/202010011500/tests-ITA.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/SAR-COV2/0dim/seihrd.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/SAR-COV2/0dim/seihrd.py" afterDir="false" />
-    </list>
+    <list default="true" id="65008231-1577-4d00-8686-78e34aa09284" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
