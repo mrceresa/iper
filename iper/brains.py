@@ -2,6 +2,10 @@ import logging
 from .xmlobjects import XMLObject
 from . import _brainModelFactory
 
+class Reward(object):
+  def __init__(self):
+    pass
+
 class WorldState(object):
   def __init__(self):
     pass

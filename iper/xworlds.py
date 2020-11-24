@@ -61,13 +61,13 @@ class XAgent(Agent):
     print(agent._xd)
     return agent
     
-  def __init__(self, id):
-    Agent.__init__( self, id)
+  def __init__(self, id, model=None):
+    Agent.__init__( self, id, model)
     #_configure_logging()
     self.l = logging.getLogger(self.__class__.__name__)        
     self._xd = XMLObject('Agent')
     self._meta = self._xd.add("metadata")
-    self._meta.el.set("id", id)
+    self._meta.el.set("id", str(id))
     self._events = self._xd.add("events")
     self._envdata = self._xd.add("environments")
     self._behaviours = []
@@ -75,6 +75,13 @@ class XAgent(Agent):
     self._sensors = [Sensor()]
     self._next_reward = 0.0
     self._last_reward = 0.0
+  
+  @property
+  def id(self):
+    return self._meta.el.get("id")
+
+  def getWorld(self):
+    return self.model
 
   def toXmlFile(self, odir="./", suffix=""):
     fname = os.path.join(odir, "%s-%s.xml"%(self.id, suffix))
@@ -95,12 +102,21 @@ class XAgent(Agent):
       
   def addTemplates(self, templates):
     for _t in templates:
-      #self.l.info("Adding template %s"%_t)
+      self.l.info("Adding template %s"%_t)
       _xd2 = _agentTemplateFactory.instantiate(_t)
-      if _xd2 is not None:
-        #self.l.info(str(self._xd))
-        self._xd.merge(_xd2)
-        #self._xd.rootNode.el.append(_xd2)
+      if (_xd2 is not None) and (len(_xd2) > 0):
+        _att = _xd2.find("attributes").getchildren()
+        if len(_att):
+          self.l.error(" addTemplate.attributes NOT IMPLEMENTED")
+
+        _evs = _xd2.find("events").getchildren()
+        if len(_evs):
+          self.l.error("addTemplate.events NOT IMPLEMENTED")
+        
+        _envs = _xd2.find("environments").getchildren()
+        for _e in _envs:
+          self.model.add_env(_environmentFactory.get(_e.tag))
+
       else:
         raise RuntimeError("Template %s is not defined"%_t)        
     
@@ -220,13 +236,16 @@ class XAgent(Agent):
           s += ", " + _el.tag + "." + _attr.tag + ":" + _attr.attrib["val"]
     return s
 
+  def info(self):
+    return toStr(self._xd.rootNode.el)
 
 class MultiEnvironmentWorld(Model):
   def __init__(self, config, output_dir="./" ):
     super().__init__()
     self.odir = output_dir
     self._aodir = os.path.join(self.odir, "agents")
-    os.makedirs(self._aodir)    
+    if not os.path.exists(self._aodir):
+      os.makedirs(self._aodir)    
     #_configure_logging()
     self._af = None # No factory defined. Override!
     self.l = logging.getLogger(self.__class__.__name__)    
@@ -288,7 +307,8 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
-    super().addAgent(agent)
+    #self.grid.add_agents([agent])
+    self.schedule.add(agent)
     self._totCreated += 1
     self._agents.setdefault(type(agent),[]).append(agent)
 
@@ -309,7 +329,7 @@ class MultiEnvironmentWorld(Model):
     return True
   
   def add_env(self, env):
-    if env and (env not in self._envs):
+    if (env is not None) and (env not in self._envs):
       if self._check_env_reqs(env):
         self._envs.append(env)
       else:
@@ -339,7 +359,7 @@ class MultiEnvironmentWorld(Model):
               "templates":str(_templates),
               "pythonClass": _agtClass.__name__
           }
-        _agent = _agtClass(_prefix + "_" + str(uuid.uuid4()))
+        _agent = _agtClass(_prefix + "_" + str(uuid.uuid4()), self)
         _agent.setMetadata(_meta)
         # Load templates if needed
         _agent.addTemplates(_templates)
@@ -369,14 +389,15 @@ class MultiEnvironmentWorld(Model):
         
   def _prepareAgentForAdd(self, agent):
     # Generate random position
-    _x = random.randint(0, self.config.size._width-1)
-    _y = random.randint(0, self.config.size._height-1)
+    _x = random.randint(0, self.config["size"]["width"]-1)
+    _y = random.randint(0, self.config["size"]["height"]-1)
     agent.position = (_x, _y)
     # Configure environments
     self._applyEnvRequir(agent)
     
   def _applyEnvRequir(self, agent):
     for env in self._envs:
+      self.l.info("Requesting environment %s"%str(env.getName()))
       _ed = agent._envdata.add(env.getName())
       for a in env._aa:
         _tag = _ed.add(a.tag)
@@ -389,7 +410,7 @@ class MultiEnvironmentWorld(Model):
       _bhvs = env.rootNode.el.find("behaviours")
       if _bhvs is not None:
         it = _bhvs.iter()
-        it.next() # Skip parent tag
+        #it.next() # Skip parent tag
         for el in it:
           classname = el.tag
           #_mod = __import__("behaviours")#, fromlist=[classname])
