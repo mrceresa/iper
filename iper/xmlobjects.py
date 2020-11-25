@@ -93,7 +93,10 @@ class XMLObject(object):
     def setAttributes(self,el,vals):
         for k,v in vals.items():
             el.setAttribute(k,v)
-        
+
+    def set(self,k,v):
+        self.rootNode.el.set(k,v)
+                
     def addElement(self, el1, name):
         newEl = self.doc.createElement(name)
         try:
