@@ -15,12 +15,13 @@ import logging
 
 from copy import deepcopy
 from iper import _sandbox_defs, _agentTemplateFactory, _environmentFactory
+from iper import BrainModelFactory
+from iper.brains import BaseBrain
 import inspect
 import io, traceback
 
 from .brains import BaseBrain, WorldState
 from .behaviours.actions import Action
-
 
 import pandas as pd
 
@@ -61,20 +62,32 @@ class XAgent(Agent):
     print(agent._xd)
     return agent
     
-  def __init__(self, id):
-    Agent.__init__( self, id)
+  def __init__(self, id, model=None):
+    Agent.__init__( self, id, model)
     #_configure_logging()
     self.l = logging.getLogger(self.__class__.__name__)        
     self._xd = XMLObject('Agent')
     self._meta = self._xd.add("metadata")
-    self._meta.el.set("id", id)
+    self._meta.el.set("id", str(id))
     self._events = self._xd.add("events")
     self._envdata = self._xd.add("environments")
+    self._body = self._xd.add("body")
     self._behaviours = []
-    self._brain = BaseBrain(self)
     self._sensors = [Sensor()]
     self._next_reward = 0.0
     self._last_reward = 0.0
+    self.avStates = []
+    self.avActions = []
+    self.exists = False
+    self._brain = BaseBrain(self)
+    self.pos = (0,0)
+
+  @property
+  def id(self):
+    return self._meta.el.get("id")
+
+  def getWorld(self):
+    return self.model
 
   def toXmlFile(self, odir="./", suffix=""):
     fname = os.path.join(odir, "%s-%s.xml"%(self.id, suffix))
@@ -95,12 +108,21 @@ class XAgent(Agent):
       
   def addTemplates(self, templates):
     for _t in templates:
-      #self.l.info("Adding template %s"%_t)
+      self.l.info("Adding template %s"%_t)
       _xd2 = _agentTemplateFactory.instantiate(_t)
-      if _xd2 is not None:
-        #self.l.info(str(self._xd))
-        self._xd.merge(_xd2)
-        #self._xd.rootNode.el.append(_xd2)
+      if (_xd2 is not None) and (len(_xd2) > 0):
+        _att = _xd2.find("attributes").getchildren()
+        if len(_att):
+          self.l.error(" addTemplate.attributes NOT IMPLEMENTED")
+
+        _evs = _xd2.find("events").getchildren()
+        if len(_evs):
+          self.l.error("addTemplate.events NOT IMPLEMENTED")
+        
+        _envs = _xd2.find("environments").getchildren()
+        for _e in _envs:
+          self.model.add_env(_environmentFactory.get(_e.tag))
+
       else:
         raise RuntimeError("Template %s is not defined"%_t)        
     
@@ -137,7 +159,7 @@ class XAgent(Agent):
       self.l.debug("Agent %s dead because of %s"%(self.id, reason))
     if self.exists:
       self._notifyDeath()
-      self.remove()   
+
 
   def getReward(self):
     return self._next_reward
@@ -156,20 +178,11 @@ class XAgent(Agent):
     status = [getattr(self, _s) for _s in self.getPossibleStates() if _s]
 
     toDo = self._brain.think(status, self.getReward())
-
+    
     self.getWorld().notify(
               Event(self.id, "step")
             )
             
-    for _behav in self.getBehaviours():
-      if type(_behav) is not str:
-        if not self.exists: return       
-        self.l.debug("Agent %s executing behaviour: %s"%(self.id, _behav.__class__.__name__))
-        self.getWorld().notify(
-              Event(self.id, "perform_"+_behav.__class__.__name__)
-            )        
-        _behav.do(self)
-        
     for action in toDo:
       # Some actions may destroy the agent in the middle of the loop
       # if this is the case just return from this ghost shell!
@@ -186,6 +199,15 @@ class XAgent(Agent):
         self.l.error(
                   'Uncaught exception running action %s:\n %s'
                   %(str(action), exc_buffer.getvalue()))
+
+      for _behav in self.getBehaviours():
+        if type(_behav) is not str:
+          if not self.exists: return       
+          self.l.debug("Agent %s executing behaviour: %s"%(self.id, _behav.__class__.__name__))
+          self.getWorld().notify(
+                Event(self.id, "perform_"+_behav.__class__.__name__)
+              )        
+          _behav.do(self)
 
 
   def _envGet(self, env_name,attr_name, var):
@@ -220,13 +242,20 @@ class XAgent(Agent):
           s += ", " + _el.tag + "." + _attr.tag + ":" + _attr.attrib["val"]
     return s
 
+  def info(self):
+    s = toStr(self._xd.rootNode.el)
+    s += str(self._brain._xd)
+    s += str([_b.name for _b in self.getBehaviours()])
+    return s
 
 class MultiEnvironmentWorld(Model):
   def __init__(self, config, output_dir="./" ):
     super().__init__()
+    self.config = config
     self.odir = output_dir
     self._aodir = os.path.join(self.odir, "agents")
-    os.makedirs(self._aodir)    
+    if not os.path.exists(self._aodir):
+      os.makedirs(self._aodir)    
     #_configure_logging()
     self._af = None # No factory defined. Override!
     self.l = logging.getLogger(self.__class__.__name__)    
@@ -234,11 +263,15 @@ class MultiEnvironmentWorld(Model):
     self._rasters = []
     self._agentsToAdd = []
     self._agents = {}
+    self._agentsById = {}
     self._events = []
     self._rewardRules = []      
     self._deathsinturn = []
     self._totCreated = 0
     self._totDestroyed = 0    
+
+  def getAgents(self):
+    return self._agentsById.values()
 
   def _onEvent(self, event):
     #self.l.info("** Applying %d reward rules on %d events "%(len(self._rewardRules),len(self._events)))
@@ -257,22 +290,21 @@ class MultiEnvironmentWorld(Model):
     self._events.append(event)
     self._onEvent(event)
     _a, _t, _b = event._a, event._type, event._b
-    self.l.info("Agent %s notified %s on %s"%(_a, _t, _b))
+    self.l.debug("Agent %s notified %s on %s"%(_a, _t, _b))
     _agent = self.getAgent(_a)    
     if _t == "death":
       self._deathsinturn.append(_a)
       _agent.toXmlFile(odir=self._aodir)
       if _agent in self._agents[type(_agent)]:
         self.l.debug("Removing dead agent")
-        self._agents[type(_agent)].remove(_agent)
-        self._totDestroyed += 1
+        self.removeAgent(_agent)
       else:      
         self.l.error("Cannot find agent %s of type %s in %s"%(str(_agent), str(type(_agent)), str(self._agents)))
     else:
       _ev = _agent._events.add(_t)
       _ev.el.attrib["simStep"] = str(self.currentStep)
 
-  def getAllAgentsIds(self):
+  def getAllAgentsIds(self) -> list:
     _w = self.getBoundaries()._size._width
     _h = self.getBoundaries()._size._height
     bag = []
@@ -288,10 +320,28 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
-    super().addAgent(agent)
+    self.grid.place_agent(agent, agent.pos)
+    self.schedule.add(agent)
     self._totCreated += 1
     self._agents.setdefault(type(agent),[]).append(agent)
+    self._agentsById[agent.id]=agent
+    agent.exists=True
+    agent._postInit()
 
+  def removeAgent(self, agent):
+    self.schedule.remove(agent)
+    self.grid.remove_agent(agent)
+    self._agents[type(agent)].remove(agent)
+    if not self._agents[type(agent)]:
+      del self._agents[type(agent)]
+    del self._agentsById[agent.id]    
+    self._totDestroyed += 1
+
+  def getAgent(self, aid):
+    if aid in self._agentsById: 
+      return self._agentsById[aid]
+    
+    return None
 
   def _check_env_reqs(self, env):
     self.l.info("Analyzing requirements for environment %s"%env.name)
@@ -309,14 +359,14 @@ class MultiEnvironmentWorld(Model):
     return True
   
   def add_env(self, env):
-    if env and (env not in self._envs):
+    if (env is not None) and (env not in self._envs):
       if self._check_env_reqs(env):
         self._envs.append(env)
       else:
         raise ValueError("Cannot fullfill requirements for model " + str(env))    
 
   def stepEnvironment(self):
-    self.l.info("%d - "%self.currentStep)
+    #self.l.info("%d - "%self.currentStep)
     #self.l.info("Deaths: %d - "%len(self._deathsinturn))    
     for env in self._envs:
       # TODO: Step added environments
@@ -333,17 +383,19 @@ class MultiEnvironmentWorld(Model):
       _templates = _d.get("templates", [])
       _behavs = _d.get("defaultBehaviours",[])
       _varsToSet =  _d.get("varsToSet",[])
-      _brain = _d.get("brain", None)      
+      _brain = _d.get("brain", BaseBrain)
+
       for i in range(_num):
         _meta = {"prInvokedBy":_caller,
               "templates":str(_templates),
               "pythonClass": _agtClass.__name__
           }
-        _agent = _agtClass(_prefix + "_" + str(uuid.uuid4()))
+        _agent = _agtClass(_prefix + "_" + str(uuid.uuid4()), self)
         _agent.setMetadata(_meta)
+        _agent._brain = _brain(_agent)
+
         # Load templates if needed
         _agent.addTemplates(_templates)
-        _agent._postInit(brain=_brain)
         self._prepareAgentForAdd(_agent)
         for _v in _varsToSet:
           item, value = _v.split(":")
@@ -369,14 +421,15 @@ class MultiEnvironmentWorld(Model):
         
   def _prepareAgentForAdd(self, agent):
     # Generate random position
-    _x = random.randint(0, self.config.size._width-1)
-    _y = random.randint(0, self.config.size._height-1)
+    _x = random.randint(0, self.config["size"]["width"]-1)
+    _y = random.randint(0, self.config["size"]["height"]-1)
     agent.position = (_x, _y)
     # Configure environments
     self._applyEnvRequir(agent)
     
   def _applyEnvRequir(self, agent):
     for env in self._envs:
+      self.l.debug("Requesting environment %s"%str(env.getName()))
       _ed = agent._envdata.add(env.getName())
       for a in env._aa:
         _tag = _ed.add(a.tag)
@@ -389,11 +442,12 @@ class MultiEnvironmentWorld(Model):
       _bhvs = env.rootNode.el.find("behaviours")
       if _bhvs is not None:
         it = _bhvs.iter()
-        it.next() # Skip parent tag
+        next(it) # Skip parent tag
         for el in it:
           classname = el.tag
-          #_mod = __import__("behaviours")#, fromlist=[classname])
-          agent._behaviours.append(Action())
+          _mod = __import__("iper.behaviours.actions", globals(), locals(), (classname), 0)
+          _class = getattr(_mod, classname)
+          agent._behaviours.append(_class())
        
   def createRasters(self):
     for env in self._envs:

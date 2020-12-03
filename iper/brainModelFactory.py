@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import operator
+from iper.behaviours.actions import TestAction
 
 class BrainModel(object):
   def __init__(self, name):
@@ -10,11 +11,11 @@ class BrainModel(object):
     self._nS = 1 # Num of states
     self._nA = 1 # Num of Actions    
 
-  def train(self):
+  def train(self, ):
     self.l.info("Training model %s with %d new data"%(self._name, len(self._rewards)))
     
   def policy(self, status):
-    return []
+    return [] 
     
 class QLearnBrainModel(BrainModel):
   def __init__(self, name):
@@ -42,6 +43,7 @@ class BrainModelFactory(object):
   def __init__(self):
     self.l = logging.getLogger(self.__class__.__name__)    
     self._models = {"default":BrainModel("default"),
+                    "goap":BrainModel("goap"),
                     "Q":QLearnBrainModel("Q")}    
 
   def train(self):
@@ -59,7 +61,7 @@ class BrainModelFactory(object):
     #  self.register(_a.__name__, _a(None))
 
   def get(self, name):
-    return self._models.get(name, None)
+    return self._models.get(name.lower(), None)
 
   def register(self, name, action):
     if action is None: return False

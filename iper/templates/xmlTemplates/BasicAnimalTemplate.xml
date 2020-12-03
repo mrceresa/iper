@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<BasicAnimal>
+  <attributes/>
+  <events/>
+  <environments>
+  	<BasalMetabolism/>
+  </environments>  	
+</BasicAnimal> 

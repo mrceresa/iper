@@ -4,7 +4,7 @@
   </requires>  
   <provides/>
   <agentAttributes>
-    <energy min="0" max="100" default="24" type="int"/>
+    <energy min="0" max="100" default="3" type="int"/>
   </agentAttributes>
   <behaviours>
     <ConsumeBasal/>

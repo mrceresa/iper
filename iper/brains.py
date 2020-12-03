@@ -2,6 +2,10 @@ import logging
 from .xmlobjects import XMLObject
 from . import _brainModelFactory
 
+class Reward(object):
+  def __init__(self):
+    pass
+
 class WorldState(object):
   def __init__(self):
     pass
@@ -11,6 +15,8 @@ class BaseBrain(XMLObject):
     XMLObject.__init__( self)
     self.l = logging.getLogger(self.__class__.__name__)        
     self._xd = XMLObject('Brain')
+    self._xd.set("model", model)
+    self._xd.set("agent", agent.id)
     self._agent = agent
     self._avActions = []
     self._model = _brainModelFactory.get(model)
@@ -41,9 +47,10 @@ class BaseBrain(XMLObject):
         
 class ScriptedBrain(BaseBrain):
   def __init__(self, agent):
-    BaseBrain.__init__( self)        
-    
+    super().__init__( agent )
+    self._xd.set("type","Scripted")        
     
 class GOAPBrain(BaseBrain):
   def __init__(self, agent):
-    BaseBrain.__init__( self)      
+    super().__init__( agent, model="goap" )
+    self._xd.set("type","GOAP")

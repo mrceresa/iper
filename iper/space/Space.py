@@ -1,4 +1,5 @@
 from mesa_geo import GeoSpace, GeoAgent
+from mesa.space import MultiGrid
 import logging
 _log = logging.getLogger(__name__)
 
