@@ -1,0 +1,33 @@
+﻿stop_id,stop_name,stop_desc,stop_lat,stop_lon,stop_url,wheelchair_boarding
+1,Francesc Macià,,41.392206,2.143175,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+2,L'Illa,,41.390508,2.136522,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+3,Numància,,41.389342,2.131953,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+4,Maria Cristina,Correspondència amb Metro L3,41.387972,2.126508,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+5,Pius XII,,41.386719,2.121603,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+8,Palau Reial,Correspondència amb Metro L3,41.385919,2.118461,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+9,Zona Universitària,Correspondència amb Metro L3,41.384267,2.114436,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+10,Avinguda de Xile,,41.380739,2.114836,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+11,Ernest Lluch,,41.376483,2.110786,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+12,Can Rigal,,41.376078,2.105928,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+13,Ca n'Oliveres,,41.376606,2.098408,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+13bis,Can Clota,,41.376956,2.093522,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+14,Pont d'Esplugues,,41.376828,2.088606,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+15,La Sardana,,41.372789,2.084003,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+16,Montesa,,41.369563,2.080928,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+17,El Pedró,,41.365317,2.076675,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+18,Ignasi Iglésias,,41.361242,2.072672,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+19,Cornellà Centre,Correspondència amb Metro L5 i Rodalies,41.357442,2.069917,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+20,Les Aigües,,41.356672,2.066069,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+21,Fontsanta | Fatjó,,41.360333,2.062217,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+22,Bon Viatge,,41.364608,2.058817,http://www.tram.cat/linies-i-horaris/linea-t1/,1
+25,La Fontsanta,,41.367794,2.062953,http://www.tram.cat/linies-i-horaris/linea-t2/,1
+26,Centre Miquel Martí i Pol,,41.368658,2.071197,http://www.tram.cat/linies-i-horaris/linea-t2/,1
+Baixador,Llevant-Les Planes,,41.370869,2.076117,http://www.tram.cat/linies-i-horaris/linea-t2/,1
+28,Hospital de Sant Joan Despí | TV3,,41.372386,2.075678,http://www.tram.cat/linies-i-horaris/linea-t3/,1
+29,Rambla de Sant Just,,41.378828,2.075050,http://www.tram.cat/linies-i-horaris/linea-t3/,1
+30,Walden,,41.379719,2.066897,http://www.tram.cat/linies-i-horaris/linea-t3/,1
+31,Torreblanca,,41.379758,2.060825,http://www.tram.cat/linies-i-horaris/linea-t3/,1
+32,Sant Feliu | Consell Comarcal,,41.379356,2.0533720,http://www.tram.cat/linies-i-horaris/linea-t3/,1
+
+
+

@@ -1,0 +1,5 @@
+﻿route_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color
+1,T1,Bon Viatge-Francesc Macià,,0,http://www.tram.cat/linies-i-horaris/linea-t1/,008272,FFFFFF
+2,T2,Llevant_Les Planes-Francesc Macià,,0,http://www.tram.cat/linies-i-horaris/linea-t2/,008272,FFFFFF
+3,T3,Sant Feliu|Consell Comarcal-Francesc Macià,,0,http://www.tram.cat/linies-i-horaris/linea-t3/,008272,FFFFFF
+
