@@ -28,15 +28,16 @@ mainVars={}
 
 def deriv(y, t, N, beta,pAI, pIH, rates,pHD):
     
-    S, A, I, R, H, D = y
+    S, A, I, R, Ra, H, D = y
     dSdt = -rates["rsa"]* S/N* beta(t)*(I+A)
     dAdt =  rates["rsa"]* S/N* beta(t)*(I+A) - rates["rai"]*pAI(t,I,N)*A-rates["rar"]*(1-pAI(t,I,N))*A
     dIdt =  rates["rai"]*pAI(t,I,N)*A  - rates["rir"]*(1 - pIH(t, I, N) )*I  - rates["rih"]*pIH(t, I, N)*I
     dHdt =  rates["rih"]*pIH(t, I, N)*I - rates["rhd"]*pHD(t, I, N)*H - rates["rhr"]*(1-pHD(t, I, N))*H    
-    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H + rates["rar"]*(1-pAI(t,I,N))*A
+    dRdt =  rates["rir"]*(1 - pIH(t, I, N))*I + rates["rhr"]*(1-pHD(t, I, N))*H 
+    dRadt=  rates["rar"]*(1-pAI(t,I,N))*A
     dDdt =  rates["rhd"]*pHD(t, I, N)*H
     
-    return dSdt, dAdt, dIdt, dRdt, dHdt, dDdt
+    return dSdt, dAdt, dIdt, dRdt,dRadt ,dHdt, dDdt
 
 def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,demographic, icu_beds):
     
@@ -71,9 +72,9 @@ def solveSIRdet(y0, t, N,age_effect, r0_max, r0_min, k, startLockdown, rates,dem
 # Integrate the SEIHR equations over the time grid, t
     
   ret = odeint(deriv, y0, t, args=(N, beta,pAI, pIH, rates,pHD))
-  s, a, i, r, h, d = ret.T
+  s, a, i, r, ra, h, d = ret.T
 
-  res = {"S":s, "A":a, "I":i, "R":r, "H":h, "D":d} 
+  res = {"S":s, "A":a, "I":i, "R":r, "Ra":ra, "H":h, "D":d} 
   res["R_0"] = list(map(R_0, t)) 
   res["pIH"] = [pIH(tau, res["I"][tau], N) for tau in range(len(t))]
 
@@ -198,12 +199,13 @@ def doFit(args):
 
     t=np.array([i+1 for i in range(len(I))])
     i0=df["confirmed"].iloc[0]  #  35708    #infetti a t0 
-    a0=4*i0
+    a0=2*i0
     r0=0
+    ra0=0
     h0=0                                           
     d0=df["deaths"].iloc[0] # 35587      #deceduti  t0
-    s0=N-i0-d0-a0                   #suscettibili a t0
-    y0=s0,a0,i0,r0,h0,d0 
+    s0=N-i0#-a0                   #suscettibili a t0
+    y0=s0,a0,i0,r0,ra0,h0,d0 
 
 
 
@@ -212,16 +214,17 @@ def doFit(args):
     R = df["recovered"]
     D = df["deaths"]
     H = df["hosp"]
-    S = N - I - D - H - R
+    S = N - df["confirmed"]
 
     t=np.array([i+1 for i in range(len(I))])
     i0=df["confirmed"].iloc[0]- df["recovered"].iloc[0]-df["deaths"].iloc[0]  #  35708    #infetti a t0 
-    a0=4*i0                            #asintomatici a t0
+    a0=2*i0                            #asintomatici a t0
     r0=df["recovered"].iloc[0] # 211885      #recovered a t0
+    ra0=2*r0
     h0=df["hosp"].iloc[0]   # 2000    #ospedaliz. a t0                         
     d0=df["deaths"].iloc[0] # 35587      #deceduti  t0
-    s0=N-i0-r0 -h0 -d0  -a0                   #suscettibili a t0
-    y0=s0,a0,i0,r0,h0,d0 
+    s0=N-i0-r0 -h0 -d0  -a0 -ra0                  #suscettibili a t0
+    y0=s0,a0,i0,r0,ra0,h0,d0 
   
   def resid_ESP(params,y0, t, N,age_effect,S,I,D,icu_beds):
       print(params)
@@ -235,7 +238,7 @@ def doFit(args):
       #return sum((seihrd_det['S']-S)**2+(seihrd_det['I']-I)**2+(seihrd_det['H']-H)**2+(seihrd_det['R']-R)**2+(seihrd_det['D']-D)**2)
       #er=np.array((((seihrd_det['S']-S)**2),((seihrd_det['I']-I)**2),((seihrd_det['H']-H)**2),((seihrd_det['R']-R)**2),((seihrd_det['D']-D)**2)))
       
-      #a=np.array((S-seihrd_det['S'])**2)
+      a=np.array((S-(seihrd_det['S']+seihrd_det['A']))**2)
 
       b=np.array((I-(seihrd_det['I']+seihrd_det['R']+seihrd_det['H']+seihrd_det['D']))**2)
        #b=np.array((Iday-seihrd_det['I'])**2)
@@ -263,14 +266,13 @@ def doFit(args):
       #return sum((seihrd_det['S']-S)**2+(seihrd_det['I']-I)**2+(seihrd_det['H']-H)**2+(seihrd_det['R']-R)**2+(seihrd_det['D']-D)**2)
       #er=np.array((((seihrd_det['S']-S)**2),((seihrd_det['I']-I)**2),((seihrd_det['H']-H)**2),((seihrd_det['R']-R)**2),((seihrd_det['D']-D)**2)))
    
-      #a=np.array((S-seihrd_det['S'])**2) 
+      a=np.array((S-(seihrd_det['S']+seihrd_det['A']))**2) 
       b=np.array((I-seihrd_det['I'])**2)
-     #b=np.array((Iday-seihrd_det['I'])**2)
       c=np.array((H-seihrd_det['H'])**2)
       d=np.array((R-seihrd_det['R'])**2)
-      e=np.array((1.2*D-1.2*seihrd_det['D'])**2)
+      e=np.array(1.44*(D-seihrd_det['D'])**2)#mettere fuori 1.2
 
-      tot=np.concatenate((b,e))
+      tot=np.concatenate((a,b,e,c,d))
    
       #return er
       #er=er.flatten()
@@ -289,8 +291,8 @@ def doFit(args):
     params2.add('rar',value=0.010080807956200328,min=0.01,max=2,vary=False)  
     params2.add('rih',value=0.15376988655220583,min=0.01,max=2.0,vary=False)
     params2.add('rir',value=0.012084665739583795,min=0.01,max=2,vary=False)
-    params2.add('rhr',value=0.0743636663768294,min=0.01,max=2,vary=False)
-    params2.add('rhd',value=0.125,min=0.01,max=2,vary=True)
+    params2.add('rhr',value=0.012,min=0.01,max=2,vary=False)#0.0743636663768294
+    params2.add('rhd',value=0.125,min=0.01,max=2,vary=True)#
 
     out = minimize(resid_ESP, params2, args=(y0, t, N,age_effect,S,I,D,icu_beds),
      method='differential_evolution')#method='differential_evolution',method='leastsq'
@@ -347,7 +349,7 @@ def doFit(args):
     I_tot=seihrd_det_fit['I']+seihrd_det_fit['R']+seihrd_det_fit['D']+seihrd_det_fit['H']
     ax3=plt.subplot(331)
     ax3.plot(t,I_tot,color="r")
-    ax3.plot(t,I,label='Infected',color="r",ls="--")
+    ax3.plot(t,I,label='Infected-cumulative',color="r",ls="--")
     plt.xlabel('day')
     plt.ylabel('Infected')
   
@@ -360,23 +362,23 @@ def doFit(args):
     ax5=plt.subplot(333)        
     ax5.plot(t,seihrd_det_fit['R'],color="g")
     plt.xlabel('day')
-    plt.ylabel('Recovered')
+    plt.ylabel('Recovered-seihrd')
   
-    ax6=plt.subplot(334)        
-    ax6.plot(t,seihrd_det_fit['S'],color="y")
-    ax6.plot(t,S,label='Susceptible',color="y",ls="--")
-    plt.xlabel('day')
-    plt.ylabel('Susceptible')
+    #ax6=plt.subplot(334)        
+    #ax6.plot(t,seihrd_det_fit['S'],color="y")
+    #ax6.plot(t,S,label='Susceptible',color="y",ls="--")
+    #plt.xlabel('day')
+    #plt.ylabel('Susceptible')
   
     ax7=plt.subplot(335)        
     ax7.plot(t,seihrd_det_fit['H'],color="orange")
     plt.xlabel('day')
-    plt.ylabel('Hosp.')
+    plt.ylabel('Hosp-seihrd')
   
   
     ax8=plt.subplot(336)        
     ax8.plot(t,I_tot,color="r")
-    ax8.plot(t,I,label='Infected',color="r",ls="--")
+    ax8.plot(t,I,label='Infected-cumulative',color="r",ls="--")
     ax8.plot(t,seihrd_det_fit['R'],color="g")
     ax8.plot(t,seihrd_det_fit['D'],color="black")
     ax8.plot(t,D,label='Dead',color="black",ls="--")
@@ -404,7 +406,7 @@ def doFit(args):
     plt.ylabel('Recovered')
   
     ax6=plt.subplot(334)        
-    ax6.plot(t,seihrd_det_fit['S'],color="y")
+    ax6.plot(t,((seihrd_det_fit['S']+seihrd_det_fit['A'])),color="y")
     ax6.plot(t,S,label='Susceptible',color="y",ls="--")
     plt.xlabel('day')
     plt.ylabel('Susceptible')
