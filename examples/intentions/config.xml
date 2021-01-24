@@ -1,0 +1,21 @@
+<data>
+	<width>4</width>
+	<height>4</height>
+	<torus>False</torus>
+	<world>
+
+		<obstacle num="1" type="MazeBlock" inPos="(1,0)">Obs1</obstacle>
+		<obstacle num="1" type="MazeBlock" inPos="(1,1)">Obs2</obstacle>
+		<obstacle num="1" type="MazeBlock" inPos="(1,3)">Obs3</obstacle>
+		<obstacle num="1" type="MazeBlock" inPos="(2,3)">Obs4</obstacle>
+		<obstacle num="1" type="MazeBlock" inPos="(3,1)">Obs5</obstacle>
+		<win num="1" type="MazeExit" inPos="(3,0)">Exit</win>
+	</world>
+    <agents>
+        <agent num="1" type="Cat" templates="['BasicAnimal']" brain="SmartCatBrain" inPos="(0,0)">Cat</agent>
+        <agent num="1" type="FoodAgent" inPos="(0,2)">Cheese1</agent>
+        <agent num="1" type="FoodAgent" inPos="(2,2)">Cheese2</agent>
+        <agent num="1" type="FoodAgent" inPos="(2,0)">Cheese3</agent>
+        <agent num="1" type="FoodAgent" inPos="(1,2)">Cheese4</agent>
+    </agents>
+</data>

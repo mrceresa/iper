@@ -1,0 +1,10 @@
+<data>
+    <items>
+        <agent name="Cat">
+        	<type>Cat</type>
+        	<templates>['BasicAnimal']</templates>
+        	<brain>CatBrain</brain>
+        	<inPos>(0,0)</inPos>
+        </agent>
+	</items>
+</data>
