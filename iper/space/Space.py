@@ -1,11 +1,31 @@
 from mesa_geo import GeoSpace, GeoAgent
-from mesa.space import MultiGrid
+from mesa.space import MultiGrid, NetworkGrid
 import logging
 _log = logging.getLogger(__name__)
 
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Polygon, LineString, Point
+import trimesh
+import networkx as nx
+import numpy as np
+
+class MeshSpace(NetworkGrid):
+
+  def __init__(self, mesh):
+    _ad = trimesh.graph.face_adjacency(mesh=mesh, return_edges=False)
+    
+    g = nx.Graph()
+
+    _v = mesh.vertices
+    _nodes = []
+    for i, f in enumerate(mesh.faces):
+      loop = np.asarray([_v[f[0]], _v[f[1]], _v[f[2]]])
+      _c = np.mean(np.asarray(loop), axis=0)
+      _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
+
+    g.add_nodes_from(_nodes)
+    g.add_edges_from(_ad)
+    super().__init__(g)
 
 
 class GeoSpaceQR(GeoSpace):
