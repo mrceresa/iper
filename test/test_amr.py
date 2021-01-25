@@ -58,28 +58,38 @@ class TestMeshAsGraph(unittest.TestCase):
   def testGraph3D(self):
     #print("Vertices",self._grid.vertices)
     #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
-    _grid = trimesh.load("test/cube_plane.msh")
-
+    _grid = trimesh.load("test/meshes/cube_plane.msh")
     ms = MeshSpace(_grid)
-    print(ms.G.nodes)
-    print(ms.G.edges)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot()
+    ms.plot(savefig="testCubeMesh3D.png")
     plt.close()
 
+    _grid = trimesh.load("test/meshes/sphere.msh")
+    ms = MeshSpace(_grid)
+    
+    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
+    ms.plot(savefig="testShpereMesh3D.png")
+    plt.close()
+
+    _grid = trimesh.load("test/meshes/indheat.msh")
+    ms = MeshSpace(_grid)
+    
+    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
+    ms.plot(savefig="testComplexMesh3D.png")
+    plt.close()
 
   def testGraph2D(self):
     #print("Vertices",self._grid.vertices)
     #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
-    _grid = trimesh.load("test/plane.msh")
+    _grid = trimesh.load("test/meshes/plane.msh")
 
     ms = MeshSpace(_grid)
     print(ms.G.nodes)
     print(ms.G.edges)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testGraph2D.png")
+    ms.plot(savefig="testPlaneMesh2D.png")
     plt.close()
     #fig1, ax1 = plt.subplots(figsize=(12,9), projection='3d')
 

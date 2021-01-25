@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 from mpl_toolkits.mplot3d import Axes3D
-
+#from mayavi import mlab
 
 class MeshSpace(NetworkGrid):
 
@@ -45,7 +45,12 @@ class MeshSpace(NetworkGrid):
 
   def plot(self, savefig=None):
     fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
-    ax.plot_trisurf(self.triang, self.elevation, cmap=plt.cm.Spectral)
+    ax.plot_trisurf(self.triang, 
+      self.elevation, 
+      cmap="jet",
+      alpha=0.3,
+      antialiased=True
+      )
     ax.set_title('Agent mesh space plot')
     if savefig:
       plt.savefig(savefig)
