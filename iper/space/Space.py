@@ -8,24 +8,52 @@ import geopandas as gpd
 import trimesh
 import networkx as nx
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+from mpl_toolkits.mplot3d import Axes3D
+
 
 class MeshSpace(NetworkGrid):
 
   def __init__(self, mesh):
-    _ad = trimesh.graph.face_adjacency(mesh=mesh, return_edges=False)
-    
+    self._mesh = mesh
+    g = self._processMesh()
+    super().__init__(g)
+
+
+  def _processMesh(self):
+    # Generate triangulation
+    _v = self._mesh.vertices
+    x, y, z = self._mesh.vertices[:,0], self._mesh.vertices[:,1], self._mesh.vertices[:,2]
+    triang = tri.Triangulation(x, y, triangles=self._mesh.faces)
+    self._v = _v; self.triang = triang; self.elevation = z
+
+    # Transform to a graph
     g = nx.Graph()
 
-    _v = mesh.vertices
+    _ad = trimesh.graph.face_adjacency(mesh=self._mesh, return_edges=False)
+    self._ad = _ad
     _nodes = []
-    for i, f in enumerate(mesh.faces):
+    for i, f in enumerate(self._mesh.faces):
       loop = np.asarray([_v[f[0]], _v[f[1]], _v[f[2]]])
       _c = np.mean(np.asarray(loop), axis=0)
       _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
 
     g.add_nodes_from(_nodes)
     g.add_edges_from(_ad)
-    super().__init__(g)
+    return g
+
+  def plot(self, savefig=None):
+    fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
+    ax.plot_trisurf(self.triang, self.elevation, cmap=plt.cm.Spectral)
+    ax.set_title('Agent mesh space plot')
+    if savefig:
+      plt.savefig(savefig)
+    else:
+      plt.show()
+
+    return fig, ax
+
 
 
 class GeoSpaceQR(GeoSpace):

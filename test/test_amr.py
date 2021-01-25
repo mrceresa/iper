@@ -8,18 +8,16 @@ from iper.space.Space import MeshSpace
 import meshio
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+from mpl_toolkits.mplot3d import Axes3D
 from descartes.patch import PolygonPatch
 import numpy as np
 import networkx as nx
 
 
-def plot(mesh):
+def plot(mesh, ax1):
   _v = mesh.vertices
   x, y = mesh.vertices[:,0], mesh.vertices[:,1]
-  triang = tri.Triangulation(x, y,
-    triangles=mesh.faces)
-
-  fig1, ax1 = plt.subplots(figsize=(12,9))
+  triang = tri.Triangulation(x, y, triangles=mesh.faces)
   ax1.set_aspect('equal')
   ax1.triplot(triang, 'bo-', lw=1)
   ax1.set_title('triplot')
@@ -46,7 +44,7 @@ def plot(mesh):
     #ax1.add_patch(patch)
   
   #plt.show()
-  plt.savefig("test.png")
+
 
 
 class TestMeshAsGraph(unittest.TestCase):
@@ -54,21 +52,39 @@ class TestMeshAsGraph(unittest.TestCase):
     #self._grid = AMRSpace()
     #self._grid.load_example_mesh("lattice_3x3")
     # mesh objects can be created from existing faces and vertex data
+    pass
 
-    self._grid = trimesh.load("test/plane.msh")
 
-
-  def testAdjacencies(self):
+  def testGraph3D(self):
     #print("Vertices",self._grid.vertices)
     #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
+    _grid = trimesh.load("test/cube_plane.msh")
 
-    ms = MeshSpace(self._grid)
+    ms = MeshSpace(_grid)
     print(ms.G.nodes)
     print(ms.G.edges)
     
-    self.assertTrue(len(self._grid.faces) == len(ms.G.nodes))
-    import ipdb
-    ipdb.set_trace()
+    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
+    ms.plot()
+    plt.close()
+
+
+  def testGraph2D(self):
+    #print("Vertices",self._grid.vertices)
+    #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
+    _grid = trimesh.load("test/plane.msh")
+
+    ms = MeshSpace(_grid)
+    print(ms.G.nodes)
+    print(ms.G.edges)
+    
+    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
+    ms.plot(savefig="testGraph2D.png")
+    plt.close()
+    #fig1, ax1 = plt.subplots(figsize=(12,9), projection='3d')
+
+    #plot(grid, ax1)
+    #plt.savefig("testGraph.png")
 
     #self.assertTrue(self._grid.size == (3,3))
 
