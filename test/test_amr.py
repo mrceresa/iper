@@ -13,6 +13,30 @@ import numpy as np
 import networkx as nx
 from mesa import Agent
 import random
+import math
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import scipy.interpolate as interp
+
+def create_poisson(x, y, xx, yy):
+    p_an = np.sinh(1.5*np.pi*yy / x[-1]) /\
+      (np.sinh(1.5*np.pi*y[-1]/x[-1]))*np.sin(1.5*np.pi*xx/x[-1])
+
+    pts = np.vstack(list(map(np.ravel, [xx,yy] ))).T
+    p_an = p_an.flatten()
+    return pts, p_an
+
+def create_paraboloid(n_angles = 20,   n_radii = 10, min_radius = 0.15):
+  # First create the x and y coordinates of the points.
+  radii = np.linspace(min_radius, 0.95, n_radii)
+  angles = np.linspace(0, 2*math.pi, n_angles, endpoint=False)
+  angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
+  angles[:, 1::2] += math.pi/n_angles
+  x = (radii*np.cos(angles)).flatten()
+  y = (radii*np.sin(angles)).flatten()
+
+  pts = np.vstack([x, y]).T
+  z = x*x + y*y
+  return pts, z
 
 def plot(mesh, ax1):
   _v = mesh.vertices
@@ -46,12 +70,6 @@ def plot(mesh, ax1):
   #plt.show()
 
 class TestMeshAsGraph(unittest.TestCase):
-  def setUp(self):
-    #self._grid = AMRSpace()
-    #self._grid.load_example_mesh("lattice_3x3")
-    # mesh objects can be created from existing faces and vertex data
-    pass
-
 
   def testGraph3D(self):
     #print("Vertices",self._grid.vertices)
@@ -60,41 +78,35 @@ class TestMeshAsGraph(unittest.TestCase):
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testCubeMesh3D.png")
+    ms.plot(savefig="test/testCubeMesh3D.png", show=False, title="Test cubic space")
     plt.close()
 
     _grid = trimesh.load("test/meshes/sphere.msh")
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testShpereMesh3D.png")
+    ms.plot(savefig="test/testShpereMesh3D.png", show=False, title="Test shperical space")
     plt.close()
 
     _grid = trimesh.load("test/meshes/indheat.msh")
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testComplexMesh3D.png", alpha=0.3)
+    ms.plot(savefig="test/testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
     plt.close()
 
   def testGraph2D(self):
-    #print("Vertices",self._grid.vertices)
-    #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
     _grid = trimesh.load("test/meshes/plane.msh")
 
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testPlaneMesh2D.png")
+    ms.plot(savefig="test/testPlaneMesh2D.png", 
+      show=False, 
+      title="Test Plane space",
+      cmap="jet")
     plt.close()
-    #fig1, ax1 = plt.subplots(figsize=(12,9), projection='3d')
 
-    #plot(grid, ax1)
-    #plt.savefig("testGraph.png")
-
-    #self.assertTrue(self._grid.size == (3,3))
-
-    #self.grid.refine()
 
   def testGraphMovement2D(self):
     _grid = trimesh.load("test/meshes/plane.msh")
@@ -131,14 +143,129 @@ class TestMeshAsGraph(unittest.TestCase):
     self.assertTrue(a.pos == new_position)  
 
   def testMeshGrid(self):
-    mesh, grid = MeshSpace.from_meshgrid(z=1.0)
-    space = MeshSpace(mesh)
-    space.plot() 
+    space, grid = MeshSpace.from_meshgrid(z=1.0)
+    space.plot(savefig="test/testFromMeshgrid.png", 
+      show=False, 
+      title="Test meshgrid space",
+      cmap="jet") 
+    plt.close()
     #plt.triplot(mesh.vertices[:,0], points[:,1], tri.simplices)
     #plt.plot(xx, yy, "o")
     #plt.show()
   
-            
+  def testPoisson(self):
+    nx, ny = (41, 16)
+    x = np.linspace(0,1,nx)
+    y = np.linspace(0,1,ny)
+    xx, yy = np.meshgrid(x,y)
+
+    pts, p_an = create_poisson(x,y,xx,yy)    
+    space = MeshSpace.from_vertices(points=pts, elevation=p_an)
+    space.plot(cmap="viridis",show=False,savefig="test/testPoisson.png")
+    plt.close()
+
+  def testPoissonOnPlane(self):
+    nx, ny = (41, 16)
+    x = np.linspace(0,1,nx)
+    y = np.linspace(0,1,ny)
+    xx, yy = np.meshgrid(x,y)
+
+    pts, p_an = create_poisson(x,y,xx,yy)
+    pspace = MeshSpace.from_vertices(pts, elevation=p_an)
+    
+    space = MeshSpace.from_vertices(pts, elevation=0.0)
+
+    f = interp.interp1d(np.arange(p_an.size),p_an)
+    colors = f(
+      np.linspace(
+        0,
+        p_an.size-1, 
+        space._tri.triangles.shape[0]
+        )
+      )
+    print("COLORS", colors.shape)
+    ax, collec = space.plot(show=False, 
+      title="Test plane space with Poisson field",
+      cmap="viridis")
+    collec.set_array(colors)
+    collec.autoscale()
+    plt.colorbar(collec)
+
+    pspace.plot(show=False, 
+      title="Test plane space with Poisson field",
+      cmap="viridis",
+      alpha=0.6,
+      ax=ax)
+    
+    plt.savefig("test/testPoissonOnPlane.png")
+    plt.show()
+
+
+  def testSurfaceCustomField(self):
+    pts, z = create_paraboloid()
+
+    space = MeshSpace.from_vertices(points=pts, elevation=z)
+
+    # Plotting
+    ax, collec = space.plot(show=False,
+      title="Custom field on surface",
+      cmap="jet")
+    vals = -z #np.sin(pts[:,0]) * np.cos(pts[:,1])
+    colors = np.mean(vals[space._mesh.faces], axis=1)
+    collec.set_array(colors)
+    collec.autoscale()
+    plt.colorbar(collec)
+    plt.savefig("test/testCustomField.png")
+    #fig = plt.figure()
+    #ax = fig.gca(projection='3d')
+    #ax.plot_trisurf(space._tri, space._elev)
+    #plt.show()
+
+
+  def testRefinement(self):
+    """ We start from a simple mesh, calculate a field on it and then refine
+        we should check that the field information is copied correctly and then interpolated
+    """
+    create_paraboloid(n_angles = 20,   n_radii = 10)
+    return
+
+    # First create a mesh and put some information on it
+    space, grid = MeshSpace.from_meshgrid()
+    _h = grid[0]
+    x = np.squeeze(grid[0][0,:])
+    y = np.squeeze(grid[1][:,0])
+    #plt.contourf(x, y, np.squeeze(_h))
+    #plt.show()
+    #print(space._mesh.faces)
+    #print(_h[space._mesh.faces])
+    #colors = np.mean(_h[triangles], axis=1)
+
+
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    cmap = plt.get_cmap('jet')
+    collec = ax.plot_trisurf(space._tri, space._elev, cmap=cmap, shade=False, linewidth=0.)
+    collec.set_array(_h.ravel())
+    collec.autoscale()
+    ax.colorbar()
+    plt.show()
+    #for nid in space.G.nodes:
+    #space.G[nid]["h"] = np.sin(grid[0]**2 + grid[1]**2) / (grid[0] + grid[1])
+    #  _h = np.sin(grid[0]**2 + grid[1]**2) / (grid[0] + grid[1])
+    #space.getField("h")
+    # Plot with a colormap for the face values
+    # Refine the mesh and copy the info interpolating
+    # Determine the mapping from old to new mesh
+
+    # Make it coarser and average
+
+
+    #space, grid = MeshSpace.from_meshgrid(z=1.0)
+    #space.plot() 
+    #plt.triplot(mesh.vertices[:,0], points[:,1], tri.simplices)
+    #plt.plot(xx, yy, "o")
+    #plt.show()            
     
 if __name__ == "__main__":
   unittest.main()

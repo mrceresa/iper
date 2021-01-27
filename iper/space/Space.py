@@ -15,23 +15,45 @@ from scipy.spatial import Delaunay
 from trimesh import Trimesh
 
 class MeshSpace(NetworkGrid):
+  """
+    _mesh
+    _v
+    _tri
+    _elev
+    G
+    _adj
+  """
+
+  @staticmethod
+  def from_vertices(points, elevation=None):
+    tess = Delaunay(points)
+    #triang = mtri.Triangulation(x=points[:, 0], y=points[:, 1], triangles=tri)
+    if elevation is not None:
+      nx, ny = points.shape
+      _tp = np.zeros((nx, ny+1))
+      _tp[:,:-1] = points 
+      _tp[:,-1] = elevation
+      points = _tp    
+
+    mesh = Trimesh(vertices=points,
+      faces=tess.simplices)
+    ms = MeshSpace(mesh)
+    return ms
+
 
   @staticmethod
   def from_meshgrid(xmin=0.0, ymin=0.0, xmax=1.0, ymax=1.0, z=0.0, xp=10, yp=10):
     nx, ny = (xp, yp)
     x = np.linspace(xmin, xmax, nx)
     y = np.linspace(ymin, ymax, ny)
-    xx, yy, zz = np.meshgrid(x, y, z)
+    xx, yy= np.meshgrid(x, y)
     points = np.vstack(list(map(np.ravel, [xx,yy] ))).T
-    points3d = np.vstack(list(map(np.ravel, [xx,yy,zz] ))).T    
-    tri = Delaunay(points)
-    mesh = Trimesh(vertices=points3d,
-      faces=tri.simplices)
+    ms = MeshSpace.from_vertices(points, z)
     #plt.triplot(points[:,0], points[:,1], tri.simplices)
     #plt.plot(xx, yy, "o")
     #plt.show()
 
-    return mesh, [xx, yy, zz]
+    return ms, [xx, yy]
 
 
 
@@ -46,13 +68,13 @@ class MeshSpace(NetworkGrid):
     _v = self._mesh.vertices
     x, y, z = self._mesh.vertices[:,0], self._mesh.vertices[:,1], self._mesh.vertices[:,2]
     triang = tri.Triangulation(x, y, triangles=self._mesh.faces)
-    self._v = _v; self.triang = triang; self.elevation = z
+    self._v = _v; self._tri = triang; self._elev = z
 
     # Transform to a graph
     g = nx.Graph()
 
     _ad = trimesh.graph.face_adjacency(mesh=self._mesh, return_edges=False)
-    self._ad = _ad
+    self._adj = _ad
     _nodes = []
     for i, f in enumerate(self._mesh.faces):
       loop = np.asarray([_v[f[0]], _v[f[1]], _v[f[2]]])
@@ -63,22 +85,57 @@ class MeshSpace(NetworkGrid):
     g.add_edges_from(_ad)
     return g
 
-  def plot(self, alpha=1.0, savefig=None):
-    fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
-    ax.plot_trisurf(self.triang, 
-      self.elevation, 
-      cmap="jet",
+  def getNodeField(self, field):
+    for node_id in self.G.nodes:
+      _n = self.G.nodes[node_id]
+      if field in _n:
+        yield self.G.nodes[node_id][field]
+      else:
+        yield np.nan
+  
+  def getField(self, field):
+    """ Go through all the nodes and get the correspondig value
+    """
+    for node_id in self.G.nodes:
+      _n = self.G.nodes[node_id]
+      _c = _n["centroid"]
+      if field in _n:
+        yield _c, self.G.nodes[node_id][field]
+      else:
+        yield _c, np.nan
+
+
+  def plot(self, alpha=1.0, savefig=None, field=None, 
+      show=True, 
+      title="Agent mesh space plot",
+      cmap="Blues",
+      ax=None
+      ):
+
+    if ax is None:
+      fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
+    
+    collec = ax.plot_trisurf(self._tri, 
+      self._elev, 
+      cmap=cmap,
       alpha=alpha,
       antialiased=True,
-      linewidth=2.0
+      linewidth=1.0,
+      shade=False
       )
-    ax.set_title('Agent mesh space plot')
+
+    if field:
+      collec.set_array(colors)
+      collec.autoscale()
+
+    ax.set_title(title)
     if savefig:
       plt.savefig(savefig)
-    else:
+    
+    if show:
       plt.show()
 
-    return fig, ax
+    return ax, collec
 
 
 
