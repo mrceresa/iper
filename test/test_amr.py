@@ -2,7 +2,6 @@ import unittest
 import iper
 from utils import captured_output
 import trimesh
-trimesh.util.attach_to_log()
 
 from iper.space.Space import MeshSpace
 import meshio
@@ -75,7 +74,7 @@ class TestMeshAsGraph(unittest.TestCase):
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testComplexMesh3D.png")
+    ms.plot(savefig="testComplexMesh3D.png", alpha=0.3)
     plt.close()
 
   def testGraph2D(self):
@@ -131,6 +130,14 @@ class TestMeshAsGraph(unittest.TestCase):
     ms.move_agent(a, new_position)
     self.assertTrue(a.pos == new_position)  
 
+  def testMeshGrid(self):
+    mesh, grid = MeshSpace.from_meshgrid(z=1.0)
+    space = MeshSpace(mesh)
+    space.plot() 
+    #plt.triplot(mesh.vertices[:,0], points[:,1], tri.simplices)
+    #plt.plot(xx, yy, "o")
+    #plt.show()
+  
             
     
 if __name__ == "__main__":

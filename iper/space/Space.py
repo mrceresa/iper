@@ -11,9 +11,29 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 from mpl_toolkits.mplot3d import Axes3D
-#from mayavi import mlab
+from scipy.spatial import Delaunay
+from trimesh import Trimesh
 
 class MeshSpace(NetworkGrid):
+
+  @staticmethod
+  def from_meshgrid(xmin=0.0, ymin=0.0, xmax=1.0, ymax=1.0, z=0.0, xp=10, yp=10):
+    nx, ny = (xp, yp)
+    x = np.linspace(xmin, xmax, nx)
+    y = np.linspace(ymin, ymax, ny)
+    xx, yy, zz = np.meshgrid(x, y, z)
+    points = np.vstack(list(map(np.ravel, [xx,yy] ))).T
+    points3d = np.vstack(list(map(np.ravel, [xx,yy,zz] ))).T    
+    tri = Delaunay(points)
+    mesh = Trimesh(vertices=points3d,
+      faces=tri.simplices)
+    #plt.triplot(points[:,0], points[:,1], tri.simplices)
+    #plt.plot(xx, yy, "o")
+    #plt.show()
+
+    return mesh, [xx, yy, zz]
+
+
 
   def __init__(self, mesh):
     self._mesh = mesh
@@ -43,13 +63,14 @@ class MeshSpace(NetworkGrid):
     g.add_edges_from(_ad)
     return g
 
-  def plot(self, savefig=None):
+  def plot(self, alpha=1.0, savefig=None):
     fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
     ax.plot_trisurf(self.triang, 
       self.elevation, 
       cmap="jet",
-      alpha=0.3,
-      antialiased=True
+      alpha=alpha,
+      antialiased=True,
+      linewidth=2.0
       )
     ax.set_title('Agent mesh space plot')
     if savefig:
