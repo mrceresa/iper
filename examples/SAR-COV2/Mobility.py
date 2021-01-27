@@ -67,13 +67,14 @@ class Bike(Agent):
 class Stops():
     pass
 
-
 class Schedule():
-    pass
+    def __init__(self, date, time):
+        self.date = date
+        self.time = time
 
-
-
-
+    def now(date, time):ç
+        pass
+    
 
 if __name__ == "__main__":
     sched = pygtfs.Schedule(":memory:")
@@ -82,7 +83,10 @@ if __name__ == "__main__":
 
 
     
-
-    
+# DISCUSS
+# WORK AS TRAJECTORIES PRELOADED OR CHECK TIME AND READ FEED 
+# HOW TIME WORKS
+# TRAM FEED IS NOT VALID. SUGESTION: WORK FIRST WITH SUBWAY AND BUS AND THEN FIGURE OUT HOW TO WORK WITH TRAM
+# WORKPLAN, NECESSARY TO BE IN THE PROJECT REPORT? 
 
     
