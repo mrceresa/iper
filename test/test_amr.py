@@ -74,34 +74,34 @@ class TestMeshAsGraph(unittest.TestCase):
   def testGraph3D(self):
     #print("Vertices",self._grid.vertices)
     #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
-    _grid = trimesh.load("test/meshes/cube_plane.msh")
+    _grid = trimesh.load("meshes/cube_plane.msh")
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testCubeMesh3D.png", show=False, title="Test cubic space")
+    ms.plot(savefig="testCubeMesh3D.png", show=False, title="Test cubic space")
     plt.close()
 
-    _grid = trimesh.load("test/meshes/sphere.msh")
+    _grid = trimesh.load("meshes/sphere.msh")
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testShpereMesh3D.png", show=False, title="Test shperical space")
+    ms.plot(savefig="testShpereMesh3D.png", show=False, title="Test shperical space")
     plt.close()
 
-    _grid = trimesh.load("test/meshes/indheat.msh")
+    _grid = trimesh.load("meshes/indheat.msh")
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
+    ms.plot(savefig="testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
     plt.close()
 
   def testGraph2D(self):
-    _grid = trimesh.load("test/meshes/plane.msh")
+    _grid = trimesh.load("meshes/plane.msh")
 
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testPlaneMesh2D.png", 
+    ms.plot(savefig="testPlaneMesh2D.png", 
       show=False, 
       title="Test Plane space",
       cmap="jet")
@@ -109,24 +109,46 @@ class TestMeshAsGraph(unittest.TestCase):
 
 
   def testGraphMovement2D(self):
-    _grid = trimesh.load("test/meshes/plane.msh")
+    _grid = trimesh.load("meshes/plane.msh")
 
     ms = MeshSpace(_grid)
     nodes = ms.G.nodes
     starting_node = 0
+    ending_node = 10
     a = Agent(0, None)
+    short_path = (nx.shortest_path(ms.G,starting_node,ending_node))
+    # check short path 
+    self.assertEqual(short_path, [0, 19, 10])
     ms.place_agent(a, starting_node)
-    possible_steps = ms.get_neighbors(
-        a.pos,
-        include_center=False
-    )
-    self.assertEqual(possible_steps, [4, 19, 2])
-    new_position = random.choice(possible_steps)
-    ms.move_agent(a, new_position)
-    self.assertTrue(a.pos == new_position)
+    track_move = 0
+
+    while a.pos != ending_node:
+      possible_steps = ms.get_neighbors(a.pos,include_center=False)
+      #check neighbors for pos 0 pos 1 and pos 2
+      if a.pos == short_path[0]:
+        self.assertEqual(possible_steps, [4, 19, 2])
+      elif a.pos == short_path[1]:
+        self.assertEqual(possible_steps, [14, 10, 0])
+     
+      
+      for neighbor in possible_steps: 
+        if neighbor == short_path[track_move+1]:
+          new_position = neighbor
+          break
+      
+      #check we have found the new path 
+      self.assertNotEqual(a.pos, new_position)
+
+      #new_position = random.choice(possible_steps)
+      ms.move_agent(a, new_position)
+      self.assertTrue(a.pos == new_position)
+      track_move += 1
+
+    #Check that we have arrived to our destination
+    self.assertTrue(a.pos == ending_node)
 
   def testGraphMovement3D(self):
-    _grid = trimesh.load("test/meshes/sphere.msh")
+    _grid = trimesh.load("meshes/sphere.msh")
 
     ms = MeshSpace(_grid)
     nodes = ms.G.nodes
@@ -144,7 +166,7 @@ class TestMeshAsGraph(unittest.TestCase):
 
   def testMeshGrid(self):
     space, grid = MeshSpace.from_meshgrid(z=1.0)
-    space.plot(savefig="test/testFromMeshgrid.png", 
+    space.plot(savefig="testFromMeshgrid.png", 
       show=False, 
       title="Test meshgrid space",
       cmap="jet") 
@@ -161,7 +183,7 @@ class TestMeshAsGraph(unittest.TestCase):
 
     pts, p_an = create_poisson(x,y,xx,yy)    
     space = MeshSpace.from_vertices(points=pts, elevation=p_an)
-    space.plot(cmap="viridis",show=False,savefig="test/testPoisson.png")
+    space.plot(cmap="viridis",show=False,savefig="testPoisson.png")
     plt.close()
 
   def testPoissonOnPlane(self):
@@ -197,7 +219,7 @@ class TestMeshAsGraph(unittest.TestCase):
       alpha=0.6,
       ax=ax)
     
-    plt.savefig("test/testPoissonOnPlane.png")
+    plt.savefig("testPoissonOnPlane.png")
     plt.show()
 
 
@@ -215,7 +237,7 @@ class TestMeshAsGraph(unittest.TestCase):
     collec.set_array(colors)
     collec.autoscale()
     plt.colorbar(collec)
-    plt.savefig("test/testCustomField.png")
+    plt.savefig("testCustomField.png")
     #fig = plt.figure()
     #ax = fig.gca(projection='3d')
     #ax.plot_trisurf(space._tri, space._elev)
@@ -269,3 +291,4 @@ class TestMeshAsGraph(unittest.TestCase):
     
 if __name__ == "__main__":
   unittest.main()
+
