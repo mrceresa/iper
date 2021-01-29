@@ -74,7 +74,6 @@ class TestMeshAsGraph(unittest.TestCase):
   def testGraph3D(self):
     #print("Vertices",self._grid.vertices)
     #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
-<<<<<<< HEAD
     _grid = meshio.read("test/meshes/cube_plane.msh")
     ms = MeshSpace(_grid)
     
@@ -103,7 +102,6 @@ class TestMeshAsGraph(unittest.TestCase):
     
     self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
     ms.plotSurface(savefig="test/testPlaneMesh2D.png", 
-=======
     _grid = trimesh.load("meshes/cube_plane.msh")
     ms = MeshSpace(_grid)
     
@@ -125,14 +123,13 @@ class TestMeshAsGraph(unittest.TestCase):
     ms.plot(savefig="testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
     plt.close()
 
-  def testGraph2D(self):
+  def testPlane2D(self):
     _grid = trimesh.load("meshes/plane.msh")
 
     ms = MeshSpace(_grid)
     
     self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
     ms.plot(savefig="testPlaneMesh2D.png", 
->>>>>>> 8c1e304cabecde7725cd1b39b4325c604f6a2574
       show=False, 
       title="Test Plane space",
       cmap="jet")
@@ -140,11 +137,7 @@ class TestMeshAsGraph(unittest.TestCase):
 
 
   def testGraphMovement2D(self):
-<<<<<<< HEAD
     _grid = meshio.read("test/meshes/plane.msh")
-=======
-    _grid = trimesh.load("meshes/plane.msh")
->>>>>>> 8c1e304cabecde7725cd1b39b4325c604f6a2574
 
     ms = MeshSpace(_grid)
     nodes = ms.G.nodes
@@ -225,12 +218,20 @@ class TestMeshAsGraph(unittest.TestCase):
     plt.close()
 
 
-  def testAlveolo(self):
+  def testTetra(self):
     _grid = meshio.read("/Users/mario/Downloads/malla-Mario_0_0.vtu")
     import ipdb
     #ipdb.set_trace()  
     ms = MeshSpace(_grid, debug=True)
     ms.plotSurface()
+
+def testAlveolo(self):
+    _grid = meshio.read("/Users/mario/Downloads/TFG_ORIOL_CUXART/healthy.vtk")
+    import ipdb
+    #ipdb.set_trace()  
+    ms = MeshSpace(_grid, debug=True)
+    ms.plotSurface()
+
 
   def testInterpolationPoissonOnPlane(self):
     nx, ny = (41, 16)
