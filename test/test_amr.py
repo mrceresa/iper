@@ -16,7 +16,6 @@ import random
 import math
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import scipy.interpolate as interp
-import meshio
 
 def create_poisson(x, y, xx, yy):
     p_an = np.sinh(1.5*np.pi*yy / x[-1]) /\
@@ -74,62 +73,53 @@ class TestMeshAsGraph(unittest.TestCase):
   def testGraph3D(self):
     #print("Vertices",self._grid.vertices)
     #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
-    _grid = meshio.read("test/meshes/cube_plane.msh")
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/cube_plane.msh")
     
     self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
     ms.plotSurface(savefig="test/testCubeMesh3D.png", show=False, title="Test cubic space")
     plt.close()
 
-    _grid = meshio.read("test/meshes/sphere.msh")
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/sphere.msh")
     
     self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
     ms.plotSurface(savefig="test/testShpereMesh3D.png", show=False, title="Test shperical space")
     plt.close()
 
-    _grid = meshio.read("test/meshes/indheat.msh")
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/indheat.msh")
     
     self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
     ms.plotSurface(savefig="test/testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
     plt.close()
 
   def testGraph2D(self):
-    _grid = meshio.read("test/meshes/plane.msh")
-
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/plane.msh")
     
     self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
-    ms.plotSurface(savefig="test/testPlaneMesh2D.png", 
-    _grid = trimesh.load("meshes/cube_plane.msh")
-    ms = MeshSpace(_grid)
+    ms.plotSurface(savefig="test/testPlaneMesh2D.png",show=False, title="Test plane mesh")
+
+    ms, _grid = MeshSpace.read("test/meshes/cube_plane.msh")
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testCubeMesh3D.png", show=False, title="Test cubic space")
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="testCubeMesh3D.png", show=False, title="Test cubic space")
     plt.close()
 
-    _grid = trimesh.load("meshes/sphere.msh")
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/sphere.msh")
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testShpereMesh3D.png", show=False, title="Test shperical space")
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="testShpereMesh3D.png", show=False, title="Test shperical space")
     plt.close()
 
-    _grid = trimesh.load("meshes/indheat.msh")
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/indheat.msh")
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
     plt.close()
 
   def testPlane2D(self):
-    _grid = trimesh.load("meshes/plane.msh")
-
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/plane.msh")
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="testPlaneMesh2D.png", 
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="testPlaneMesh2D.png", 
       show=False, 
       title="Test Plane space",
       cmap="jet")
@@ -137,9 +127,8 @@ class TestMeshAsGraph(unittest.TestCase):
 
 
   def testGraphMovement2D(self):
-    _grid = meshio.read("test/meshes/plane.msh")
+    ms, _grid = MeshSpace.read("test/meshes/plane.msh")
 
-    ms = MeshSpace(_grid)
     nodes = ms.G.nodes
     starting_node = 0
     ending_node = 10
@@ -177,9 +166,7 @@ class TestMeshAsGraph(unittest.TestCase):
 
   def testGraphMovement3D(self):
 
-    _grid = meshio.read("test/meshes/sphere.msh")
-
-    ms = MeshSpace(_grid)
+    ms, _grid = MeshSpace.read("test/meshes/sphere.msh")
     nodes = ms.G.nodes
     starting_node = 0
     a = Agent(0, None)
@@ -219,17 +206,15 @@ class TestMeshAsGraph(unittest.TestCase):
 
 
   def testTetra(self):
-    _grid = meshio.read("/Users/mario/Downloads/malla-Mario_0_0.vtu")
+    ms, _grid = MeshSpace.read("/Users/mario/Downloads/malla-Mario_0_0.vtu")
     import ipdb
     #ipdb.set_trace()  
-    ms = MeshSpace(_grid, debug=True)
     ms.plotSurface()
 
-def testAlveolo(self):
-    _grid = meshio.read("/Users/mario/Downloads/TFG_ORIOL_CUXART/healthy.vtk")
+  def testAlveolo(self):
+    ms, _grid = MeshSpace.read("/Users/mario/Downloads/TFG_ORIOL_CUXART/healthy.vtk")
     import ipdb
     #ipdb.set_trace()  
-    ms = MeshSpace(_grid, debug=True)
     ms.plotSurface()
 
 

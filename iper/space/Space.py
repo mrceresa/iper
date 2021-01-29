@@ -26,6 +26,11 @@ class MeshSpace(NetworkGrid):
   """
 
   @staticmethod
+  def read(filename):
+    _grid = meshio.read(filename)
+    return MeshSpace(_grid, name=filename), _grid
+
+  @staticmethod
   def from_vertices(points, elevation=None):
     tess = Delaunay(points)
     #triang = mtri.Triangulation(x=points[:, 0], y=points[:, 1], triangles=tri)
@@ -38,7 +43,7 @@ class MeshSpace(NetworkGrid):
 
     cells = [("triangle", tess.simplices)]
     mesh = meshio.Mesh(points, cells)
-    ms = MeshSpace(mesh, tass=tess)
+    ms = MeshSpace(mesh)
     return ms
 
 
@@ -58,9 +63,9 @@ class MeshSpace(NetworkGrid):
 
 
 
-  def __init__(self, mesh, tass=None, debug=False): 
+  def __init__(self, mesh, debug=False, name="New MeshSpace"): 
+    self.name = name
     self._mesh = mesh
-    if tass: self._tass = tass
     self._info = {}
     self.has_surface = False
     self.has_volume = False
@@ -83,6 +88,7 @@ class MeshSpace(NetworkGrid):
   def _processMesh(self, debug=False):
     # Generate triangulation
 
+    print("Processing mesh", self.name)
     _v = self._v
     x, y, z = _v[:,0], _v[:,1], _v[:,2]
     if debug:
@@ -133,13 +139,16 @@ class MeshSpace(NetworkGrid):
 
   def plotSurface(self, alpha=1.0, savefig=None, field=None, 
       show=True, 
-      title="Agent mesh space plot",
+      title=None,
       cmap="Blues",
       ax=None
       ):
 
     if not self.has_surface:
-      print("No surface in", self._info)
+      print("*"*5 + 
+        "Mesh %s has NO surface??"%self.name, 
+        self._info)
+
       return None, None
 
     if ax is None:
@@ -158,6 +167,7 @@ class MeshSpace(NetworkGrid):
       collec.set_array(colors)
       collec.autoscale()
 
+    if title is None: title = self.name
     ax.set_title(title)
     if savefig:
       plt.savefig(savefig)
