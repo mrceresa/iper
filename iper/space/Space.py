@@ -13,6 +13,7 @@ import matplotlib.tri as tri
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial import Delaunay
 from trimesh import Trimesh
+import meshio
 
 class MeshSpace(NetworkGrid):
   """
@@ -35,9 +36,9 @@ class MeshSpace(NetworkGrid):
       _tp[:,-1] = elevation
       points = _tp    
 
-    mesh = Trimesh(vertices=points,
-      faces=tess.simplices)
-    ms = MeshSpace(mesh)
+    cells = [("triangle", tess.simplices)]
+    mesh = meshio.Mesh(points, cells)
+    ms = MeshSpace(mesh, tass=tess)
     return ms
 
 
@@ -57,32 +58,57 @@ class MeshSpace(NetworkGrid):
 
 
 
-  def __init__(self, mesh):
+  def __init__(self, mesh, tass=None, debug=False): 
     self._mesh = mesh
-    g = self._processMesh()
+    if tass: self._tass = tass
+    self._info = {}
+    self.has_surface = False
+    self.has_volume = False
+
+    self._v = self._mesh.points;
+    self._info["points"] = self._v.shape
+
+    self._tri = self._mesh.cells_dict.get("triangle",np.asarray([]))
+    self._info["triangle"] = self._tri.shape
+    if self._info["triangle"][0] > 0: self.has_surface = True
+
+    self._tetra = self._mesh.cells_dict.get("tetra",np.asarray([]))
+    self._info["tetra"] = self._tetra.shape
+    if self._info["tetra"][0] > 0: self.has_volume = True
+
+    g = self._processMesh(debug)
+
     super().__init__(g)
 
-
-  def _processMesh(self):
+  def _processMesh(self, debug=False):
     # Generate triangulation
-    _v = self._mesh.vertices
-    x, y, z = self._mesh.vertices[:,0], self._mesh.vertices[:,1], self._mesh.vertices[:,2]
-    triang = tri.Triangulation(x, y, triangles=self._mesh.faces)
-    self._v = _v; self._tri = triang; self._elev = z
+
+    _v = self._v
+    x, y, z = _v[:,0], _v[:,1], _v[:,2]
+    if debug:
+      print(self._info)
+      import ipdb
+      #ipdb.set_trace()
 
     # Transform to a graph
     g = nx.Graph()
 
-    _ad = trimesh.graph.face_adjacency(mesh=self._mesh, return_edges=False)
-    self._adj = _ad
-    _nodes = []
-    for i, f in enumerate(self._mesh.faces):
-      loop = np.asarray([_v[f[0]], _v[f[1]], _v[f[2]]])
-      _c = np.mean(np.asarray(loop), axis=0)
-      _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
+    if self.has_surface:
+      _surface = trimesh.Trimesh(vertices=self._v, faces=self._tri)
+      triang = tri.Triangulation(x, y, triangles=self._tri)
+      self._plt_tri = triang; self._elev = z
 
-    g.add_nodes_from(_nodes)
-    g.add_edges_from(_ad)
+ 
+      _ad = trimesh.graph.face_adjacency(mesh=_surface, return_edges=False)
+      self._adj = _ad
+      _nodes = []
+      for i, f in enumerate(self._tri):
+        loop = np.asarray([_v[f[0]], _v[f[1]], _v[f[2]]])
+        _c = np.mean(np.asarray(loop), axis=0)
+        _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
+
+      g.add_nodes_from(_nodes)
+      g.add_edges_from(_ad)
     return g
 
   def getNodeField(self, field):
@@ -105,17 +131,21 @@ class MeshSpace(NetworkGrid):
         yield _c, np.nan
 
 
-  def plot(self, alpha=1.0, savefig=None, field=None, 
+  def plotSurface(self, alpha=1.0, savefig=None, field=None, 
       show=True, 
       title="Agent mesh space plot",
       cmap="Blues",
       ax=None
       ):
 
+    if not self.has_surface:
+      print("No surface in", self._info)
+      return None, None
+
     if ax is None:
       fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
     
-    collec = ax.plot_trisurf(self._tri, 
+    collec = ax.plot_trisurf(self._plt_tri, 
       self._elev, 
       cmap=cmap,
       alpha=alpha,

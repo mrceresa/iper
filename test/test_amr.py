@@ -16,13 +16,13 @@ import random
 import math
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import scipy.interpolate as interp
+import meshio
 
 def create_poisson(x, y, xx, yy):
     p_an = np.sinh(1.5*np.pi*yy / x[-1]) /\
       (np.sinh(1.5*np.pi*y[-1]/x[-1]))*np.sin(1.5*np.pi*xx/x[-1])
 
     pts = np.vstack(list(map(np.ravel, [xx,yy] ))).T
-    p_an = p_an.flatten()
     return pts, p_an
 
 def create_paraboloid(n_angles = 20,   n_radii = 10, min_radius = 0.15):
@@ -31,8 +31,8 @@ def create_paraboloid(n_angles = 20,   n_radii = 10, min_radius = 0.15):
   angles = np.linspace(0, 2*math.pi, n_angles, endpoint=False)
   angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
   angles[:, 1::2] += math.pi/n_angles
-  x = (radii*np.cos(angles)).flatten()
-  y = (radii*np.sin(angles)).flatten()
+  x = (radii*np.cos(angles)).ravel()
+  y = (radii*np.sin(angles)).ravel()
 
   pts = np.vstack([x, y]).T
   z = x*x + y*y
@@ -74,34 +74,34 @@ class TestMeshAsGraph(unittest.TestCase):
   def testGraph3D(self):
     #print("Vertices",self._grid.vertices)
     #print("Faces (%d)"%len(self._grid.faces),self._grid.faces)
-    _grid = trimesh.load("test/meshes/cube_plane.msh")
+    _grid = meshio.read("test/meshes/cube_plane.msh")
     ms = MeshSpace(_grid)
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testCubeMesh3D.png", show=False, title="Test cubic space")
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="test/testCubeMesh3D.png", show=False, title="Test cubic space")
     plt.close()
 
-    _grid = trimesh.load("test/meshes/sphere.msh")
+    _grid = meshio.read("test/meshes/sphere.msh")
     ms = MeshSpace(_grid)
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testShpereMesh3D.png", show=False, title="Test shperical space")
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="test/testShpereMesh3D.png", show=False, title="Test shperical space")
     plt.close()
 
-    _grid = trimesh.load("test/meshes/indheat.msh")
+    _grid = meshio.read("test/meshes/indheat.msh")
     ms = MeshSpace(_grid)
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="test/testComplexMesh3D.png", alpha=0.3, show=False, title="Test complex space")
     plt.close()
 
   def testGraph2D(self):
-    _grid = trimesh.load("test/meshes/plane.msh")
+    _grid = meshio.read("test/meshes/plane.msh")
 
     ms = MeshSpace(_grid)
     
-    self.assertTrue(len(_grid.faces) == len(ms.G.nodes))
-    ms.plot(savefig="test/testPlaneMesh2D.png", 
+    self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
+    ms.plotSurface(savefig="test/testPlaneMesh2D.png", 
       show=False, 
       title="Test Plane space",
       cmap="jet")
@@ -109,7 +109,7 @@ class TestMeshAsGraph(unittest.TestCase):
 
 
   def testGraphMovement2D(self):
-    _grid = trimesh.load("test/meshes/plane.msh")
+    _grid = meshio.read("test/meshes/plane.msh")
 
     ms = MeshSpace(_grid)
     nodes = ms.G.nodes
@@ -126,7 +126,7 @@ class TestMeshAsGraph(unittest.TestCase):
     self.assertTrue(a.pos == new_position)
 
   def testGraphMovement3D(self):
-    _grid = trimesh.load("test/meshes/sphere.msh")
+    _grid = meshio.read("test/meshes/sphere.msh")
 
     ms = MeshSpace(_grid)
     nodes = ms.G.nodes
@@ -144,7 +144,7 @@ class TestMeshAsGraph(unittest.TestCase):
 
   def testMeshGrid(self):
     space, grid = MeshSpace.from_meshgrid(z=1.0)
-    space.plot(savefig="test/testFromMeshgrid.png", 
+    space.plotSurface(savefig="test/testFromMeshgrid.png", 
       show=False, 
       title="Test meshgrid space",
       cmap="jet") 
@@ -159,47 +159,62 @@ class TestMeshAsGraph(unittest.TestCase):
     y = np.linspace(0,1,ny)
     xx, yy = np.meshgrid(x,y)
 
-    pts, p_an = create_poisson(x,y,xx,yy)    
+    pts, p_an = create_poisson(x,y,xx,yy)
+    p_an = p_an.ravel()
     space = MeshSpace.from_vertices(points=pts, elevation=p_an)
-    space.plot(cmap="viridis",show=False,savefig="test/testPoisson.png")
+    space.plotSurface(cmap="viridis",show=False,savefig="test/testPoisson.png")
     plt.close()
 
-  def testPoissonOnPlane(self):
+
+  def testAlveolo(self):
+    _grid = meshio.read("/Users/mario/Downloads/malla-Mario_0_0.vtu")
+    import ipdb
+    #ipdb.set_trace()  
+    ms = MeshSpace(_grid, debug=True)
+    ms.plotSurface()
+
+  def testInterpolationPoissonOnPlane(self):
     nx, ny = (41, 16)
     x = np.linspace(0,1,nx)
     y = np.linspace(0,1,ny)
     xx, yy = np.meshgrid(x,y)
 
+    #pts = np.vstack(list(map(np.ravel, [xx,yy] ))).T
     pts, p_an = create_poisson(x,y,xx,yy)
+    #print(pts.shape, p_an.shape)    
+    p_an = p_an.ravel()
+
     pspace = MeshSpace.from_vertices(pts, elevation=p_an)
-    
     space = MeshSpace.from_vertices(pts, elevation=0.0)
+    
+    #print(pts.shape, pspace._tri.triangles.shape)
+    #print(pts.shape, pspace._mesh.faces.shape)
+    #print(pts.shape, space._tri.triangles.shape)
+    #print(pts.shape, space._mesh.faces.shape)
 
     f = interp.interp1d(np.arange(p_an.size),p_an)
     colors = f(
       np.linspace(
         0,
         p_an.size-1, 
-        space._tri.triangles.shape[0]
+        space._tri.shape[0]
         )
       )
-    print("COLORS", colors.shape)
-    ax, collec = space.plot(show=False, 
+    ax, collec = space.plotSurface(show=False, 
       title="Test plane space with Poisson field",
       cmap="viridis")
     collec.set_array(colors)
     collec.autoscale()
     plt.colorbar(collec)
 
-    pspace.plot(show=False, 
+    pspace.plotSurface(show=False, 
       title="Test plane space with Poisson field",
       cmap="viridis",
       alpha=0.6,
       ax=ax)
     
-    plt.savefig("test/testPoissonOnPlane.png")
-    plt.show()
-
+    plt.savefig("test/testInterpPoissonOnPlane.png")
+    
 
   def testSurfaceCustomField(self):
     pts, z = create_paraboloid()
@@ -207,11 +222,11 @@ class TestMeshAsGraph(unittest.TestCase):
     space = MeshSpace.from_vertices(points=pts, elevation=z)
 
     # Plotting
-    ax, collec = space.plot(show=False,
+    ax, collec = space.plotSurface(show=False,
       title="Custom field on surface",
       cmap="jet")
     vals = -z #np.sin(pts[:,0]) * np.cos(pts[:,1])
-    colors = np.mean(vals[space._mesh.faces], axis=1)
+    colors = np.mean(vals[space._tri], axis=1)
     collec.set_array(colors)
     collec.autoscale()
     plt.colorbar(collec)
