@@ -9,7 +9,7 @@ import trimesh
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.tri as tri
+from matplotlib.tri import Triangulation, LinearTriInterpolator, CubicTriInterpolator
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial import Delaunay
 from trimesh import Trimesh
@@ -27,8 +27,12 @@ class MeshSpace(NetworkGrid):
 
   @staticmethod
   def read(filename):
-    _grid = meshio.read(filename)
-    return MeshSpace(_grid, name=filename), _grid
+    mesh = meshio.read(filename)
+    return MeshSpace(mesh, name=filename), mesh
+
+  def from_meshio(points, cells):
+    mesh = meshio.Mesh(points, cells)
+    return MeshSpace(mesh, name="Meshio object")
 
   @staticmethod
   def from_vertices(points, elevation=None):
@@ -93,18 +97,15 @@ class MeshSpace(NetworkGrid):
     x, y, z = _v[:,0], _v[:,1], _v[:,2]
     if debug:
       print(self._info)
-      import ipdb
-      #ipdb.set_trace()
 
     # Transform to a graph
     g = nx.Graph()
 
     if self.has_surface:
       _surface = trimesh.Trimesh(vertices=self._v, faces=self._tri)
-      triang = tri.Triangulation(x, y, triangles=self._tri)
+      triang = Triangulation(x, y, triangles=self._tri)
       self._plt_tri = triang; self._elev = z
 
- 
       _ad = trimesh.graph.face_adjacency(mesh=_surface, return_edges=False)
       self._adj = _ad
       _nodes = []

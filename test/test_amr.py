@@ -16,6 +16,8 @@ import random
 import math
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import scipy.interpolate as interp
+from matplotlib.tri import Triangulation, LinearTriInterpolator, CubicTriInterpolator
+
 
 def create_poisson(x, y, xx, yy):
     p_an = np.sinh(1.5*np.pi*yy / x[-1]) /\
@@ -96,6 +98,7 @@ class TestMeshAsGraph(unittest.TestCase):
     
     self.assertTrue(len(_grid.cells_dict["triangle"]) == len(ms.G.nodes))
     ms.plotSurface(savefig="test/testPlaneMesh2D.png",show=False, title="Test plane mesh")
+    plt.close()
 
     ms, _grid = MeshSpace.read("test/meshes/cube_plane.msh")
     
@@ -204,19 +207,58 @@ class TestMeshAsGraph(unittest.TestCase):
     space.plotSurface(cmap="viridis",show=False,savefig="test/testPoisson.png")
     plt.close()
 
-
   def testTetra(self):
     ms, _grid = MeshSpace.read("/Users/mario/Downloads/malla-Mario_0_0.vtu")
     import ipdb
     #ipdb.set_trace()  
     ms.plotSurface()
+    plt.close()
 
-  def testAlveolo(self):
-    ms, _grid = MeshSpace.read("/Users/mario/Downloads/TFG_ORIOL_CUXART/healthy.vtk")
-    import ipdb
-    #ipdb.set_trace()  
-    ms.plotSurface()
+  def testPolydata(self):
+    from vtkmodules.vtkIOLegacy import vtkPolyDataReader
+    from vtk.util.numpy_support import vtk_to_numpy
+    from vtkmodules.vtkCommonCore import vtkIdList
 
+    reader = vtkPolyDataReader()
+    reader.SetFileName('/Users/mario/Downloads/malla-Mario/malla_sup.vtk')
+    reader.ReadAllScalarsOn()
+    reader.ReadAllVectorsOn()
+    reader.Update()
+    polydata = reader.GetOutput()
+
+    points = vtk_to_numpy(polydata.GetPoints().GetData())
+
+    #def getCellIds(data):
+    #  cells = data.GetPolys()
+    #  cell_ids = []
+    #  points_per_cell = []
+    #  idList = vtkIdList()
+    #  cells.InitTraversal()
+    #  while cells.GetNextCell(idList):
+    #      points_per_cell.append(idList.GetNumberOfIds())
+    #      for i in range(0, idList.GetNumberOfIds()):
+    #          pId = idList.GetId(i)
+    #          cell_ids.append(pId)
+    #  return np.array(cell_ids), points_per_cell
+
+    #cell_ids = np.array(cell_ids)
+    cells = polydata.GetPolys()
+    nCells = cells.GetNumberOfCells()
+    array = cells.GetData()
+    # This holds true if all polys are of the same kind, e.g. triangles.
+    assert(array.GetNumberOfValues()%nCells==0)
+    nCols = array.GetNumberOfValues()//nCells
+    numpy_cells = vtk_to_numpy(array)
+    numpy_cells = numpy_cells.reshape((-1,nCols))
+    # Drop first cell that is only the number of points
+    numpy_cells = [("triangle", numpy_cells[::10,1:])] 
+    ms = MeshSpace.from_meshio(points, numpy_cells) 
+    ms.plotSurface(show=False, 
+      title="Test vtk polydata alveolar mesh (decimated)",
+      cmap="viridis",
+      savefig="test/testVTKPolydata.png",
+      alpha=0.6)
+    plt.close()
 
   def testInterpolationPoissonOnPlane(self):
     nx, ny = (41, 16)
@@ -236,6 +278,14 @@ class TestMeshAsGraph(unittest.TestCase):
     #print(pts.shape, pspace._mesh.faces.shape)
     #print(pts.shape, space._tri.triangles.shape)
     #print(pts.shape, space._mesh.faces.shape)
+    #cubic interpolation
+    fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
+    ax.scatter(pspace._v[:,0], pspace._v[:,1], p_an, marker='o')
+    ax.scatter(space._v[:,0], space._v[:,1], 0.0, marker='^')
+    #plt.show()
+
+    #fzc = LinearTriInterpolator(pspace._plt_tri,p_an)
+    #colors = fzc(pts[:,0],pts[:,1])
 
     f = interp.interp1d(np.arange(p_an.size),p_an)
     colors = f(
@@ -245,10 +295,12 @@ class TestMeshAsGraph(unittest.TestCase):
         space._tri.shape[0]
         )
       )
+    #import ipdb
+    #ipdb.set_trace()
     ax, collec = space.plotSurface(show=False, 
       title="Test plane space with Poisson field",
       cmap="viridis")
-    collec.set_array(colors)
+    collec.set_array(colors.ravel())
     collec.autoscale()
     plt.colorbar(collec)
 
@@ -259,6 +311,7 @@ class TestMeshAsGraph(unittest.TestCase):
       ax=ax)
     
     plt.savefig("test/testInterpPoissonOnPlane.png")
+    plt.close()
     
   def testSurfaceCustomField(self):
     pts, z = create_paraboloid()
@@ -275,6 +328,7 @@ class TestMeshAsGraph(unittest.TestCase):
     collec.autoscale()
     plt.colorbar(collec)
     plt.savefig("testCustomField.png")
+    plt.close()
     #fig = plt.figure()
     #ax = fig.gca(projection='3d')
     #ax.plot_trisurf(space._tri, space._elev)
