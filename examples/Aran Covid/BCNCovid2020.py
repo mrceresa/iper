@@ -2,7 +2,6 @@ from enum import IntEnum
 
 from mesa import Agent, Model
 from mesa.time import RandomActivation
-from mesa.space import MultiGrid
 from mesa_geo.geoagent import GeoAgent, AgentCreator
 from mesa_geo import GeoSpace
 
@@ -89,60 +88,6 @@ class BasicHuman(Agent):
     self.move()
     self.contact()
 
-class Human(GeoAgent):
-  def __init__(self, unique_id, model, shape, probs=None):
-    super().__init__(unique_id, model, shape)
-    # Markov transition matrix
-    self._trans = probs
-    self._vel1step = 0.4 #Km per hora
-    self.state = State.SUSC
-    self.infection_time = 0
-
-  def place_at(self, newPos):
-    self.model.grid.move_agent(self, newPos)
-    #self.model.place_at(self, newPos) for GEOSPACEPANDAS
-  
-  def get_pos(self):
-    return (self.shape.x, self.shape.y)
-
-  def new_step_position(self):
-    nx = random.uniform(-1.0, 1.0)*self._vel1step / self.model._xs["dx"]
-    ny = random.uniform(-1.0, 1.0)*self._vel1step / self.model._xs["dy"]
-    ox, oy = self.get_pos()
-    newPos = Point(ox + nx, oy + ny)
-    return newPos
-
-  def status(self):
-    """Check infection status"""
-    if self.state == State.INF:
-      d_rate = self.model.virus.death_rate
-      alive = np.random.choice([0,1], p=[d_rate, 1-d_rate])
-      if alive == 0:
-        self.model.schedule.remove(self)
-      t = self.model.schedule.time-self.infection_time
-      if t >= self.infection_time:
-        self.state = State.REM
-
-  """def contact(self):
-    cellmates = self.model.grid.get_cell_list_contents([self.pos])
-    print(len(cellmates))"""
-
-  def step(self):
-    self.status() #check the status of the agents
-
-    _log.debug("*** Agent %d stepping"%self.unique_id) 
-    newPos = self.new_step_position()
-    self.place_at(newPos) #move the agents to a new position
-
-    #self.contact()
-
-
-    #neighbors = self.model.grid.get_neighbors(self)
-
-  def __repr__(self):
-    return "Agent " + str(self.unique_id)
-    
-    
 class BCNCovid2020(Model):
 
   def __init__(self, N, basemap, width=10, height=10):
@@ -186,28 +131,6 @@ class BCNCovid2020(Model):
   def place_at(self, agent, loc):
     if self._xs["bbox"].contains(loc):
       self.grid.update_shape(agent, loc)
-
-  def createAgents(self, N):
-      
-    base = self._xs["centroid"]
-    AC = AgentCreator(Human, {"model": self})
-    agents = []
-    for i in range(N):
-      _a = AC.create_agent(
-        Point(
-          random.uniform(self._xs["w"],self._xs["e"]),
-          random.uniform(self._xs["n"],self._xs["s"])
-        ), i)
-      agents.append(_a)
-    
-    _log.info("Adding %d agents..."%len(agents))
-    self.grid.add_agents(agents)
-    for agent in agents:
-      self.schedule.add(agent)
-      infected = np.random.choice([0, 1], p=[0.98, 0.02])
-      if infected == 1:
-        agent.state = State.INF
-        agent.recovery_time = self.get_recovery_time()
 
   def create_table_stats(self):
     """pivot the model dataframe to get states count at each step"""
