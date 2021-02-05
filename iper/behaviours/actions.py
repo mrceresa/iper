@@ -8,7 +8,9 @@ class Action(object):
     if not name: name = self.__class__.__name__
     #XMLObject.__init__( self, name)
     self.name = name
-    self.l = logging.getLogger(name)        
+    self.l = logging.getLogger(name)  
+    self._pre = []
+    self._post = []      
 
 class TestAction(Action):
   def do(self, agent):
@@ -44,15 +46,17 @@ class ConsumeBasal(Action):
     agent._envSetVal("BasalMetabolism","energy",en-1)    
     
 class Eat(Action):
+  def __init__(self, food):
+    super().__init__()
+    self._food = food
     
   def do(self, agent):
-    location = agent.position
     world = agent.getWorld()
-    _food = int(agent._envGetVal("FoodProduction","food"))
-    if _food > 0:
+    _fn = int(self._food._envGetVal("FoodProduction","food"))
+    if _fn > 0:
       en = int(agent._envGetVal("BasalMetabolism","energy"))
       agent._envSetVal("BasalMetabolism","energy",en + 1)
-      agent._envSetVal("FoodProduction","food", _food - 1) > 0
+      self._food._envSetVal("FoodProduction","food", _fn - 1)
 
 class Harvest(Action):
     
@@ -66,16 +70,23 @@ class Harvest(Action):
       agent._envSetVal("FoodProduction","food",_food + 1)
       world.setValue(raster_name, location, has_food - 1)
 
-class RandomWalk(Action):
-
+class MoveTo(Action):
+  def __init__(self, direction):
+    super().__init__()
+    self._dir = direction
+    
   def do(self, agent):
-
     new_pos = (
-      agent.position._x + random.randint(-1, 2), 
-      agent.position._y + random.randint(-1, 2)
+      agent.pos[0] + self._dir[0], 
+      agent.pos[1] + self._dir[1]
                  )
-    if agent.getWorld().checkPosition(new_pos):
-      agent.position = new_pos
+
+    world = agent.getWorld()
+    if not world.grid.out_of_bounds(new_pos):
+      world.grid.move_agent(agent, new_pos)
+      
+  def __str__(self):
+    return "MoveTo%d_%d"%(self._dir[0],self._dir[1])
 
 class TouchAndInfect(Action):
 
