@@ -23,7 +23,7 @@ def main(args):
   #model.plotAll() for geospacepandas
   #plt.savefig("start.png")
   model.run_model(args.steps)
-  model.plot_results()
+  #model.plot_results()
 
   #model.plotAll()
   #plt.savefig("end.png")
