@@ -41,7 +41,7 @@ class State(IntEnum):
   SUSC = 0
   INF = 1
   REC = 2
-  DEATH = 3
+  DEAD = 3
 
 class BasicHuman(Agent):
   def __init__(self, unique_id, model):
@@ -65,10 +65,14 @@ class BasicHuman(Agent):
       drate = self.model.virus.death_rate
       alive = np.random.choice([0, 1], p=[drate, 1 - drate])
       if alive == 0:
-        self.state = State.DEATH
+        self.model.collector_counts["INF"] -= 1  # Adjust initial counts
+        self.model.collector_counts["DEAD"] += 1
+        self.state = State.DEAD
         #self.model.schedule.remove(self)
       t = self.model.schedule.time - self.infection_time
       if t >= self.recovery_time:
+        self.model.collector_counts["INF"] -= 1  # Adjust initial counts
+        self.model.collector_counts["REC"] += 1
         self.state = State.REC
 
   def contact(self):
@@ -83,10 +87,23 @@ class BasicHuman(Agent):
           other.infection_time = self.model.schedule.time
           other.recovery_time = self.model.get_recovery_time()
 
+  def update_stats(self):
+    if self.state == State.INF:
+      self.model.collector_counts['INF'] += 1
+    if self.state == State.SUSC:
+      self.model.collector_counts['SUSC'] += 1
+    if self.state == State.REC:
+      self.model.collector_counts['REC'] += 1
+    if self.state == State.DEAD:
+      self.model.collector_counts['DEAD'] += 1
+
+
   def step(self):
     self.status()
     self.move()
     self.contact()
+    self.update_stats()
+
 
 class BCNCovid2020(Model):
 
@@ -101,6 +118,15 @@ class BCNCovid2020(Model):
     self.initial_outbreak_size = 100
     self.virus = VirusCovid()
 
+    #variables for data collector
+    self.collector_counts = None
+    self.reset_counts()
+    self.collector_counts["SUSC"] = N
+    #self.datacollector = DataCollector(agent_reporters={"State": "state"})
+    self.datacollector = DataCollector(
+      {"INF": get_infected_count, "SUSC": get_susceptible_count, "REC": get_recovered_count, "DEAD": get_dead_count, }
+    )
+
     _log.info("Loading shapefiles")
 
     #self.loadShapefiles() for GEOSPACEPANDAS
@@ -109,7 +135,8 @@ class BCNCovid2020(Model):
     #self.createAgents(N)
     self.createBasicAgents(N)
 
-    self.datacollector = DataCollector(agent_reporters={"State": "state"})
+    self.datacollector.collect(self)
+
 
   def createBasicAgents(self, N):
     for i in range(N):
@@ -123,6 +150,8 @@ class BCNCovid2020(Model):
       infected = np.random.choice([0, 1], p=[0.98, 0.02])
       if infected == 1:
         a.state = State.INF
+        self.collector_counts["SUSC"] -= 1
+        self.collector_counts["INF"] += 1  # Adjust initial counts
         a.recovery_time = self.get_recovery_time()
 
   def get_recovery_time(self):
@@ -132,11 +161,14 @@ class BCNCovid2020(Model):
     if self._xs["bbox"].contains(loc):
       self.grid.update_shape(agent, loc)
 
+  def reset_counts(self):
+    self.collector_counts = {"SUSC": 0, "INF": 0, "REC": 0, "DEAD": 0, }
+
   def create_table_stats(self):
     """pivot the model dataframe to get states count at each step"""
     agent_state = self.datacollector.get_agent_vars_dataframe()
     X = pd.pivot_table(agent_state.reset_index(), index='Step', columns='State', aggfunc=np.size, fill_value=0)
-    labels = ['Susceptible', 'Infected', 'Recovered', 'Death']
+    labels = ['Susceptible', 'Infected', 'Recovered', 'Dead']
     X.columns = labels[:len(X.columns)]
     X.to_csv('sir_stats.csv', index=False)
     return X
@@ -198,14 +230,31 @@ class BCNCovid2020(Model):
     self._roads = [roads_1, roads_2]
 
   def step(self):
-    self.datacollector.collect(self)
+    self.reset_counts()
     self.schedule.step()
+    self.datacollector.collect(self)
 
   def run_model(self, n):
     for i in range(n):
       _log.info("Step %d of %d"%(i, n))
       self.step()
 
+
+# Functions needed for datacollector
+def get_infected_count(model):
+  return model.collector_counts["INF"]
+
+
+def get_susceptible_count(model):
+  return model.collector_counts["SUSC"]
+
+
+def get_recovered_count(model):
+  return model.collector_counts["REC"]
+
+
+def get_dead_count(model):
+  return model.collector_counts["DEAD"]
     
     
 
