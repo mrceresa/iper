@@ -124,8 +124,10 @@ class BCNCovid2020(Model):
     self.collector_counts["SUSC"] = N
     #self.datacollector = DataCollector(agent_reporters={"State": "state"})
     self.datacollector = DataCollector(
-      {"INF": get_infected_count, "SUSC": get_susceptible_count, "REC": get_recovered_count, "DEAD": get_dead_count, }
+      {"INF": get_infected_count, "SUSC": get_susceptible_count, "REC": get_recovered_count, "DEAD": get_dead_count, },
+      tables = {"DC_Table": {"Steps":[], "Infected":[], "Susceptible":[], "Recovered":[], "Dead":[]}}
     )
+
 
     _log.info("Loading shapefiles")
 
@@ -164,22 +166,19 @@ class BCNCovid2020(Model):
   def reset_counts(self):
     self.collector_counts = {"SUSC": 0, "INF": 0, "REC": 0, "DEAD": 0, }
 
-  def create_table_stats(self):
-    """pivot the model dataframe to get states count at each step"""
-    agent_state = self.datacollector.get_agent_vars_dataframe()
-    X = pd.pivot_table(agent_state.reset_index(), index='Step', columns='State', aggfunc=np.size, fill_value=0)
-    labels = ['Susceptible', 'Infected', 'Recovered', 'Dead']
-    X.columns = labels[:len(X.columns)]
-    X.to_csv('sir_stats.csv', index=False)
-    return X
-
   def plot_results(self, title=''):
     """Plot cases per country"""
-
-    X = self.create_table_stats()
+    X = self.datacollector.get_table_dataframe("DC_Table")
+    X.to_csv('sir_stats.csv', index=False)
     X.plot.line().get_figure().savefig('sir_stats.png')
 
 
+  def update_DC_table(self):
+    # collect "Strategies" table data
+    step_num = self.schedule.steps
+    next_row = {'Steps': step_num, 'Infected': get_infected_count(self),
+                'Susceptible': get_susceptible_count(self), 'Recovered': get_recovered_count(self), 'Dead': get_dead_count(self)}
+    self.datacollector.add_table_row("DC_Table", next_row, ignore_missing=True)
 
 
   def plotAll(self):
@@ -233,6 +232,7 @@ class BCNCovid2020(Model):
     self.reset_counts()
     self.schedule.step()
     self.datacollector.collect(self)
+    self.update_DC_table()
 
   def run_model(self, n):
     for i in range(n):
