@@ -1,4 +1,4 @@
-from BCNCovid2020wFriends import BasicHuman, BCNCovid2020, State
+from BCNCovid2020wFriendsSEIRHD import BasicHuman, BCNCovid2020, State
 
 from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 from mesa.visualization.UserParam import UserSettableParameter
@@ -20,6 +20,10 @@ def agent_portrayal(agent):
     if agent.state == State.SUSC:
         portrayal["Color"] = "green"
         portrayal["Layer"] = 0
+    elif agent.state == State.EXP:
+        portrayal["Color"] = "yellow"
+        portrayal["Layer"] = 1
+        portrayal["r"] = 0.4
     elif agent.state == State.INF:
         portrayal["Color"] = "red"
         portrayal["Layer"] = 1
@@ -28,8 +32,12 @@ def agent_portrayal(agent):
         portrayal["Color"] = "blue"
         portrayal["Layer"] = 2
         portrayal["r"] = 0.3
-    elif agent.state == State.DEAD:
+    elif agent.state == State.HOSP:
         portrayal["Color"] = "gray"
+        portrayal["Layer"] = 1
+        portrayal["r"] = 0.4
+    elif agent.state == State.DEAD:
+        portrayal["Color"] = "black"
         portrayal["Layer"] = 3
         portrayal["r"] = 0.2
     return portrayal
@@ -38,9 +46,11 @@ def agent_portrayal(agent):
 grid = CanvasGrid(agent_portrayal, 50, 50, 500, 500)
 infected_chart = ChartModule(
     [
-        {"Label": "INF", "Color": "Red"},
         {"Label": "SUSC", "Color": "Green"},
+        {"Label": "EXP", "Color": "Yellow"},
+        {"Label": "INF", "Color": "Red"},
         {"Label": "REC", "Color": "Blue"},
+        {"Label": "HOSP", "Color": "Gray"},
         {"Label": "DEAD", "Color": "Black"},
     ]
 )

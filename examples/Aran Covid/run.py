@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import coloredlogs, logging
 _log = logging.getLogger(__name__)
 import pandas as pd
-from BCNCovid2020 import BCNCovid2020
+from BCNCovid2020wFriendsSEIRHD import BCNCovid2020
 import argparse
 import geopy
 geopy.geocoders.options.default_user_agent = "iper-social"
@@ -18,7 +18,7 @@ def main(args):
   
   # Start model
   _log.info("Started BCN Mobility simulator with params %s"%str(args))
-  model = BCNCovid2020(args.agents, args.basemap, width= 10, height=10)
+  model = BCNCovid2020(args.agents, args.basemap, width= 50, height=50)
   
   #model.plotAll() for geospacepandas
   #plt.savefig("start.png")
