@@ -224,8 +224,8 @@ class BCNCovid2020(Model):
 
     path = os.getcwd()
     _log.info("Loading geo data from path:"+path)
-    roads_1 = gpd.read_file(os.path.join(path, "shapefiles","1","roads-line.shp"))
-    roads_2 = gpd.read_file(os.path.join(path, "shapefiles","2","roads-line.shp"))
+    roads_1 = gpd.read_file(os.path.join(path, "../shapefiles", "1", "roads-line.shp"))
+    roads_2 = gpd.read_file(os.path.join(path, "../shapefiles", "2", "roads-line.shp"))
     self._roads = [roads_1, roads_2]
 
   def step(self):
