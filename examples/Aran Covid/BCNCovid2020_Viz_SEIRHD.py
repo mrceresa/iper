@@ -1,4 +1,4 @@
-from BCNCovid2020wFriendsSEIRHD import BasicHuman, BCNCovid2020, State
+from BCNCovid2020SEIRHD import BasicHuman, BCNCovid2020, State
 
 from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 from mesa.visualization.UserParam import UserSettableParameter

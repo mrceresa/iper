@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import coloredlogs, logging
 _log = logging.getLogger(__name__)
 import pandas as pd
-from BCNCovid2020wFriendsSEIRHD import BCNCovid2020
+from BCNCovid2020SEIRHD import BCNCovid2020
 import argparse
 import geopy
 geopy.geocoders.options.default_user_agent = "iper-social"
