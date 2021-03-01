@@ -1,2 +1,2 @@
 feed_publisher_name,feed_publisher_url,feed_lang,feed_start_date,feed_end_date,feed_version
-TMB,https://www.tmb.cat,ca,20201127,20210724,151027112020002
+TMB,https://www.tmb.cat,ca,20210215,20211012,172115022021002
