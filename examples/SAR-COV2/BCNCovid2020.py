@@ -91,6 +91,7 @@ class BCNCovid2020(Model):
 
   def createAgents(self, N):
     #base = self._xs["centroid"]
+    
     AC = AgentCreator(Human, {"model": self})
     agents = []
  
