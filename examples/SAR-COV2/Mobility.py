@@ -11,6 +11,8 @@ from datetime import datetime, timedelta
 import numpy as np
 from pyproj import CRS
 import copy
+import random
+
 
 import timeit
 
@@ -68,7 +70,7 @@ class RouteAgent(Agent):
         for t in group.trip_id:
             trajectory = self.model.st.loc[self.model.st['trip_id'] == t]
             trajectory = pd.merge(trajectory, self.model.stops[['stop_id','geometry']], on = 'stop_id')
-            gdf_trajectory = gpd.GeoDataFrame(trajectory, crs=CRS(31256))
+            gdf_trajectory = gpd.GeoDataFrame(trajectory, crs=CRS(32631))
             traj = mpd.Trajectory(gdf_trajectory, t)
             traj_dict[t] = traj
         return traj_dict    
@@ -141,9 +143,8 @@ class Human(GeoAgent):
     def __init__(self, unique_id, model, shape):
         super().__init__(unique_id, model, shape)
         self.has_goal = False
-        #Goal is a postition or node
         self.life_goals = 0  
-        self.timedate = datetime(year=2021, month=10, day=10, hour= 11, minute=0, second=0)
+        self.record_trajectories = {}
 
     def place_at(self, newPos):
         self.model.place_at(self, newPos)
@@ -152,12 +153,14 @@ class Human(GeoAgent):
         return (self.shape.x, self.shape.y)
 
     def define_goal(self):
+        random_node = random.choice(list(self.model.walkMap.G_proj.nodes))
         node = self.model.walkMap.G_proj.nodes[random_node]
         return (node['x'], node['y'])
     
     def init_goal_traj(self):
         route = self.model.walkMap.routing_by_travel_time(self.get_pos(), self.goal)
-
+        self.model.walkMap.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(self.unique_id) + '_num' + str(self.life_goals) + '.png')
+        
         df = pd.DataFrame()
         nodes, lats, lngs, times = [], [], [], []
         total_time = 0
@@ -183,17 +186,19 @@ class Human(GeoAgent):
         df['node'] = nodes
         df['time'] = pd.to_timedelta(times, unit = 'S')
         dfg = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(lngs, lats))
-        gdf_trajectory = gpd.GeoDataFrame(dfg, crs=CRS(31256))
+        gdf_trajectory = gpd.GeoDataFrame(dfg, crs=CRS(32631))
         traj = mpd.Trajectory(gdf_trajectory, self.life_goals)
-        traj.df.loc[:,'time'] = traj.df.loc[:,'time'] + self.timedate
+        traj.df.loc[:,'time'] = traj.df.loc[:,'time'] + self.model.DateTime
         traj.df.set_index('time', inplace=True)
+
+        self.record_trajectories[traj.df.index[0]] = traj
         return traj
        
     def update_goal_traj(self):
         try: 
-            new_traj = self.goal_traj.df[self.goal_traj.df.index >= self.timedate]
+            new_traj = self.goal_traj.df[self.goal_traj.df.index > self.model.DateTime]
             new_traj = new_traj.reset_index()
-            new_traj.loc[new_traj.shape[0]] = (self.timedate, '', self.goal_traj.get_position_at(self.timedate))
+            new_traj.loc[new_traj.shape[0]] = (self.model.DateTime, '', self.goal_traj.get_position_at(self.model.DateTime))
             new_traj.set_index('time', inplace=True)
             new_traj = mpd.Trajectory(new_traj, 1)
             return new_traj
@@ -208,12 +213,18 @@ class Human(GeoAgent):
             self.life_goals += 1
             self.has_goal = True
         else: 
-            newPos = Point(self.goal_traj.get_position_at(self.timedate))
+            currentPos = self.get_pos()
+            goal_df = self.goal_traj.df
+            print(len(goal_df))
+            newPos = self.goal_traj.get_position_at(self.model.DateTime)
             self.place_at(newPos)
 
             self.goal_traj = self.update_goal_traj()
 
             #neighbors = self.model.grid.get_neighbors(self)
+
+    def __repr__(self):
+        return "Agent " + str(self.unique_id)
 
 class Tram(TransportAgent):
     def __init__(self, unique_id, model, shape):
@@ -267,12 +278,20 @@ class Bike(TransportAgent):
 
 class Map_to_Graph():
     def __init__(self, place, net_type):
+        self.net_type = net_type
         root_path = os.getcwd()
         path_name = '/BCNgraphs/'+net_type+'.graphml'
         cheat = True
         if cheat == True:
-            self.G = ox.graph_from_address('Plaça Catalunya, Barcelona, Spain', dist = 1000, network_type = 'drive')
-            self.G_proj = ox.project_graph(self.G)
+            try: 
+                self.G = ox.load_graphml(root_path + '/BCNgraphs/'+'cheat'+'.graphml')
+            except:
+                self.G = ox.graph_from_address('Plaça Catalunya, Barcelona, Spain', dist = 1000, network_type = 'walk')
+                self.G_proj = ox.project_graph(self.G)
+                self.graph_consolidation()
+                ox.save_graphml(self.G_proj, root_path + '/BCNgraphs/'+'cheat'+'.osm')  
+                
+            
             self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G_proj, nodes=True, edges=True)
         else:
             try:  
@@ -298,7 +317,7 @@ class Map_to_Graph():
         return {'n': northern_node, 'e': eastern_node, 's': southern_node, 'w': western_node}
 
     def get_lat_lng_from_point(self, point):
-        node_from_point = ox.get_nearest_node(self.G, point)
+        node_from_point = ox.get_nearest_node(self.G_proj, point)
         lat = self.nodes_proj.loc[self.nodes_proj['osmid'] == node_from_point]['lat'].item()
         lon = self.nodes_proj.loc[self.nodes_proj['osmid'] == node_from_point]['lon'].item()
         return lat, lon
@@ -321,41 +340,56 @@ class Map_to_Graph():
         pass
 
     def graph_consolidation(self):
-        # Check if it returns a graph projected 
-        self.G = ox.consolidate_intersections(self.G_proj, rebuild_graph=True, tolerance=15, dead_ends=False)
+        self.G_proj = ox.consolidate_intersections(self.G_proj, rebuild_graph=True, tolerance=8, dead_ends=True)
 
     def routing_by_distance(self, origin_coord, destination_coord):
-        origin_node = ox.get_nearest_node(self.G, origin_coord)
-        destination_node = ox.get_nearest_node(self.G, destination_coord)
-        route = ox.shortest_path(self.G ,origin_node, destination_node, weight='length')
+        origin_node = ox.get_nearest_node(self.G_proj, origin_coord)
+        destination_node = ox.get_nearest_node(self.G_proj, destination_coord)
+        route = ox.shortest_path(self.G_proj ,origin_node, destination_node, weight='length')
         return route 
     
     def routing_by_travel_time(self, origin_coord, destination_coord):
-        origin_node = ox.get_nearest_node(self.G, origin_coord)
-        destination_node = ox.get_nearest_node(self.G, destination_coord)
-        hwy_speeds = {'residential': 35,
-                    'living_street': 20,
-                    'secondary': 50,
-                    'tertiary': 60}
-        self.G = ox.add_edge_speeds(self.G, hwy_speeds)
-        self.G = ox.add_edge_travel_times(self.G)
+        origin_node, dist = ox.get_nearest_node(self.G_proj, (origin_coord[1],origin_coord[0]), method='euclidean', return_dist=True)
+        #_log.info("Origin dist to node: %d"%dist)
+        destination_node, dist = ox.get_nearest_node(self.G_proj, (destination_coord[1],destination_coord[0]), method='euclidean', return_dist=True)
+        #_log.info("Destination dist to node: %d"%dist)
+        if self.net_type == 'drive':
+            hwy_speeds = {'residential': 35,
+                        'living_street': 20,
+                        'secondary': 50,
+                        'tertiary': 60}
+        elif self.net_type == 'walk':
+            hwy_speeds = {'residential': 3,
+                    'living_street': 3,
+                    'secondary': 3,
+                    'tertiary': 3}
+        elif self.net_type == 'bike':
+            hwy_speeds = {'residential': 20,
+                    'living_street': 15,
+                    'secondary': 25,
+                    'tertiary': 25}
+        self.G_proj = ox.add_edge_speeds(self.G_proj, hwy_speeds)
+        self.G_proj = ox.add_edge_travel_times(self.G_proj)
         route = ox.shortest_path(self.G_proj ,origin_node, destination_node, weight='travel_time')
         return route 
 
     def compare_routes(self, route1, route2):
-        route1_length = int(sum(ox.utils_graph.get_route_edge_attributes(self.G, route1, 'length')))
-        route2_length = int(sum(ox.utils_graph.get_route_edge_attributes(self.G, route2, 'length')))
-        route1_time = int(sum(ox.utils_graph.get_route_edge_attributes(self.G, route1, 'travel_time')))
-        route2_time = int(sum(ox.utils_graph.get_route_edge_attributes(self.G, route2, 'travel_time')))
+        route1_length = int(sum(ox.utils_graph.get_route_edge_attributes(self.G_proj, route1, 'length')))
+        route2_length = int(sum(ox.utils_graph.get_route_edge_attributes(self.G_proj, route2, 'length')))
+        route1_time = int(sum(ox.utils_graph.get_route_edge_attributes(self.G_proj, route1, 'travel_time')))
+        route2_time = int(sum(ox.utils_graph.get_route_edge_attributes(self.G_proj, route2, 'travel_time')))
         print('Route 1 is', route1_length, 'meters and takes', route1_time, 'seconds.')
         print('Route 2 is', route2_length, 'meters and takes', route2_time, 'seconds.')
 
     def plot_graph(self, ax=None, figsize=(8, 8), bgcolor="#111111", node_color="w", node_size=15, node_alpha=None, node_edgecolor="none", node_zorder=1, edge_color="#999999", edge_linewidth=1, edge_alpha=None, show=True, close=False, save=False, filepath=None, dpi=300, bbox=None):
-        fig, ax = ox.plot_graph(self.G_proj, ax=ax, figsize=figsize, bgcolor=bgcolor, node_color=node_color, node_size=node_size, node_alpha=node_alpha, node_edgecolor=node_edgecolor, node_zorder=node_zorder, edge_color=edge_color, edge_linewidth=edge_linewidth, edge_alpha=edge_alpha, show=show, close=close, save=False, filepath=filepath, dpi=dpi, bbox=bbox)
+        fig, ax = ox.plot_graph(self.G_proj, ax=ax, figsize=figsize, bgcolor=bgcolor, node_color=node_color, node_size=node_size, node_alpha=node_alpha, node_edgecolor=node_edgecolor, node_zorder=node_zorder, edge_color=edge_color, edge_linewidth=edge_linewidth, edge_alpha=edge_alpha, show=show, close=close, save=save, filepath=filepath, dpi=dpi, bbox=bbox)
         return fig, ax
     
+    def plot_graph_route(self, route, route_color, show = True, save=False, filepath=None):
+        fig, ax = ox.plot_graph_route(self.G_proj, route=route, route_color=route_color, route_linewidth=6, node_size=0, show=show, save=save, filepath=filepath)
+
     def plot_graph_routes(self, routes, route_colors ):
-        fig, ax = ox.plot_graph_routes(self.G, routes=routes, route_colors=route_colors, route_linewidth=6, node_size=0)
+        fig, ax = ox.plot_graph_routes(self.G_proj, routes=routes, route_colors=route_colors, route_linewidth=6, node_size=0)
 
 # DISCUSS
 # Work done: 
@@ -402,3 +436,8 @@ class Map_to_Graph():
 # HOW TIME WORKS
 # TRAM FEED IS NOT VALID. SUGESTION: WORK FIRST WITH SUBWAY AND BUS AND THEN FIGURE OUT HOW TO WORK WITH TRAM
 # WORKPLAN, NECESSARY TO BE IN THE PROJECT REPORT?    
+
+
+
+
+# El start hauria de coincidir amb el inici de ruta. 

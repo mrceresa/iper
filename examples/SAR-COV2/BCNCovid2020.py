@@ -1,7 +1,7 @@
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import NetworkGrid
-from Mobility import RouteAgent, Map_to_Graph
+from Mobility import RouteAgent, Map_to_Graph, Human
 
 from mesa_geo.geoagent import GeoAgent, AgentCreator
 
@@ -24,6 +24,7 @@ from io import StringIO
 import json
 
 from iper import GeoSpacePandas
+import osmnx as ox
 
 import logging
 logging.basicConfig(level = logging.DEBUG)
@@ -33,31 +34,6 @@ class VirusInformation(object):
   def __init__(self):
     self.r0 = 2.5
 
-class Human(GeoAgent):
-  def __init__(self, unique_id, model, shape, probs=None):
-    super().__init__(unique_id, model, shape)
-    # Markov transition matrix
-    self._trans = probs
-    self._vel1step = 0.4 #Km per hora
-
-  def place_at(self, newPos):
-    self.model.place_at(self, newPos)
-  
-  def get_pos(self):
-    return (self.shape.x, self.shape.y)
-
-  def step(self):
-    _log.debug("*** Agent %d stepping"%self.unique_id) 
-    nx = random.uniform(-1.0, 1.0)*self._vel1step / self.model._xs["dx"]
-    ny = random.uniform(-1.0, 1.0)*self._vel1step / self.model._xs["dy"]
-    ox, oy = self.get_pos()
-    newPos = Point(ox + nx, oy + ny)
-
-    self.place_at(newPos)
-    #neighbors = self.model.grid.get_neighbors(self)
-
-  def __repr__(self):
-    return "Agent " + str(self.unique_id)
     
 
 class BCNCovid2020(Model):
@@ -85,23 +61,22 @@ class BCNCovid2020(Model):
     _log.info("Initializing Routes")
     #self.createRouteAgents() 
 
+    self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0)
+
   def place_at(self, agent, loc):
-    if self._xs["bbox"].contains(loc):
-      self.grid.update_shape(agent, loc)
+    #if self.boundaries["bbox"].contains(loc):
+    self.grid.update_shape(agent, loc)
 
   def createAgents(self, N):
     #base = self._xs["centroid"]
-    
+
     AC = AgentCreator(Human, {"model": self})
     agents = []
  
     for i in range(N):
-      random_node = random.choice(list(self.walkMap.G.nodes))
-      _a = AC.create_agent( 
-        Point( 
-          self.walkMap.G_proj.nodes[random_node]['x'],
-          self.walkMap.G_proj.nodes[random_node]['y']
-        ), i)
+      random_node = random.choice(list(self.walkMap.G_proj.nodes))
+      x, y = self.walkMap.G_proj.nodes[random_node]['x'],self.walkMap.G_proj.nodes[random_node]['y']
+      _a = AC.create_agent(Point(x,y), i)
       agents.append(_a)
     
     _log.info("Adding %d agents..."%len(agents))
@@ -124,7 +99,7 @@ class BCNCovid2020(Model):
     self.grid._agdf.plot(ax=ax1)
     
   def loadShapefiles(self):
-    self.walkMap = Map_to_Graph('Barcelona, Spain', 'walk')  #Load the shapefiles 
+    self.walkMap = Map_to_Graph(self._basemap, 'walk')  #Load the shapefiles 
     self.boundaries = self.walkMap.get_boundaries()
     print(self.boundaries) 
 
@@ -143,7 +118,6 @@ class BCNCovid2020(Model):
     self.boundaries["dx"] = 111.32; #One degree in longitude is this in KM 
     self.boundaries["dy"] = 40075 * math.cos( self.boundaries["centroid"].y ) / 360 
     _log.info("Arc amplitude at this latitude %f, %f"%(self.boundaries["dx"], self.boundaries["dy"]))
-
 
   def load_public_transport_dataset(self):
     _log.info("Loading GTFS data")
@@ -197,11 +171,11 @@ class BCNCovid2020(Model):
   def step(self):
     self.schedule.step()
     
-
   def run_model(self, n):
     for i in range(n):
       _log.info("Step %d of %d"%(i, n))
       self.step()
+      self.DateTime += timedelta(seconds=1)
 
     
 
