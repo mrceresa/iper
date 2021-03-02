@@ -102,7 +102,10 @@ class BCNCovid2020(Model):
         indice_family+=1
         families_progressiv.append(families[indice_family])
       age=attributes_Agent.age_(distr_age)
-      work=attributes_Agent.job(distr_job)
+      if age<=18:
+        work="student"
+      else:
+        work=attributes_Agent.job(distr_job)
       AC = AgentCreator(Human, {"model": self,"family":indice_family,"job":work,"age_group":age})
       _a = AC.create_agent( 
         Point( 

@@ -18,7 +18,10 @@ def age_(distr_age):
                     break
                 else:                                
                     continue
-    return list(distr_age.keys())[indice_age]
+    A=int(list(distr_age.keys())[indice_age][0]+list(distr_age.keys())[indice_age][1])
+    B=int(list(distr_age.keys())[indice_age][-2]+list(distr_age.keys())[indice_age][-1])
+    return random.randint(A, B)
+    #return list(distr_age.keys())[indice_age]
 
 def job(distr_job):
     """
