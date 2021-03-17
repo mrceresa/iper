@@ -3,18 +3,30 @@ from Covid_class import VirusCovid, State
 from Human_Class import BasicHuman
 from Hospital_class import Hospital, Workplace
 
-
-
 from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 from mesa.visualization.UserParam import UserSettableParameter
-from mesa.visualization.ModularVisualization import ModularServer
-
+from mesa.visualization.ModularVisualization import ModularServer, VisualizationElement
 
 # {"N":30, "basemap":"Barcelona, Spain", "width":10, "height":10}
 model_params = {
     "N": UserSettableParameter("slider", "Population size", 10, 10, 100, 10),
     "basemap": "Barcelona, Spain", "width": 50, "height": 50,
 }
+
+
+class TimeElement(TextElement):
+    def __init__(self):
+        pass
+
+    def render(self, model):
+        time = getattr(model, "DateTime")
+        return "Day: " + str(time.day) + ". Hour: " + str(time.hour) + ":" + str(time.minute)
+
+        """day = model.get_day()  # get day from get_day function in model
+        hour = model.get_hour
+        hour = '{0:02.0f}:{1:02.0f}'.format(
+            *divmod(model.get_hour() * 60, 60))  # get hour from get_hour function in model & transform it to hh:mm.
+        return "Dia: " + str(day) + ". Hour: " + str(hour)"""
 
 
 def agent_portrayal(agent):
@@ -42,10 +54,10 @@ def agent_portrayal(agent):
             portrayal["Color"] = "gray"
             portrayal["Layer"] = 1
             portrayal["r"] = 0.4
-        elif agent.state == State.DEAD:
+        """elif agent.state == State.DEAD: #dont show dead agents
             portrayal["Color"] = "black"
             portrayal["Layer"] = 3
-            portrayal["r"] = 0.2
+            portrayal["r"] = 0.2"""
 
     elif isinstance(agent, Hospital):
         portrayal["Shape"] = "rect"
@@ -76,8 +88,10 @@ infected_chart = ChartModule(
     ]
 )
 
+show_time = TimeElement()
+
 server = ModularServer(BCNCovid2020,
-                       [grid, infected_chart],
+                       [show_time, grid, infected_chart],
                        "Covid Model", model_params)
 
 server.port = 8521  # The default
