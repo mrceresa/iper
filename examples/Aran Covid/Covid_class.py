@@ -1,4 +1,5 @@
 from enum import Enum
+import random
 
 
 class VirusCovid(object):
@@ -10,23 +11,27 @@ class VirusCovid(object):
         self.incubation_days_sd = 1
 
         # from INF to REC - HOSP
-        self.infection_days = 5#1
-        self.infection_days_sd = 1#7
+        self.infection_days = 5  # 1
+        self.infection_days_sd = 1  # 7
 
         # from REC to SUSC
-        self.immune_days = 3#0
-        self.immune_days_sd = 1#0
+        self.immune_days = 3  # 0
+        self.immune_days_sd = 1  # 0
 
         # from HOSP to REC - DEATH
-        self.severe_days = 2#0
-        self.severe_days_sd = 1#0
+        self.severe_days = 2  # 0
+        self.severe_days_sd = 1  # 0
 
         self.ptrans = 0.7
         self.pSympt = 0.4  # probability to present the symptoms
-        self.pTest = 0.8  # probability of test of true positive
+        self.pTest = 1  # probability of test of true positive
         self.death_rate = 0.002 / (24 * 4)
         self.severe_rate = 0.005 / (24 * 4)
 
+    def pTrans(self, Mask1, Mask2):
+        pMask1 = Mask1.maskPtrans(Mask1)
+        pMask2 = Mask2.maskPtrans(Mask2)
+        return self.ptrans * pMask1 * pMask2
 
 class State(Enum):
     SUSC = 0
@@ -48,10 +53,13 @@ class Mask(Enum):
     def __str__(self):
         return self.name
 
-    def maskPtrans(self):
-        if Mask.NONE:return 1
-        elif Mask.HYGIENIC: return 0.90
-        elif Mask.FFP2: return 0.80
+    @classmethod
+    def maskPtrans(self, mask):
+        if mask == self.NONE: return 1
+        elif mask == self.HYGIENIC: return 0.90
+        elif mask == self.FFP2: return 0.80
 
+    @classmethod
     def RandomMask(self):
-        return Mask.FFP2
+        mask_list = [Mask.NONE, Mask.HYGIENIC, Mask.FFP2]
+        return random.choice(mask_list)
