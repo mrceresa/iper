@@ -176,6 +176,9 @@ class XAgent(Agent):
     self.l.debug("Agent %s received reward %f"%(self.id, reward))          
     self._next_reward += reward
 
+  def step(self):
+    self.updateState()
+
   def updateState(self):
     #self._brain.setActions(self._behaviours)
     # Generate perceptions
@@ -274,6 +277,28 @@ class MultiEnvironmentWorld(Model):
     self._deathsinturn = []
     self._totCreated = 0
     self._totDestroyed = 0    
+    self.currentStep = 0    
+
+
+  def info(self):
+    self.l.info("TOTAL agent types %d"%len(self._agents))    
+    for k,v in self._agents.items():
+      self.l.info("%s:%d"%(k, len(v)))  
+
+  def step(self):
+    self.schedule.step()
+    
+  def run(self, n):
+    self.l.info("***** STARTING SIMULATION *******")
+    for i in range(n):
+      self.l.info("Step %d of %d"%(i, n))    
+      self.info()          
+      self.stepEnvironment()
+      self.step()
+      self.currentStep+=1
+      
+
+    self.l.info("***** FINISHED SIMULATION *******")
 
   def getAgents(self):
     return self._agentsById.values()
