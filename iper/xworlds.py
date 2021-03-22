@@ -82,6 +82,11 @@ class XAgent(Agent):
     self._brain = BaseBrain(self)
     self.pos = (0,0)
 
+  def _postInit(self):
+    self.l.warn("You are calling virtual XAgent._postInit()")
+    self.l.warn("This is to allow late initialization of you agent code")            
+    self.l.warn("Consider overriding it in you agent")                
+
   @property
   def id(self):
     return self._meta.el.get("id")

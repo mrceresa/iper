@@ -25,7 +25,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     author="Mario Ceresa, BCNMedTech",
-    author_email="",
+    author_email="mario.ceresa@upf.edu",
     url="https://github.com/bcn-medtech/iper-social-simulations",
     packages=find_packages(),
     package_data={
