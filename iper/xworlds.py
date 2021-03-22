@@ -350,17 +350,19 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
-    self.grid.place_agent(agent, agent.pos)
+    self.space.place_agent(agent, agent.pos)
     self.schedule.add(agent)
+    
     self._totCreated += 1
     self._agents.setdefault(type(agent),[]).append(agent)
     self._agentsById[agent.id]=agent
+    agent.model = self
     agent.exists=True
     agent._postInit()
 
   def removeAgent(self, agent):
     self.schedule.remove(agent)
-    self.grid.remove_agent(agent)
+    self.space.remove_agent(agent)
     self._agents[type(agent)].remove(agent)
     if not self._agents[type(agent)]:
       del self._agents[type(agent)]
