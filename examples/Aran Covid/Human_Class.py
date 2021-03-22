@@ -13,7 +13,7 @@ class BasicHuman(Agent):
         super().__init__(unique_id, model)
         self.house = None
         self.state = State.SUSC
-        self.Mask = Mask.NONE
+        self.mask = Mask.NONE
         # variable to calculate time passed since last state transition
         self.days_in_current_state = self.model.DateTime
         self.presents_virus = False  # for symptomatic and detected asymptomatic people
@@ -44,6 +44,7 @@ class BasicHuman(Agent):
                                        key=lambda c: euclidean(c, self.workplace.place))  # check shortest path to work
 
                 elif self.workplace is not None and self.pos == self.workplace.place:  # employee at workplace
+                    self.mask = self.workplace.mask
                     cellmates = self.model.grid.get_cell_list_contents([self.pos])
                     if len(cellmates) > 1:
                         for other in [i for i in cellmates if i != self]:
@@ -73,7 +74,7 @@ class BasicHuman(Agent):
                     new_position = min(possible_steps,
                                        key=lambda c: euclidean(c, self.house))  # check shortest path to house
                 else:  # agent at home
-                    self.Mask = Mask.NONE
+                    self.mask = Mask.NONE
 
         # Ill agents move to nearest hospital to be treated
         elif self.state == State.HOSP and self.pos != self.obj_place:
@@ -88,16 +89,15 @@ class BasicHuman(Agent):
 
             elif self.obj_place is not None:
 
-                if self.obj_place != self.pos: # and 7 < self.model.get_hour() <= 23:  # if has to go testing, just go
+                if self.obj_place != self.pos and 7 < self.model.get_hour() <= 23:  # if has to go testing, just go
                     print(f"Agent {self.unique_id} on their way to testing")
                     new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
 
-                elif self.obj_place == self.pos: # and 7 < self.model.get_hour() <= 23:
+                elif self.obj_place == self.pos:  # and 7 < self.model.get_hour() <= 23:
                     # once at hospital, is tested and next step will go home to quarantine
                     h = self.model.getHospitalPosition(self.obj_place)
                     h.doTest(self)
                     self.obj_place = None
-
 
         if new_position: self.model.grid.move_agent(self, new_position)
 
@@ -219,9 +219,11 @@ class BasicHuman(Agent):
         cellmates = self.model.grid.get_cell_list_contents([self.pos])
         if len(cellmates) > 1:
             for other in cellmates:
-                if isinstance(other, BasicHuman):
-                    pTrans = self.model.virus.ptrans * self.Mask.maskPtrans() * other.Mask.maskPtrans()
-                    # print(f"Agent {self.unique_id} wears {self.Mask} and agent {other.unique_id} wears {other.Mask}, thus the prob is {pTrans} ")
+                if isinstance(other, BasicHuman) and other != self:
+                    pTrans = self.model.virus.pTrans(self.mask, other.mask)
+                    print(f"Agent {self.unique_id} wears {self.mask} and agent {other.unique_id} wears {other.mask}, "
+                          f"thus the prob is {pTrans} ")
+
                     trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
                     if trans == 0 and (
                             self.state is State.INF or self.state is State.EXP) and other.state is State.SUSC:

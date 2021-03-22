@@ -237,7 +237,7 @@ class BCNCovid2020(Model):
         Ttime = (current_step - timedelta(days=Tdays)).strftime('%Y-%m-%d')
         if Ttime in self.peopleTested: del self.peopleTested[Ttime]
 
-        # People tested in the last days
+        # People tested in the last recorded days
         peopleTested = set()
         for key in self.peopleTested:
             for elem in self.peopleTested[key]:
@@ -245,7 +245,11 @@ class BCNCovid2020(Model):
 
         print(f"Lista total de agentes a testear a primera hora: {self.peopleToTest}")
 
-        for a in [a for a in self.schedule.agents]:
+        # shuffle agent list to distribute to test agents among the hospitals
+        agents_list = self.schedule.agents.copy()
+        random.shuffle(agents_list)
+        for a in agents_list:
+            # delete contacts of human agents of Adays time
             if isinstance(a, BasicHuman):
                 if Atime in a.contacts: del a.contacts[Atime]
 
@@ -255,19 +259,14 @@ class BCNCovid2020(Model):
                     if not date in self.peopleTested: self.peopleTested[date] = a.PCR_results[date]
                     else:
                         for elem in a.PCR_results[date]: self.peopleTested[date].add(elem)"""
+                # delete contact tracing of Hdays time
                 if Htime in a.PCR_testing: del a.PCR_testing[Htime]
                 if Htime in a.PCR_results: del a.PCR_results[Htime]
 
-                #print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}")
+                # print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}")
 
         print(f"Lista total de testeados: {self.peopleTested}")
         print(f"Lista total de agentes a testear: {self.peopleToTest}")
-
-
-
-
-
-
 
     def run_model(self, n):
         """ Runs the model for the 'n' number of steps """

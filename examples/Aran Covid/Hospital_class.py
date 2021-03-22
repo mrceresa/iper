@@ -1,4 +1,5 @@
 from mesa import Agent
+import Covid_class
 from Covid_class import State, Mask
 import numpy as np
 from datetime import datetime, timedelta
@@ -10,7 +11,7 @@ class Hospital(Agent):
         self.place = (self.random.randrange(self.model.grid.width), self.random.randrange(self.model.grid.height))
         self.total_capacity = int(len(self.model.schedule.agents) / 10)  # 10% of population
         self.list_pacients = set()  # patients in the hospital
-        self.PCR_availables = self.random.randrange(3, 5)
+        self.PCR_availables = 2  # self.random.randrange(3, 5)
         self.PCR_testing = {}  # patients waiting for the testing
         self.PCR_results = {}  # patients tested
         self.mask = Mask.FFP2
@@ -40,9 +41,10 @@ class Hospital(Agent):
         print(f"Agente {agent.unique_id} testeandose en hospital {self.unique_id}")
 
         today = self.model.DateTime.strftime('%Y-%m-%d')
-        if not today in self.model.peopleTested: self.model.peopleTested[today] = {agent}
-        else: self.model.peopleTested[today].add(agent)
-
+        if not today in self.model.peopleTested:
+            self.model.peopleTested[today] = {agent}
+        else:
+            self.model.peopleTested[today].add(agent)
 
         agentStatus = agent.state
         pTest = self.model.virus.pTest
@@ -54,7 +56,7 @@ class Hospital(Agent):
                 # save agent contacts for future tests
                 for key in agentcontacts:
                     for elem in agentcontacts[key]:
-                        #if not today in self.PCR_testing:
+                        # if not today in self.PCR_testing:
                         if not today in self.model.peopleToTest:
                             self.model.peopleToTest[today] = {elem}
                         else:
@@ -64,9 +66,11 @@ class Hospital(Agent):
             self.PCR_results[today] = {agent}
         else:
             self.PCR_results[today].add(agent)"""
-            # adds agents to list of people tested in model
+        # adds agents to list of people tested in model
 
     def decideTesting(self, patientsTested):
+        """ Called by model function at midnight to decide which agents will be tested from the contact tracing set
+        the next day with a 2-3 day delay."""
         PCRs = self.PCR_availables
         HospToTest = set()
 
@@ -74,28 +78,29 @@ class Hospital(Agent):
 
         if ThreeD_ago in self.model.peopleToTest and PCRs:
             for elem in self.model.peopleToTest[ThreeD_ago]:
-                if elem not in patientsTested and PCRs:
+                if elem not in patientsTested and PCRs > 0:
+                    print(f"To test {elem.unique_id}")
                     PCRs -= 1
                     HospToTest.add(elem)
-                    elem.quarantine = self.model.DateTime
+                    elem.quarantined = self.model.DateTime + timedelta(days=3)
                     elem.obj_place = self.place
 
             self.model.peopleToTest[ThreeD_ago] -= HospToTest
 
-
+        print(patientsTested)
         TwoD_ago = (self.model.DateTime - timedelta(days=2)).strftime('%Y-%m-%d')
         if PCRs and TwoD_ago in self.model.peopleToTest:
             for elem in self.model.peopleToTest[TwoD_ago]:
-                if elem not in (patientsTested | HospToTest) and PCRs:
+                if elem not in (patientsTested | HospToTest) and PCRs > 0:
                     PCRs -= 1
                     HospToTest.add(elem)
-                    self.quarantine = self.model.DateTime
+                    elem.quarantined = self.model.DateTime + timedelta(days=3)
                     elem.obj_place = self.place
 
             self.model.peopleToTest[TwoD_ago] -= HospToTest
 
-        print(f"Hoy el hospital {self.unique_id} testeara a {HospToTest}")
-        return HospToTest
+        print(f"Hoy el hospital {self.unique_id} testeara a {HospToTest} con tests {PCRs}")
+        return patientsTested | HospToTest
 
 
 class Workplace(Agent):
@@ -104,11 +109,10 @@ class Workplace(Agent):
         self.place = (self.random.randrange(self.model.grid.width), self.random.randrange(self.model.grid.height))
         self.total_capacity = 0
         self.workers = set()
-        self.mask = Mask.NONE
-        self.mask = self.mask.RandomMask()
+        self.mask = Mask.RandomMask()
 
     def __str__(self):
-        return "Workplace at " + str(self.place)
+        return "Workplace at " + str(self.place) + " with mask " + str(self.mask)
 
     def set_capacity(self, mean, sd):
         """ Sets capacity of the workplace. """
@@ -116,7 +120,7 @@ class Workplace(Agent):
         # print("Capacity of workplace: " + str(self.unique_id) + " has a capacity of " + str(self.total_capacity))
 
     def add_worker(self, agent):
-        """ Adds a worker to the workplace hospital pacients """
+        """ Adds a worker to the workplace hospital patients """
         self.workers.add(agent)
 
     def get_workers(self):
