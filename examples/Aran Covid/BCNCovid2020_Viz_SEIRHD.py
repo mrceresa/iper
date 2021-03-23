@@ -85,13 +85,23 @@ infected_chart = ChartModule(
         {"Label": "REC", "Color": "Blue"},
         {"Label": "HOSP", "Color": "Gray"},
         {"Label": "DEAD", "Color": "Black"},
-    ]
+    ], data_collector_name="datacollector"
+)
+
+hospital_chart = ChartModule(
+    [
+        {"Label": "H-SUSC", "Color": "Green"},
+        {"Label": "H-INF", "Color": "Red"},
+        {"Label": "H-REC", "Color": "Blue"},
+        {"Label": "H-HOSP", "Color": "Gray"},
+        {"Label": "H-DEAD", "Color": "Black"},
+    ], data_collector_name="hosp_collector"
 )
 
 show_time = TimeElement()
 
 server = ModularServer(BCNCovid2020,
-                       [show_time, grid, infected_chart],
+                       [show_time, grid, infected_chart, hospital_chart],
                        "Covid Model", model_params)
 
 server.port = 8521  # The default
