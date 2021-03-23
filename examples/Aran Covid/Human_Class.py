@@ -199,10 +199,14 @@ class BasicHuman(Agent):
             # Agent dies
             if alive == 0:
                 self.adjust_init_stats("HOSP", "DEAD", State.DEAD)
+                self.model.hosp_collector_counts['H-HOSP'] -= 1
+                self.model.hosp_collector_counts['H-DEAD'] += 1
                 # self.model.schedule.remove(self)
             # Agent still alive, if have passed more days than hospitalized_time, change state to Recovered
             if alive != 0 and t.days >= self.hospitalized_time:
                 self.adjust_init_stats("HOSP", "REC", State.REC)
+                self.model.hosp_collector_counts['H-HOSP'] -= 1
+                self.model.hosp_collector_counts['H-REC'] += 1
 
                 im_time = self.model.get_immune_time()
                 self.immune_time = im_time
@@ -221,9 +225,6 @@ class BasicHuman(Agent):
             for other in cellmates:
                 if isinstance(other, BasicHuman) and other != self:
                     pTrans = self.model.virus.pTrans(self.mask, other.mask)
-                    print(f"Agent {self.unique_id} wears {self.mask} and agent {other.unique_id} wears {other.mask}, "
-                          f"thus the prob is {pTrans} ")
-
                     trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
                     if trans == 0 and (
                             self.state is State.INF or self.state is State.EXP) and other.state is State.SUSC:

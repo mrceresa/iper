@@ -45,23 +45,32 @@ class BCNCovid2020(Model):
         self.schedule = RandomActivation(self)
         self.initial_outbreak_size = 100
         self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
-        # self.timetable = np.arange(0, 24, 0.25) # divide the day
-        # self.step_no = 0
+
         self.virus = VirusCovid()
         self.peopleTested = {}
         self.peopleToTest = {}
 
-        # variables for data collector
+        # variables for model data collector
         self.collector_counts = None
         self.reset_counts()
         self.collector_counts["SUSC"] = N
 
         self.datacollector = DataCollector(
             {"SUSC": get_susceptible_count, "EXP": get_exposed_count, "INF": get_infected_count,
-             "REC": get_recovered_count,
-             "HOSP": get_hosp_count, "DEAD": get_dead_count, },
-            tables={"DC_Table": {"Day": [], "Susceptible": [], "Exposed": [], "Infected": [], "Recovered": [],
+             "REC": get_recovered_count, "HOSP": get_hosp_count, "DEAD": get_dead_count, },
+            tables={"Model_DC_Table": {"Day": [], "Susceptible": [], "Exposed": [], "Infected": [], "Recovered": [],
                                  "Hospitalized": [], "Dead": []}}
+        )
+
+        # variables for hospital data collector
+        self.hosp_collector_counts = None
+        self.reset_hosp_counts()
+        self.hosp_collector_counts["H-SUSC"] = N
+        self.hosp_collector = DataCollector(
+            {"H-SUSC": get_h_susceptible_count, "H-INF": get_h_infected_count,
+             "H-REC": get_h_recovered_count, "H-HOSP": get_h_hospitalized_count, "H-DEAD": get_h_dead_count, },
+            tables={"Hosp_DC_Table": {"Day": [], "Hosp-Susceptible": [], "Hosp-Infected": [], "Hosp-Recovered": [],
+                                 "Hosp-Hospitalized": [], "Hosp-Dead": []}}
         )
 
         _log.info("Loading shapefiles")
@@ -83,6 +92,7 @@ class BCNCovid2020(Model):
         self.createSocialNetwork(N)
 
         self.datacollector.collect(self)
+        self.hosp_collector.collect(self)
 
     def createBasicAgents(self, N):
         """ Create and place the Human agents into the map"""
@@ -194,15 +204,24 @@ class BCNCovid2020(Model):
             self.grid.update_shape(agent, loc)
 
     def reset_counts(self):
-        """ Sets to 0 the counts for the datacollector """
+        """ Sets to 0 the counts for the model datacollector """
         self.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, }
+
+    def reset_hosp_counts(self):
+        """ Sets to 0 the counts for the hospital datacollector """
+        self.hosp_collector_counts = {"H-SUSC": 0, "H-INF": 0, "H-REC": 0, "H-HOSP": 0, "H-DEAD": 0, }
 
     def plot_results(self, title=''):
         """Plot cases per country"""
-        X = self.datacollector.get_table_dataframe("DC_Table")
+        X = self.datacollector.get_table_dataframe("Model_DC_Table")
         X.to_csv('sir_stats.csv', index=False)  # get the csv
         colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
         X.set_index('Day').plot.line(color=colors).get_figure().savefig('sir_stats.png')  # plot the stats
+
+        Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
+        Y.to_csv('hosp_sir_stats.csv', index=False)  # get the csv
+        colors = ["Green", "Red", "Blue", "Gray", "Black"]
+        Y.set_index('Day').plot.line(color=colors).get_figure().savefig('hosp_sir_stats.png')  # plot the stats
 
     def update_DC_table(self):
         """ Collects all statistics for the DC_Table """
@@ -210,7 +229,12 @@ class BCNCovid2020(Model):
                     'Exposed': get_exposed_count(self),
                     'Infected': get_infected_count(self), 'Recovered': get_recovered_count(self),
                     'Hospitalized': get_hosp_count(self), 'Dead': get_dead_count(self)}
-        self.datacollector.add_table_row("DC_Table", next_row, ignore_missing=True)
+        self.datacollector.add_table_row("Model_DC_Table", next_row, ignore_missing=True)
+
+        next_row2 = {'Day': self.DateTime.day, 'Hosp-Susceptible': get_h_susceptible_count(self),
+                    'Hosp-Infected': get_h_infected_count(self), 'Hosp-Recovered': get_h_recovered_count(self),
+                    'Hosp-Hospitalized': get_hosp_count(self), 'Hosp-Dead': get_h_dead_count(self)}
+        self.hosp_collector.add_table_row("Hosp_DC_Table", next_row2, ignore_missing=True)
 
     def step(self):
         """ Runs one step on the model. Resets the count, collects the data, and updated the DC_Table. """
@@ -221,8 +245,11 @@ class BCNCovid2020(Model):
 
         # next day
         self.reset_counts()
+
         self.schedule.step()
+
         self.datacollector.collect(self)
+        self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
             self.update_DC_table()
             self.clean_contact_list(current_step, Adays=2,
@@ -275,7 +302,9 @@ class BCNCovid2020(Model):
             self.step()
 
 
-# Functions needed for datacollector
+""" Functions for the data collectors """
+
+
 def get_susceptible_count(model):
     """ Returns the Susceptible human agents in the model """
     return model.collector_counts["SUSC"]
@@ -304,3 +333,28 @@ def get_hosp_count(model):
 def get_dead_count(model):
     """ Returns the Dead human agents in the model """
     return model.collector_counts["DEAD"]
+
+
+def get_h_susceptible_count(model):
+    """ Returns the Susceptible human agents in the model recorded by Hospital """
+    return model.hosp_collector_counts["H-SUSC"]
+
+
+def get_h_infected_count(model):
+    """ Returns the Infected human agents in the model recorded by Hospital"""
+    return model.hosp_collector_counts["H-INF"]
+
+
+def get_h_recovered_count(model):
+    """ Returns the Recovered human agents in the model recorded by Hospitals """
+    return model.hosp_collector_counts["H-REC"]
+
+
+def get_h_hospitalized_count(model):
+    """ Returns the Hospitalized human agents in the model recorded by Hospitals """
+    return model.hosp_collector_counts["H-HOSP"]
+
+
+def get_h_dead_count(model):
+    """ Returns the Dead human agents in the model recorded by Hospitals """
+    return model.hosp_collector_counts["H-DEAD"]

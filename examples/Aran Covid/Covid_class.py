@@ -7,7 +7,7 @@ class VirusCovid(object):
         self.r0 = 2.5
 
         # from EXP to INF
-        self.incubation_days = 2
+        self.incubation_days = 3
         self.incubation_days_sd = 1
 
         # from INF to REC - HOSP
@@ -19,7 +19,7 @@ class VirusCovid(object):
         self.immune_days_sd = 1  # 0
 
         # from HOSP to REC - DEATH
-        self.severe_days = 2  # 0
+        self.severe_days = 3  # 0
         self.severe_days_sd = 1  # 0
 
         self.ptrans = 0.7

@@ -2,6 +2,7 @@ from mesa import Agent
 import Covid_class
 from Covid_class import State, Mask
 import numpy as np
+import random
 from datetime import datetime, timedelta
 
 
@@ -51,6 +52,8 @@ class Hospital(Agent):
         true_pos = np.random.choice([True, False], p=[pTest, 1 - pTest])
         if true_pos:  # test knows true state
             if agentStatus == State.EXP or agentStatus == State.INF:
+                self.model.hosp_collector_counts['H-SUSC'] -= 1
+                self.model.hosp_collector_counts['H-INF']  += 1
                 agentcontacts = agent.contacts
                 print(f"Resulta que es positivo, da sus contactos {agentcontacts}")
                 # save agent contacts for future tests
@@ -109,7 +112,7 @@ class Workplace(Agent):
         self.place = (self.random.randrange(self.model.grid.width), self.random.randrange(self.model.grid.height))
         self.total_capacity = 0
         self.workers = set()
-        self.mask = Mask.RandomMask()
+        self.mask = random.choice([Mask.HYGIENIC, Mask.FFP2])
 
     def __str__(self):
         return "Workplace at " + str(self.place) + " with mask " + str(self.mask)
