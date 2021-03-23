@@ -321,7 +321,12 @@ class MultiEnvironmentWorld(Model):
     self._onEvent(event)
     _a, _t, _b = event._a, event._type, event._b
     self.l.debug("Agent %s notified %s on %s"%(_a, _t, _b))
-    _agent = self.getAgent(_a)    
+    _agent = self.getAgent(_a)   
+    if _agent is None:
+      self.l.debug("Agent %s WON'T be notified %s on %s"%(_a, _t, _b))       
+      self.l.debug("Can't notify because agent does not exists!")
+      self.l.debug("Maybe it was already removed? Check agent logs for details...")      
+      return 
     if _t == "death":
       self._deathsinturn.append(_a)
       _agent.toXmlFile(odir=self._aodir)
