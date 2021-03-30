@@ -21,7 +21,7 @@ from matplotlib.tri import Triangulation, LinearTriInterpolator, CubicTriInterpo
 
 class TestMeshField(unittest.TestCase):
 
-  def testField(self):
+  def testFieldOnPlane(self):
     xmin, xmax = -10, 10
     ymin, ymax = -10, 10
     _nx, _ny = (10, 10)
@@ -29,12 +29,8 @@ class TestMeshField(unittest.TestCase):
     y = np.linspace(ymin, ymax, _ny)
     xx, yy= np.meshgrid(x, y)
     points = np.vstack(list(map(np.ravel, [xx,yy] ))).T
-    print(points.shape)    
+    self.assertEqual(points.shape, (_nx*_ny, 2))    
     ms = MeshSpace.from_vertices(points, 0.0)
-    print("Mesh points:", ms._mesh.points.shape)
-    _mb = ms._mesh.cells[0]    
-    print("Mesh cells:", len(_mb))    
-    print("Mesh nodes:", len(ms.G.nodes))
     
     field = {nid: nid%2 for nid in ms.G.nodes}
     ms.setField("mod", field)
@@ -42,10 +38,38 @@ class TestMeshField(unittest.TestCase):
 
     ms.plotSurface(savefig="test/field.png", 
       show=False, 
-      title="Test meshgrid space",
+      title="Test planar field",
       cmap="jet",
       field=modf) 
     plt.close()    
+
+  def testFieldOnCube(self):
+    ms, _grid = MeshSpace.read("test/meshes/cube_plane.msh")
+    
+    field = {nid: nid%2 for nid in ms.G.nodes}
+    ms.setField("mod", field)
+    modf = ms.getFieldArray("mod")
+
+    ms.plotSurface(savefig="test/fieldCube.png", 
+      show=False, 
+      title="Test cube field",
+      cmap="jet",
+      field=modf) 
+    plt.close()
+
+  def testFieldOnSphere(self):
+    ms, _grid = MeshSpace.read("test/meshes/sphere.msh")
+    
+    field = {nid: nid%2 for nid in ms.G.nodes}
+    ms.setField("mod", field)
+    modf = ms.getFieldArray("mod")
+
+    ms.plotSurface(savefig="test/fieldSphere.png", 
+      show=False, 
+      title="Test sphere field",
+      cmap="jet",
+      field=modf) 
+    plt.close()
 
 if __name__ == "__main__":
   unittest.main()
