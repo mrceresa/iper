@@ -62,8 +62,9 @@ class MeshSpace(NetworkGrid):
     #plt.triplot(points[:,0], points[:,1], tri.simplices)
     #plt.plot(xx, yy, "o")
     #plt.show()
+  
 
-    return ms, [xx, yy]
+    return ms, [xx, yy]    
 
 
 
@@ -110,34 +111,50 @@ class MeshSpace(NetworkGrid):
       self._adj = _ad
       _nodes = []
       for i, f in enumerate(self._tri):
-        loop = np.asarray([_v[f[0]], _v[f[1]], _v[f[2]]])
+        loop = (_v[f[0]], _v[f[1]], _v[f[2]])
         _c = np.mean(np.asarray(loop), axis=0)
         _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
 
       g.add_nodes_from(_nodes)
       g.add_edges_from(_ad)
+
     return g
 
-  def getNodeField(self, field):
-    for node_id in self.G.nodes:
-      _n = self.G.nodes[node_id]
-      if field in _n:
-        yield self.G.nodes[node_id][field]
-      else:
-        yield np.nan
+
+#  def getNodeField(self, field):
+#    for node_id in self.G.nodes:
+#      _n = self.G.nodes[node_id]
+#      if field in _n:
+#        yield self.G.nodes[node_id][field]
+#      else:
+#        yield np.nan
+
+  def getField(self, name): 
+    return nx.get_node_attributes(self.G, name)
   
-  def getField(self, field):
-    """ Go through all the nodes and get the correspondig value
-    """
-    for node_id in self.G.nodes:
-      _n = self.G.nodes[node_id]
-      _c = _n["centroid"]
-      if field in _n:
-        yield _c, self.G.nodes[node_id][field]
-      else:
-        yield _c, np.nan
+  def getFieldArray(self, name):
+    return np.asarray(
+      [self.G.nodes[node_id][name] if name in self.G.nodes[node_id] 
+        else np.nan
+        for node_id in self.G.nodes 
+          
+      ])
 
-
+    
+  def setField(self, name, values): 
+    nx.set_node_attributes(self.G, values, name) 
+  
+#  def getField(self, field):
+#    """ Go through all the nodes and get the correspondig value
+#    """
+#    for node_id in self.G.nodes:
+#      _n = self.G.nodes[node_id]
+#      _c = _n["centroid"]
+#      if field in _n:
+#        yield _c, self.G.nodes[node_id][field]
+#      else:
+#        yield _c, np.nan
+        
   def plotSurface(self, alpha=1.0, savefig=None, field=None, 
       show=True, 
       title=None,
@@ -164,8 +181,8 @@ class MeshSpace(NetworkGrid):
       shade=False
       )
 
-    if field:
-      collec.set_array(colors)
+    if field is not None:
+      collec.set_array(field)
       collec.autoscale()
 
     if title is None: title = self.name
