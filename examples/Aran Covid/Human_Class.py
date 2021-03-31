@@ -24,7 +24,7 @@ class BasicHuman(Agent):
 
         self.workplace = None  # to fill with a workplace if employed
         self.obj_place = None  # agent places to go
-        self.friend_to_meet = None  # to fill with Agent to meet
+        self.friend_to_meet = set()  # to fill with Agent to meet
 
     def __repr__(self):
         return "Agent " + str(self.unique_id)
@@ -54,22 +54,23 @@ class BasicHuman(Agent):
 
             # leisure time
             elif 16 < self.model.get_hour() <= 21:  # leisure time
-                if self.friend_to_meet is None:
+                if not self.friend_to_meet:
                     if np.random.choice([0, 1],
                                         p=[0.75, 0.25]): self.look_for_friend()  # probability to meet with a friend
                     new_position = self.random.choice(possible_steps)  # choose random step
 
                 else:  # going to a meeting
                     # check shortest step towards friend new position
-                    new_position = min(possible_steps, key=lambda c: euclidean(c, self.friend_to_meet.pos))
-
-                    if self.pos == self.friend_to_meet.pos:
-                        self.add_contact(self.friend_to_meet)
-                        self.friend_to_meet = None
+                    new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
+                    cellmates = set(self.model.grid.get_cell_list_contents([self.pos]))
+                    if self.pos == self.obj_place and self.friend_to_meet.issubset(cellmates):  # wait for everyone at the meeting
+                        for friend in self.friend_to_meet:
+                            self.add_contact(friend)
+                        self.friend_to_meet = set()
 
             # go back home
             else:  # Time to go home
-                self.friend_to_meet = None  # meeting is cancelled
+                self.friend_to_meet = set()  # meeting is cancelled
                 if self.pos != self.house:
                     new_position = min(possible_steps,
                                        key=lambda c: euclidean(c, self.house))  # check shortest path to house
@@ -101,24 +102,38 @@ class BasicHuman(Agent):
 
         if new_position: self.model.grid.move_agent(self, new_position)
 
+
     def look_for_friend(self):
-        """ If the agent is in their free time, looks for a bored friend to meet. """
-        id_friend = random.sample(self.friends, 1)[0]  # gets one random each time
-        friend_agent = self.model.schedule.agents[id_friend]
+        """ Check the availability of friends to meet and arrange a meeting """
+        available_friends = [self.model.schedule.agents[friend] for friend in self.friends if not self.model.schedule.agents[friend].friend_to_meet ]
+        peopleMeeting = int(self.random.normalvariate(self.model.peopleInMeeting, self.model.peopleInMeetingSd)) # get total people meeting
+        if len(available_friends) > 0:
 
-        my_iter = iter(self.friends)
-        while friend_agent.friend_to_meet is not None:
-            try:
-                # first_friend = next(iter(self.friends))          #get first one
-                id_friend = next(my_iter)  # gets one random each time
-                friend_agent = self.model.schedule.agents[id_friend]
-            except StopIteration:
-                friend_agent = None
-                break
+            pos_x = [self.pos[0]]
+            pos_y = [self.pos[1]]
 
-        if friend_agent is not None:
-            self.friend_to_meet = friend_agent
-            friend_agent.friend_to_meet = self
+            while peopleMeeting > len(self.friend_to_meet) and available_friends: # reaches max people in meeting or friends are unavailable
+                friend_agent = random.sample(available_friends, 1)[0]  # gets one random each time
+                available_friends.remove(friend_agent)
+
+                self.friend_to_meet.add(friend_agent)
+                friend_agent.friend_to_meet.add(self)
+
+                pos_x.append(friend_agent.pos[0])
+                pos_y.append(friend_agent.pos[1])
+
+            # update the obj position to meet for all of them
+            meeting_position = ( int(sum(pos_x)/len(pos_x)), int(sum(pos_y)/len(pos_y)))
+            self.obj_place = meeting_position
+
+            for friend in self.friend_to_meet:
+                friend.friend_to_meet.update(self.friend_to_meet)
+                friend.friend_to_meet.remove(friend)
+                friend.obj_place = meeting_position
+
+
+
+
 
     def status(self):
         """Check for the infection status"""
@@ -273,3 +288,4 @@ class BasicHuman(Agent):
         self.move()
         self.contact()
         self.update_stats()
+        print(f"Agent {self.unique_id} with friends {self.friend_to_meet} at place {self.obj_place} current position {self.pos}")

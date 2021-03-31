@@ -49,6 +49,9 @@ class BCNCovid2020(Model):
         self.virus = VirusCovid()
         self.peopleTested = {}
         self.peopleToTest = {}
+        self.peopleInMeeting = 5  # max people to meet with
+        self.peopleInMeetingSd = 2
+        friendsByAgent = 3  # friends each agent chooses (does not mean total number of friends by agent, it may coincide with min)
 
         # variables for model data collector
         self.collector_counts = None
@@ -89,7 +92,7 @@ class BCNCovid2020(Model):
         self.createWorkplaces(N, N_hosp, N_work)
 
         # Set the friends and workplaces of human agents
-        self.createSocialNetwork(N)
+        self.createSocialNetwork(N, friendsByAgent)
 
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
@@ -151,16 +154,18 @@ class BCNCovid2020(Model):
                         workplace.add_worker(ag)
                     break
 
-    def createSocialNetwork(self, N):
+    def createSocialNetwork(self, N, friendsByAgent):
         """ Add a set of friends for each of the human agents in the model"""
         if N < 2:
             pass
         else:
             for a in [a for a in self.schedule.agents]:
                 if isinstance(a, BasicHuman):
-                    friend = random.choice([i for i in range(0, N) if i != a.unique_id])
-                    a.friends.add(friend)
-                    self.schedule.agents[friend].friends.add(a.unique_id)
+                    friends = [i for i in range(0, N) if i != a.unique_id]
+                    for f in range(0, friendsByAgent):
+                        friend = random.choice(friends)
+                        a.friends.add(friend)
+                        self.schedule.agents[friend].friends.add(a.unique_id)
             self.printSocialNetwork()
 
     def printSocialNetwork(self):
