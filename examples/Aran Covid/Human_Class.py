@@ -32,87 +32,94 @@ class BasicHuman(Agent):
     def move(self):
         new_position = None
         possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-        if self.state != State.HOSP and self.state != State.DEAD and self.quarantined is None:  # if agent not hospitalized or dead
-            # sleeping time
-            if self.model.get_hour() <= 6:
-                pass
+        if self.state == State.SUSC or self.state == State.EXP or self.state == State.INF or self.state == State.REC:
+            if self.quarantined is None:  # if agent not hospitalized or dead
+                # sleeping time
+                if self.model.get_hour() <= 6:
+                    self.friend_to_meet = set()  # meetings are cancelled
+                    self.obj_place = None
 
-            # working time
-            elif 6 < self.model.get_hour() <= 16:  # working time
-                if self.workplace is not None and self.pos != self.workplace.place:  # Employed and not at workplace
-                    new_position = min(possible_steps,
-                                       key=lambda c: euclidean(c, self.workplace.place))  # check shortest path to work
+                # working time
+                elif 6 < self.model.get_hour() <= 16:  # working time
+                    if self.workplace is not None and self.pos != self.workplace.place:  # Employed and not at workplace
+                        new_position = min(possible_steps,
+                                           key=lambda c: euclidean(c, self.workplace.place))  # check shortest path to work
 
-                elif self.workplace is not None and self.pos == self.workplace.place:  # employee at workplace
-                    self.mask = self.workplace.mask
-                    cellmates = self.model.grid.get_cell_list_contents([self.pos])
-                    if len(cellmates) > 1:
-                        for other in [i for i in cellmates if i != self]:
-                            if isinstance(other, BasicHuman):
-                                self.add_contact(other)
+                    elif self.workplace is not None and self.pos == self.workplace.place:  # employee at workplace
+                        self.mask = self.workplace.mask
+                        cellmates = self.model.grid.get_cell_list_contents([self.pos])
+                        if len(cellmates) > 1:
+                            for other in [i for i in cellmates if i != self]:
+                                if isinstance(other, BasicHuman):
+                                    self.add_contact(other)
 
 
-            # leisure time
-            elif 16 < self.model.get_hour() <= 21:  # leisure time
-                if not self.friend_to_meet:
-                    if np.random.choice([0, 1],
-                                        p=[0.75, 0.25]): self.look_for_friend()  # probability to meet with a friend
-                    new_position = self.random.choice(possible_steps)  # choose random step
+                # leisure time
+                elif 16 < self.model.get_hour() <= 21:  # leisure time
+                    if not self.friend_to_meet:
+                        if np.random.choice([0, 1],
+                                            p=[0.75, 0.25]): self.look_for_friend()  # probability to meet with a friend
+                        new_position = self.random.choice(possible_steps)  # choose random step
 
-                else:  # going to a meeting
-                    # check shortest step towards friend new position
-                    new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
-                    cellmates = set(self.model.grid.get_cell_list_contents([self.pos]))
-                    if self.pos == self.obj_place and self.friend_to_meet.issubset(cellmates):  # wait for everyone at the meeting
-                        for friend in self.friend_to_meet:
-                            self.add_contact(friend)
-                        self.friend_to_meet = set()
+                    else:  # going to a meeting
+                        # check shortest step towards friend new position
+                        new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
+                        cellmates = set(self.model.grid.get_cell_list_contents([self.pos]))
+                        if self.pos == self.obj_place and self.friend_to_meet.issubset(
+                                cellmates):  # wait for everyone at the meeting
+                            for friend in self.friend_to_meet:
+                                self.add_contact(friend)
+                            self.friend_to_meet = set()
+                            self.obj_place = None
 
-            # go back home
-            else:  # Time to go home
-                self.friend_to_meet = set()  # meeting is cancelled
-                if self.pos != self.house:
+                # go back home
+                else:  # Time to go home
+                    if self.pos != self.house:
+                        new_position = min(possible_steps,
+                                           key=lambda c: euclidean(c, self.house))  # check shortest path to house
+                    else:  # agent at home
+                        self.mask = Mask.NONE
+            # Agent is self.quarantined
+            elif self.quarantined is not None:
+                if self.pos != self.house and self.obj_place is None:  # if has been tested, go home
                     new_position = min(possible_steps,
                                        key=lambda c: euclidean(c, self.house))  # check shortest path to house
-                else:  # agent at home
-                    self.mask = Mask.NONE
+
+                elif self.obj_place is not None:
+
+                    if self.obj_place != self.pos and 7 < self.model.get_hour() <= 23:  # if has to go testing, just go
+                        # print(f"Agent {self.unique_id} on their way to testing")
+                        new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
+
+                    elif self.obj_place == self.pos:  # and 7 < self.model.get_hour() <= 23:
+                        # once at hospital, is tested and next step will go home to quarantine
+                        h = self.model.getHospitalPosition(self.obj_place)
+                        h.doTest(self)
+                        self.obj_place = None
 
         # Ill agents move to nearest hospital to be treated
-        elif self.state == State.HOSP and self.pos != self.obj_place:
-            new_position = min(possible_steps,
+        elif self.state == State.HOSP:
+            if self.pos != self.obj_place:
+                print(f"Agent {self.unique_id} at place {self.pos} going to hospital {self.obj_place}")
+                new_position = min(possible_steps,
                                key=lambda c: euclidean(c, self.obj_place))  # check shortest path to work
 
-        # Agent is self.quarantined
-        elif self.quarantined:
-            if self.pos != self.house and self.obj_place is None:  # if has been tested, go home
-                new_position = min(possible_steps,
-                                   key=lambda c: euclidean(c, self.house))  # check shortest path to house
-
-            elif self.obj_place is not None:
-
-                if self.obj_place != self.pos and 7 < self.model.get_hour() <= 23:  # if has to go testing, just go
-                    print(f"Agent {self.unique_id} on their way to testing")
-                    new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
-
-                elif self.obj_place == self.pos:  # and 7 < self.model.get_hour() <= 23:
-                    # once at hospital, is tested and next step will go home to quarantine
-                    h = self.model.getHospitalPosition(self.obj_place)
-                    h.doTest(self)
-                    self.obj_place = None
 
         if new_position: self.model.grid.move_agent(self, new_position)
 
-
     def look_for_friend(self):
         """ Check the availability of friends to meet and arrange a meeting """
-        available_friends = [self.model.schedule.agents[friend] for friend in self.friends if not self.model.schedule.agents[friend].friend_to_meet ]
-        peopleMeeting = int(self.random.normalvariate(self.model.peopleInMeeting, self.model.peopleInMeetingSd)) # get total people meeting
+        available_friends = [self.model.schedule.agents[friend] for friend in self.friends if
+                             not self.model.schedule.agents[friend].friend_to_meet and self.model.schedule.agents[
+                                 friend].quarantined is None and self.model.schedule.agents[friend].state != State.HOSP and self.model.schedule.agents[friend].state != State.DEAD ]
+        peopleMeeting = int(self.random.normalvariate(self.model.peopleInMeeting,
+                                                      self.model.peopleInMeetingSd))  # get total people meeting
         if len(available_friends) > 0:
 
             pos_x = [self.pos[0]]
             pos_y = [self.pos[1]]
 
-            while peopleMeeting > len(self.friend_to_meet) and available_friends: # reaches max people in meeting or friends are unavailable
+            while peopleMeeting > len(self.friend_to_meet) and available_friends:  # reaches max people in meeting or friends are unavailable
                 friend_agent = random.sample(available_friends, 1)[0]  # gets one random each time
                 available_friends.remove(friend_agent)
 
@@ -123,17 +130,13 @@ class BasicHuman(Agent):
                 pos_y.append(friend_agent.pos[1])
 
             # update the obj position to meet for all of them
-            meeting_position = ( int(sum(pos_x)/len(pos_x)), int(sum(pos_y)/len(pos_y)))
+            meeting_position = (int(sum(pos_x) / len(pos_x)), int(sum(pos_y) / len(pos_y)))
             self.obj_place = meeting_position
 
             for friend in self.friend_to_meet:
                 friend.friend_to_meet.update(self.friend_to_meet)
                 friend.friend_to_meet.remove(friend)
                 friend.obj_place = meeting_position
-
-
-
-
 
     def status(self):
         """Check for the infection status"""
@@ -148,7 +151,7 @@ class BasicHuman(Agent):
                 p_sympt = self.model.virus.pSympt  # prob to being Symptomatic
                 self.presents_virus = np.random.choice([True, False], p=[p_sympt, 1 - p_sympt])
                 if self.presents_virus:
-                    print(f"Agent {self.unique_id} presents symptoms and is going to test in the hospital")
+                    # print(f"Agent {self.unique_id} presents symptoms and is going to test in the hospital")
                     self.quarantined = self.model.DateTime + timedelta(days=3)  # 3 day quarantine
                     self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
                     # print(f"Agent {self.unique_id} presents symptoms {self.presents_virus} and is quarantined until {self.quarantined.day}")
@@ -179,7 +182,9 @@ class BasicHuman(Agent):
 
                     # look for the nearest hospital
                     self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+                    print(f"Agent {self.unique_id} is now state HOSP with obj place {self.obj_place}!!")
                     self.quarantined = None
+                    self.friend_to_meet = set()
 
                 # Calculate the prob of dying
                 death_rate = self.model.virus.death_rate
@@ -288,4 +293,4 @@ class BasicHuman(Agent):
         self.move()
         self.contact()
         self.update_stats()
-        print(f"Agent {self.unique_id} with friends {self.friend_to_meet} at place {self.obj_place} current position {self.pos}")
+        # print(f"Agent {self.unique_id} with friends {self.friend_to_meet} at place {self.obj_place}")

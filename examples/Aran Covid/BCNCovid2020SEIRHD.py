@@ -35,7 +35,10 @@ _log = logging.getLogger(__name__)
 
 class BCNCovid2020(Model):
 
-    def __init__(self, N, basemap, width=50, height=50):
+    def __init__(self, N, basemap, width=50, height=50,
+                 N_hosp = 5,
+                 incubation_days=3, infection_days=5, immune_days=3,
+                 severe_days=3, ptrans=0.7, pSympt=0.8, pTest=0.9, death_rate=0.002, severe_rate= 0.005):
         super().__init__()
         _log.info("Initalizing model")
 
@@ -46,11 +49,13 @@ class BCNCovid2020(Model):
         self.initial_outbreak_size = 100
         self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
 
-        self.virus = VirusCovid()
+        self.virus = VirusCovid(incubation_days=incubation_days, incubation_days_sd=int(incubation_days*0.4), infection_days=infection_days,
+                                infection_days_sd=int(infection_days*0.4), immune_days=immune_days, immune_days_sd=int(immune_days*0.4), severe_days=severe_days,
+                                severe_days_sd=int(severe_days*0.4), ptrans=ptrans, pSympt=pSympt, pTest=pTest, death_rate= (death_rate/(24*4)), severe_rate=(severe_rate/(24*4)))
         self.peopleTested = {}
         self.peopleToTest = {}
         self.peopleInMeeting = 5  # max people to meet with
-        self.peopleInMeetingSd = 2
+        self.peopleInMeetingSd = self.peopleInMeeting *0.4
         friendsByAgent = 3  # friends each agent chooses (does not mean total number of friends by agent, it may coincide with min)
 
         # variables for model data collector
@@ -86,7 +91,7 @@ class BCNCovid2020(Model):
         self.createBasicAgents(N)
 
         # create building agents
-        N_hosp = 5
+        N_hosp = N_hosp
         N_work = int(np.ceil(N / 4))  # round up
         self.createHospitals(N, N_hosp)
         self.createWorkplaces(N, N_hosp, N_work)
@@ -129,7 +134,7 @@ class BCNCovid2020(Model):
 
     def getHospitalPosition(self, place=None):
         """ Returns the position of the Hospitals or the Hospital agent if position is given """
-        if not place:
+        if place is None:
             return [i.place for i in self.schedule.agents if isinstance(i, Hospital)]
         else:
             return [i for i in self.schedule.agents if isinstance(i, Hospital) and i.place == place][0]
@@ -275,7 +280,7 @@ class BCNCovid2020(Model):
             for elem in self.peopleTested[key]:
                 peopleTested.add(elem)
 
-        print(f"Lista total de agentes a testear a primera hora: {self.peopleToTest}")
+        #print(f"Lista total de agentes a testear a primera hora: {self.peopleToTest}")
 
         # shuffle agent list to distribute to test agents among the hospitals
         agents_list = self.schedule.agents.copy()
@@ -297,8 +302,8 @@ class BCNCovid2020(Model):
 
                 # print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}")
 
-        print(f"Lista total de testeados: {self.peopleTested}")
-        print(f"Lista total de agentes a testear: {self.peopleToTest}")
+        #print(f"Lista total de testeados: {self.peopleTested}")
+        #print(f"Lista total de agentes a testear: {self.peopleToTest}")
 
     def run_model(self, n):
         """ Runs the model for the 'n' number of steps """
