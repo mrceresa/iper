@@ -39,7 +39,7 @@ class Hospital(Agent):
     def doTest(self, agent):
         """ Tests an agent.
         If result is positive agent contacts will be added to hospital PCR testing for future tests. """
-        print(f"Agente {agent.unique_id} testeandose en hospital {self.unique_id}")
+        #print(f"Agente {agent.unique_id} testeandose en hospital {self.unique_id}")
 
         today = self.model.DateTime.strftime('%Y-%m-%d')
         if not today in self.model.peopleTested:
@@ -53,9 +53,9 @@ class Hospital(Agent):
         if true_pos:  # test knows true state
             if agentStatus == State.EXP or agentStatus == State.INF:
                 self.model.hosp_collector_counts['H-SUSC'] -= 1
-                self.model.hosp_collector_counts['H-INF']  += 1
+                self.model.hosp_collector_counts['H-INF'] += 1
                 agentcontacts = agent.contacts
-                print(f"Resulta que es positivo, da sus contactos {agentcontacts}")
+                #print(f"Resulta que es positivo, da sus contactos {agentcontacts}")
                 # save agent contacts for future tests
                 for key in agentcontacts:
                     for elem in agentcontacts[key]:
@@ -65,11 +65,7 @@ class Hospital(Agent):
                         else:
                             self.model.peopleToTest[today].add(elem)
 
-        """if not today in self.PCR_results:
-            self.PCR_results[today] = {agent}
-        else:
-            self.PCR_results[today].add(agent)"""
-        # adds agents to list of people tested in model
+
 
     def decideTesting(self, patientsTested):
         """ Called by model function at midnight to decide which agents will be tested from the contact tracing set
@@ -82,7 +78,6 @@ class Hospital(Agent):
         if ThreeD_ago in self.model.peopleToTest and PCRs:
             for elem in self.model.peopleToTest[ThreeD_ago]:
                 if elem not in patientsTested and PCRs > 0:
-                    print(f"To test {elem.unique_id}")
                     PCRs -= 1
                     HospToTest.add(elem)
                     elem.quarantined = self.model.DateTime + timedelta(days=3)
@@ -90,7 +85,7 @@ class Hospital(Agent):
 
             self.model.peopleToTest[ThreeD_ago] -= HospToTest
 
-        print(patientsTested)
+        #print(patientsTested)
         TwoD_ago = (self.model.DateTime - timedelta(days=2)).strftime('%Y-%m-%d')
         if PCRs and TwoD_ago in self.model.peopleToTest:
             for elem in self.model.peopleToTest[TwoD_ago]:
@@ -102,7 +97,7 @@ class Hospital(Agent):
 
             self.model.peopleToTest[TwoD_ago] -= HospToTest
 
-        print(f"Hoy el hospital {self.unique_id} testeara a {HospToTest} con tests {PCRs}")
+        #print(f"Hoy el hospital {self.unique_id} testeara a {HospToTest} con tests {PCRs}")
         return patientsTested | HospToTest
 
 

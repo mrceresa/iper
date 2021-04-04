@@ -11,6 +11,21 @@ from mesa.visualization.ModularVisualization import ModularServer, Visualization
 model_params = {
     "N": UserSettableParameter("slider", "Population size", 10, 10, 100, 10),
     "basemap": "Barcelona, Spain", "width": 50, "height": 50,
+    "incubation_days": UserSettableParameter("slider", "Incubation days", 3, 1, 5, 1),
+    "infection_days": UserSettableParameter("slider", "Infection days", 5, 1, 10, 1),
+    "immune_days": UserSettableParameter("slider", "Immune days", 3, 1, 5, 1),
+    "severe_days": UserSettableParameter("slider", "Severe days", 3, 1, 5, 1),
+    "ptrans": UserSettableParameter("slider", "Transmission probability", 0.7, 0, 1, 0.1),
+    "pSympt": UserSettableParameter("slider", "Symptomatic probability", 0.4, 0, 1, 0.1),
+    "pTest": UserSettableParameter("slider", "Test probability", 0.9, 0, 1, 0.1),
+    "pSympt": UserSettableParameter("slider", "Symptomatic probability", 0.4, 0, 1, 0.1),
+    "N_hosp": UserSettableParameter("slider", "Number of Hospitals", 5, 1, 10, 1),
+    "death_rate": UserSettableParameter("slider", "Death Rate", 0.02, 0, 1, 0.05),
+    "severe_rate": UserSettableParameter("slider", "Severe Rate", 0.05, 0, 1, 0.05),
+
+
+
+
 }
 
 
@@ -21,12 +36,6 @@ class TimeElement(TextElement):
     def render(self, model):
         time = getattr(model, "DateTime")
         return "Day: " + str(time.day) + ". Hour: " + str(time.hour) + ":" + str(time.minute)
-
-        """day = model.get_day()  # get day from get_day function in model
-        hour = model.get_hour
-        hour = '{0:02.0f}:{1:02.0f}'.format(
-            *divmod(model.get_hour() * 60, 60))  # get hour from get_hour function in model & transform it to hh:mm.
-        return "Dia: " + str(day) + ". Hour: " + str(hour)"""
 
 
 def agent_portrayal(agent):
@@ -44,32 +53,32 @@ def agent_portrayal(agent):
             portrayal["r"] = 0.4
         elif agent.state == State.INF:
             portrayal["Color"] = "red"
-            portrayal["Layer"] = 1
+            portrayal["Layer"] = 2
             portrayal["r"] = 0.4
         elif agent.state == State.REC:
             portrayal["Color"] = "blue"
-            portrayal["Layer"] = 2
+            portrayal["Layer"] = 3
             portrayal["r"] = 0.3
         elif agent.state == State.HOSP:
             portrayal["Color"] = "gray"
-            portrayal["Layer"] = 1
+            portrayal["Layer"] = 4
             portrayal["r"] = 0.4
-        """elif agent.state == State.DEAD: #dont show dead agents
+        elif agent.state == State.DEAD: #dont show dead agents
             portrayal["Color"] = "black"
             portrayal["Layer"] = 3
-            portrayal["r"] = 0.2"""
+            portrayal["r"] = 0.2
 
     elif isinstance(agent, Hospital):
         portrayal["Shape"] = "rect"
         portrayal["Color"] = "pink"
-        portrayal["Layer"] = 1
+        portrayal["Layer"] = 5
         portrayal["w"] = 1
         portrayal["h"] = 1
 
     elif isinstance(agent, Workplace):
         portrayal["Shape"] = "rect"
         portrayal["Color"] = "blue"
-        portrayal["Layer"] = 4
+        portrayal["Layer"] = 5
         portrayal["w"] = 1
         portrayal["h"] = 1
 
@@ -104,5 +113,5 @@ server = ModularServer(BCNCovid2020,
                        [show_time, grid, infected_chart, hospital_chart],
                        "Covid Model", model_params)
 
-server.port = 8521  # The default
+server.port = 8520  # The default
 server.launch()
