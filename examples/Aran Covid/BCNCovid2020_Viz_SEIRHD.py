@@ -20,6 +20,7 @@ model_params = {
     "pTest": UserSettableParameter("slider", "Test probability", 0.9, 0, 1, 0.1),
     "pSympt": UserSettableParameter("slider", "Symptomatic probability", 0.4, 0, 1, 0.1),
     "N_hosp": UserSettableParameter("slider", "Number of Hospitals", 5, 1, 10, 1),
+    "Hosp_capacity": UserSettableParameter("slider", "Hospital Capacity", 10, 2, 20, 2),
     "death_rate": UserSettableParameter("slider", "Death Rate", 0.02, 0, 1, 0.05),
     "severe_rate": UserSettableParameter("slider", "Severe Rate", 0.05, 0, 1, 0.05),
 

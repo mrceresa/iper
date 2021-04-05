@@ -10,7 +10,7 @@ class Hospital(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.place = (self.random.randrange(self.model.grid.width), self.random.randrange(self.model.grid.height))
-        self.total_capacity = int(len(self.model.schedule.agents) / 10)  # 10% of population
+        self.total_capacity = int(self.random.normalvariate(model.Hosp_capacity, int(model.Hosp_capacity*0.4)))   # 10% of population
         self.list_pacients = set()  # patients in the hospital
         self.PCR_availables = 2  # self.random.randrange(3, 5)
         self.PCR_testing = {}  # patients waiting for the testing
@@ -20,20 +20,13 @@ class Hospital(Agent):
     def __str__(self):
         return "Hospital at " + str(self.place) + "with " + str(self.PCR_availables) + " available tests"
 
-    def get_pacients(self):
-        """ Returns hospital pacients """
-        return len(self.list_pacients)
 
-    def new_pacient(self, agent):
-        """ Try to add a new pacient to the Hospital, otherwise return False """
-        if self.get_pacients() < self.total_capacity:
-            self.list_pacients.add(agent)
-            return True
-        else:
-            return False
+    def add_patient(self, agent):
+        """ Adds a patient """
+        self.list_pacients.add(agent)
 
-    def discharge_pacient(self, agent):
-        """ Discharges a pacient """
+    def discharge_patient(self, agent):
+        """ Discharges a patient """
         self.list_pacients.remove(agent)
 
     def doTest(self, agent):

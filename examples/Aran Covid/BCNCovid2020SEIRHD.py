@@ -36,7 +36,7 @@ _log = logging.getLogger(__name__)
 class BCNCovid2020(Model):
 
     def __init__(self, N, basemap, width=50, height=50,
-                 N_hosp = 5,
+                 N_hosp = 5, Hosp_capacity = 10,
                  incubation_days=3, infection_days=5, immune_days=3,
                  severe_days=3, ptrans=0.7, pSympt=0.8, pTest=0.9, death_rate=0.002, severe_rate= 0.005):
         super().__init__()
@@ -92,6 +92,7 @@ class BCNCovid2020(Model):
 
         # create building agents
         N_hosp = N_hosp
+        self.Hosp_capacity = Hosp_capacity
         N_work = int(np.ceil(N / 4))  # round up
         self.createHospitals(N, N_hosp)
         self.createWorkplaces(N, N_hosp, N_work)
@@ -130,7 +131,7 @@ class BCNCovid2020(Model):
             h = Hospital(i, self)
             self.schedule.add(h)
             self.grid.place_agent(h, (h.place[0], h.place[1]))
-            print(f"Hospital agent {h.unique_id} placed at {h.place[0], h.place[1]} with {h.PCR_availables} tests")
+            print(f"Hospital {h.unique_id} placed at {h.place[0], h.place[1]} with {h.PCR_availables} tests and {h.total_capacity} capacity")
 
     def getHospitalPosition(self, place=None):
         """ Returns the position of the Hospitals or the Hospital agent if position is given """
