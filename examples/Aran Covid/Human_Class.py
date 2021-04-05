@@ -173,6 +173,8 @@ class BasicHuman(Agent):
                 # Agent is hospitalized
                 if not_severe == 0:
                     self.adjust_init_stats("INF", "HOSP", State.HOSP)
+                    self.model.hosp_collector_counts['H-INF'] -= 1 # doesnt need to be, maybe it was not in the record
+                    self.model.hosp_collector_counts['H-HOSP'] += 1
 
                     sev_time = self.model.get_severe_time()
                     self.hospitalized_time = sev_time
@@ -182,15 +184,18 @@ class BasicHuman(Agent):
 
                     # look for the nearest hospital
                     self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
-                    print(f"Agent {self.unique_id} is now state HOSP with obj place {self.obj_place}!!")
+
+                    # adds patient to hospital patients list
+                    h = self.model.getHospitalPosition(self.obj_place)
+                    h.add_patient(self)
+
                     self.quarantined = None
                     self.friend_to_meet = set()
 
-                # Calculate the prob of dying
-                death_rate = self.model.virus.death_rate
-                alive = np.random.choice([0, 1], p=[death_rate, 1 - death_rate])
-                # Agent dies
-                if alive == 0: self.adjust_init_stats("INF", "DEAD", State.DEAD)
+                # Only hospitalized agents die
+                #death_rate = self.model.virus.pDeathRate(self.model)
+                #alive = np.random.choice([0, 1], p=[death_rate, 1 - death_rate])
+                #if alive == 0: self.adjust_init_stats("INF", "DEAD", State.DEAD)
 
             # agent is INF (not HOSP nor DEAD), has been INF for the infection time
             if self.state == State.INF and t.days >= self.infecting_time:
@@ -214,16 +219,24 @@ class BasicHuman(Agent):
         # For hospitalized people
         elif self.state == State.HOSP:
             # Calculate the prob of dying
-            death_rate = self.model.virus.death_rate
+            death_rate = self.model.virus.pDeathRate(self.model)
             alive = np.random.choice([0, 1], p=[death_rate, 1 - death_rate])
             # Agent dies
             if alive == 0:
+                # discharge patient
+                h = self.model.getHospitalPosition(self.obj_place)
+                h.discharge_patient(self)
+
                 self.adjust_init_stats("HOSP", "DEAD", State.DEAD)
                 self.model.hosp_collector_counts['H-HOSP'] -= 1
                 self.model.hosp_collector_counts['H-DEAD'] += 1
                 # self.model.schedule.remove(self)
             # Agent still alive, if have passed more days than hospitalized_time, change state to Recovered
             if alive != 0 and t.days >= self.hospitalized_time:
+                # discharge patient
+                h = self.model.getHospitalPosition(self.obj_place)
+                h.discharge_patient(self)
+
                 self.adjust_init_stats("HOSP", "REC", State.REC)
                 self.model.hosp_collector_counts['H-HOSP'] -= 1
                 self.model.hosp_collector_counts['H-REC'] += 1

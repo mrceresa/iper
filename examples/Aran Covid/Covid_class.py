@@ -35,6 +35,21 @@ class VirusCovid(object):
         return self.ptrans * pMask1 * pMask2
 
 
+    def pDeathRate(self, model):
+        Hosp_pos = model.getHospitalPosition() # get an array of hospital positions
+        Total_patients = 0
+        Total_Capacity = 0
+        for h_pos in Hosp_pos: # get the hospital agent
+            h = model.getHospitalPosition(h_pos)
+            Total_patients += len(h.list_pacients)
+            Total_Capacity += h.total_capacity
+
+        if Total_Capacity < Total_patients: # hospitals collapse
+            return self.death_rate * 2
+        else: return self.death_rate
+
+
+
 class State(Enum):
     SUSC = 0
     EXP = 1
