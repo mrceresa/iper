@@ -5,3 +5,5 @@ examples/SAR-COV2/prf
 examples/SAR-COV2/src/
 examples/SAR-COV2/prf2
 iper.egg-info/
+*.png
+results/
