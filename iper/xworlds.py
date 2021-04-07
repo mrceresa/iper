@@ -367,10 +367,7 @@ class MultiEnvironmentWorld(Model):
 
   def removeAgent(self, agent):
     self.schedule.remove(agent)
-    try:
-      self.space.remove_agent(agent)
-    except ValueError:
-      self.l.warn("Tried to remove agent %a from space, but it is already gone!"%str(agent))
+    self.space.remove_agent(agent)
     self._agents[type(agent)].remove(agent)
     if not self._agents[type(agent)]:
       del self._agents[type(agent)]
