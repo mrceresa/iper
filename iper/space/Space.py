@@ -14,6 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial import Delaunay
 from trimesh import Trimesh
 import meshio
+from mesa.agent import Agent
 
 class MeshSpace(NetworkGrid):
   """
@@ -90,6 +91,14 @@ class MeshSpace(NetworkGrid):
 
     super().__init__(g)
 
+  def _remove_agent(self, agent: Agent, node_id: int) -> None:
+    """ Remove an agent from a node. """
+
+    self.G.nodes[node_id]["agent"].remove(agent)
+
+  def getSize(self):
+    return self._mesh.cells[0].data.shape
+
   def _processMesh(self, debug=False):
     # Generate triangulation
 
@@ -106,6 +115,7 @@ class MeshSpace(NetworkGrid):
       _surface = trimesh.Trimesh(vertices=self._v, faces=self._tri)
       triang = Triangulation(x, y, triangles=self._tri)
       self._plt_tri = triang; self._elev = z
+      self._surface = _surface
 
       _ad = trimesh.graph.face_adjacency(mesh=_surface, return_edges=False)
       self._adj = _ad
@@ -119,6 +129,15 @@ class MeshSpace(NetworkGrid):
       g.add_edges_from(_ad)
 
     return g
+
+  def find_cell(self, pos):
+    _cp, _dist, _cellid = trimesh.proximity.closest_point(
+      self._surface,
+      np.asarray([pos])
+    )
+    
+    return int(_cellid)
+    
 
 
 #  def getNodeField(self, field):
