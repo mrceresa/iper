@@ -27,9 +27,9 @@ class MeshSpace(NetworkGrid):
   """
 
   @staticmethod
-  def read(filename):
+  def read(filename, debug=False):
     mesh = meshio.read(filename)
-    return MeshSpace(mesh, name=filename), mesh
+    return MeshSpace(mesh, name=filename, debug=debug), mesh
 
   def from_meshio(points, cells):
     mesh = meshio.Mesh(points, cells)
@@ -85,7 +85,14 @@ class MeshSpace(NetworkGrid):
 
     self._tetra = self._mesh.cells_dict.get("tetra",np.asarray([]))
     self._info["tetra"] = self._tetra.shape
-    if self._info["tetra"][0] > 0: self.has_volume = True
+    if self._info["tetra"][0] > 0: self.has_surface = True
+    
+    self._pyramid = self._mesh.cells_dict.get("pyramid",np.asarray([]))
+    self._info["pyramid"] = self._tetra.shape
+    if self._info["pyramid"][0] > 0: self.has_volume = True    
+
+    #import ipdb
+    #ipdb.set_trace()
 
     g = self._processMesh(debug)
 
@@ -102,11 +109,11 @@ class MeshSpace(NetworkGrid):
   def _processMesh(self, debug=False):
     # Generate triangulation
 
-    print("Processing mesh", self.name)
+    _log.info("Processing mesh %s"%self.name)
     _v = self._v
     x, y, z = _v[:,0], _v[:,1], _v[:,2]
     if debug:
-      print(self._info)
+      _log.info(str(self._info))
 
     # Transform to a graph
     g = nx.Graph()
