@@ -32,6 +32,8 @@ class TestMeshField(unittest.TestCase):
     self.assertEqual(points.shape, (_nx*_ny, 2))    
     ms = MeshSpace.from_vertices(points, 0.0)
     
+    self.assertEqual(ms.getSize(), (162,3))
+    
     field = {nid: nid%2 for nid in ms.G.nodes}
     ms.setField("mod", field)
     modf = ms.getFieldArray("mod")
@@ -42,7 +44,10 @@ class TestMeshField(unittest.TestCase):
       cmap="jet",
       field=modf) 
     plt.close()    
-
+  
+    _pos = (0,0,0)
+    cell_pos = ms.find_cell(_pos)
+      
   def testFieldOnCube(self):
     ms, _grid = MeshSpace.read("test/meshes/cube_plane.msh")
     
