@@ -460,7 +460,7 @@ class MultiEnvironmentWorld(Model):
     # Generate random position
     _x = random.randint(0, self.config["size"]["width"]-1)
     _y = random.randint(0, self.config["size"]["height"]-1)
-    agent.position = (_x, _y)
+    agent.pos = (_x, _y)
     # Configure environments
     self._applyEnvRequir(agent)
     
