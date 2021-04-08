@@ -16,6 +16,7 @@ from trimesh import Trimesh
 import meshio
 from mesa.agent import Agent
 
+
 class MeshSpace(NetworkGrid):
   """
     _mesh
@@ -95,16 +96,22 @@ class MeshSpace(NetworkGrid):
     #ipdb.set_trace()
 
     g = self._processMesh(debug)
+    self._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))
 
     super().__init__(g)
+
+  def place_agent(self, agent, agent_pos):
+    node_id = agent_pos[0]  
+    self._place_agent(agent, node_id)
+    agent.pos = agent_pos
 
   def _remove_agent(self, agent: Agent, node_id: int) -> None:
     """ Remove an agent from a node. """
 
     self.G.nodes[node_id]["agent"].remove(agent)
 
-  def getSize(self):
-    return self._mesh.cells[0].data.shape
+  def getSurfaceSize(self):
+    return (self._info["triangle"][0], )
 
   def _processMesh(self, debug=False):
     # Generate triangulation
@@ -138,9 +145,13 @@ class MeshSpace(NetworkGrid):
     return g
 
   def find_cell(self, pos):
+
+    pos = np.asarray([pos])
+    print(pos, len(pos))
+
     _cp, _dist, _cellid = trimesh.proximity.closest_point(
       self._surface,
-      np.asarray([pos])
+      pos
     )
     
     return int(_cellid)
