@@ -24,6 +24,7 @@ from .brains import BaseBrain, WorldState
 from .behaviours.actions import Action
 
 import pandas as pd
+import numpy as np
 
 class PopulationRequest(object):
   def __init__(self):
@@ -417,6 +418,7 @@ class MultiEnvironmentWorld(Model):
       _d = pr._data[_prefix]
       _num = _d["num"]
       _agtClass = _d["type"]
+      _gridSize = _d.get("gridSize", None)
       _templates = _d.get("templates", [])
       _behavs = _d.get("defaultBehaviours",[])
       _varsToSet =  _d.get("varsToSet",[])
@@ -433,7 +435,7 @@ class MultiEnvironmentWorld(Model):
 
         # Load templates if needed
         _agent.addTemplates(_templates)
-        self._prepareAgentForAdd(_agent)
+        self._prepareAgentForAdd(_agent, _gridSize)
         for _v in _varsToSet:
           item, value = _v.split(":")
           env, attr = item.split(".")
@@ -456,11 +458,13 @@ class MultiEnvironmentWorld(Model):
 
     self._agentsToAdd = []
         
-  def _prepareAgentForAdd(self, agent):
+  def _prepareAgentForAdd(self, agent, size):
     # Generate random position
-    _x = random.randint(0, self.config["size"]["width"]-1)
-    _y = random.randint(0, self.config["size"]["height"]-1)
-    agent.pos = (_x, _y)
+
+    if size is None: size = (self.config["size"]["width"], self.config["size"]["height"])
+    
+    agent.pos = tuple([np.random.randint(0,_i) for _i in size])
+   
     # Configure environments
     self._applyEnvRequir(agent)
     
