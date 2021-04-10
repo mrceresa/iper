@@ -41,11 +41,16 @@ class BasicHuman(Agent):
 
                 # working time
                 elif 6 < self.model.get_hour() <= 16:  # working time
+
                     if self.workplace is not None and self.pos != self.workplace.place:  # Employed and not at workplace
+                        if self.model.get_hour() == 7 and self.model.get_minutes() == 0: self.mask = Mask.RandomMask()  # wear mask for walk
                         new_position = min(possible_steps,
-                                           key=lambda c: euclidean(c, self.workplace.place))  # check shortest path to work
+                                           key=lambda c: euclidean(c,
+                                                                   self.workplace.place))  # check shortest path to work
+
 
                     elif self.workplace is not None and self.pos == self.workplace.place:  # employee at workplace
+
                         self.mask = self.workplace.mask
                         cellmates = self.model.grid.get_cell_list_contents([self.pos])
                         if len(cellmates) > 1:
@@ -56,6 +61,7 @@ class BasicHuman(Agent):
 
                 # leisure time
                 elif 16 < self.model.get_hour() <= 21:  # leisure time
+                    if self.model.get_hour() == 17 and self.model.get_minutes() == 0: self.mask = Mask.RandomMask()  # wear mask for walk
                     if not self.friend_to_meet:
                         if np.random.choice([0, 1],
                                             p=[0.75, 0.25]): self.look_for_friend()  # probability to meet with a friend
@@ -85,14 +91,18 @@ class BasicHuman(Agent):
                     new_position = min(possible_steps,
                                        key=lambda c: euclidean(c, self.house))  # check shortest path to house
 
+                elif self.pos == self.house and self.obj_place is None:
+                    self.mask = Mask.NONE
+
                 elif self.obj_place is not None:
 
                     if self.obj_place != self.pos and 7 < self.model.get_hour() <= 23:  # if has to go testing, just go
                         # print(f"Agent {self.unique_id} on their way to testing")
                         new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
 
-                    elif self.obj_place == self.pos:  # and 7 < self.model.get_hour() <= 23:
+                    elif self.obj_place == self.pos:
                         # once at hospital, is tested and next step will go home to quarantine
+                        self.mask = Mask.FFP2
                         h = self.model.getHospitalPosition(self.obj_place)
                         h.doTest(self)
                         self.obj_place = None
@@ -100,10 +110,10 @@ class BasicHuman(Agent):
         # Ill agents move to nearest hospital to be treated
         elif self.state == State.HOSP:
             if self.pos != self.obj_place:
-                print(f"Agent {self.unique_id} at place {self.pos} going to hospital {self.obj_place}")
                 new_position = min(possible_steps,
-                               key=lambda c: euclidean(c, self.obj_place))  # check shortest path to work
-
+                                   key=lambda c: euclidean(c, self.obj_place))  # check shortest path to work
+            else:  # agent is at hospital
+                self.mask = Mask.FFP2
 
         if new_position: self.model.grid.move_agent(self, new_position)
 
@@ -111,7 +121,8 @@ class BasicHuman(Agent):
         """ Check the availability of friends to meet and arrange a meeting """
         available_friends = [self.model.schedule.agents[friend] for friend in self.friends if
                              not self.model.schedule.agents[friend].friend_to_meet and self.model.schedule.agents[
-                                 friend].quarantined is None and self.model.schedule.agents[friend].state != State.HOSP and self.model.schedule.agents[friend].state != State.DEAD ]
+                                 friend].quarantined is None and self.model.schedule.agents[
+                                 friend].state != State.HOSP and self.model.schedule.agents[friend].state != State.DEAD]
         peopleMeeting = int(self.random.normalvariate(self.model.peopleInMeeting,
                                                       self.model.peopleInMeetingSd))  # get total people meeting
         if len(available_friends) > 0:
@@ -119,7 +130,8 @@ class BasicHuman(Agent):
             pos_x = [self.pos[0]]
             pos_y = [self.pos[1]]
 
-            while peopleMeeting > len(self.friend_to_meet) and available_friends:  # reaches max people in meeting or friends are unavailable
+            while peopleMeeting > len(
+                    self.friend_to_meet) and available_friends:  # reaches max people in meeting or friends are unavailable
                 friend_agent = random.sample(available_friends, 1)[0]  # gets one random each time
                 available_friends.remove(friend_agent)
 
@@ -173,7 +185,7 @@ class BasicHuman(Agent):
                 # Agent is hospitalized
                 if not_severe == 0:
                     self.adjust_init_stats("INF", "HOSP", State.HOSP)
-                    self.model.hosp_collector_counts['H-INF'] -= 1 # doesnt need to be, maybe it was not in the record
+                    self.model.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
                     self.model.hosp_collector_counts['H-HOSP'] += 1
 
                     sev_time = self.model.get_severe_time()
@@ -193,9 +205,9 @@ class BasicHuman(Agent):
                     self.friend_to_meet = set()
 
                 # Only hospitalized agents die
-                #death_rate = self.model.virus.pDeathRate(self.model)
-                #alive = np.random.choice([0, 1], p=[death_rate, 1 - death_rate])
-                #if alive == 0: self.adjust_init_stats("INF", "DEAD", State.DEAD)
+                # death_rate = self.model.virus.pDeathRate(self.model)
+                # alive = np.random.choice([0, 1], p=[death_rate, 1 - death_rate])
+                # if alive == 0: self.adjust_init_stats("INF", "DEAD", State.DEAD)
 
             # agent is INF (not HOSP nor DEAD), has been INF for the infection time
             if self.state == State.INF and t.days >= self.infecting_time:

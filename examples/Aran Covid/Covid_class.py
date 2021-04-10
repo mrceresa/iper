@@ -1,5 +1,5 @@
 from enum import Enum
-import random
+import random, numpy
 
 
 class VirusCovid(object):
@@ -81,5 +81,5 @@ class Mask(Enum):
 
     @classmethod
     def RandomMask(self):
-        mask_list = [Mask.NONE, Mask.HYGIENIC, Mask.FFP2]
-        return random.choice(mask_list)
+        a = random.choices([0, 1, 2], weights=[0.05, 0.6, 0.35], k=1)
+        return Mask(a[0])
