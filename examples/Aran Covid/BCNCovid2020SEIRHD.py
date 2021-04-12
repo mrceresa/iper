@@ -144,7 +144,7 @@ class BCNCovid2020(Model):
         """ Create and place Workplaces. Assign some of the Human agents to work on them """
         for i in range(N + N_hosp, N + N_hosp + N_work):
             w = Workplace(i, self)
-            w.set_capacity(int(np.ceil(N_work / N)), 1)
+            w.set_capacity(int(np.ceil(N / N_work)), 1)
             self.schedule.add(w)
             self.grid.place_agent(w, (w.place[0], w.place[1]))
             print(f"Workplace agent {w.unique_id} placed at {w.place[0], w.place[1]}")
@@ -158,7 +158,7 @@ class BCNCovid2020(Model):
                         ag = self.schedule.agents[ag_id]
                         ag.workplace = workplace
                         workplace.add_worker(ag)
-                    break
+                        break
 
     def createSocialNetwork(self, N, friendsByAgent):
         """ Add a set of friends for each of the human agents in the model"""
