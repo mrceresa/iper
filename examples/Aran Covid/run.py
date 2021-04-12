@@ -24,7 +24,7 @@ def main(args):
   #plt.savefig("start.png")
   model.run_model(args.steps)
 
-  model.plot_results()
+  model.plot_results(title='run_stats', hosp_title='run_hosp_stats')
 
   #model.plotAll()
   #plt.savefig("end.png")
