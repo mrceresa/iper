@@ -222,17 +222,17 @@ class BCNCovid2020(Model):
         """ Sets to 0 the counts for the hospital datacollector """
         self.hosp_collector_counts = {"H-SUSC": 0, "H-INF": 0, "H-REC": 0, "H-HOSP": 0, "H-DEAD": 0, }
 
-    def plot_results(self, title=''):
+    def plot_results(self, title='sir_stats', hosp_title='hosp_sir_stats'):
         """Plot cases per country"""
         X = self.datacollector.get_table_dataframe("Model_DC_Table")
-        X.to_csv('sir_stats.csv', index=False)  # get the csv
+        X.to_csv(title+'.csv', index=False)  # get the csv
         colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
-        X.set_index('Day').plot.line(color=colors).get_figure().savefig('sir_stats.png')  # plot the stats
+        X.set_index('Day').plot.line(color=colors).get_figure().savefig(title)  # plot the stats
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
-        Y.to_csv('hosp_sir_stats.csv', index=False)  # get the csv
+        Y.to_csv(hosp_title+'.csv', index=False)  # get the csv
         colors = ["Green", "Red", "Blue", "Gray", "Black"]
-        Y.set_index('Day').plot.line(color=colors).get_figure().savefig('hosp_sir_stats.png')  # plot the stats
+        Y.set_index('Day').plot.line(color=colors).get_figure().savefig(hosp_title+'.png')  # plot the stats
 
     def update_DC_table(self):
         """ Collects all statistics for the DC_Table """
@@ -265,6 +265,7 @@ class BCNCovid2020(Model):
             self.update_DC_table()
             self.clean_contact_list(current_step, Adays=2,
                                     Hdays=5, Tdays=10)  # clean contact lists from agents for faster computations
+            self.plot_results(title="server_stats", hosp_title="server_hosp_stats")
 
     def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
         """ Function for deleting past day contacts sets and arrange today's tests"""
