@@ -3,6 +3,7 @@ import os
 from glob import glob
 import importlib
 from iper import _sandbox_defs
+import logging
 
 class EnvironmentFactory(object):
   def __init__(self, basedir=_sandbox_defs["environments"]):
@@ -11,13 +12,14 @@ class EnvironmentFactory(object):
       os.makedirs(self._basedir)
     self._environments = {}
     self._capabilities = {}    
+    self.l = logging.getLogger(__name__)    
     
   def serialize(self):
     for e in self._environments:
       fname = os.path.join(self._basedir, "%s.xml"%e)
       v = self._environments[e]
-      print("Saving %s:", fname)
-      print(str(v))
+      self.l.debug("Saving %s:"%fname)
+      #print(str(v))
       v.toXmlFile(fname)
       
   def add(self, name, e):
@@ -31,7 +33,7 @@ class EnvironmentFactory(object):
      
   def load(self):
     for xmlf in glob(os.path.join(self._basedir,"*.xml")):
-      print("Loading %s..."%xmlf)
+      self.l.debug("Loading %s..."%xmlf)
       el = fromXmlFile(xmlf).getroot()
       _e = Environment(el.tag, el)
       self.add(el.tag, _e)
@@ -39,11 +41,11 @@ class EnvironmentFactory(object):
         self._capabilities[_c.tag] = _e
 
   def list_all(self):
-    print("* This factory contains %d models"%len(self._environments))
+    self.l.debug("* This factory contains %d models"%len(self._environments))
     for i, m in enumerate(self._environments):
-      print("**** Environment %d: %s "%(i, m))
-      print(str(self._environments[m]))
-      print("****")
+      self.l.debug("**** Environment %d: %s "%(i, m))
+      self.l.debug(str(self._environments[m]))
+      self.l.debug("****")
       
   def get(self, name):
     if name in self._environments:
@@ -63,7 +65,7 @@ class Environment(XMLObject):
     for attr in self._aa:
       classname = attr.get("sampleStrategy")
       if classname is not None:
-        print("Sampling agent population's' %s using %s distribution"%(attr.tag, classname))
+        self.l.debug("Sampling agent population's' %s using %s distribution"%(attr.tag, classname))
         _mod = __import__("numpy.random", fromlist=[classname])
         _SamplingStrategy = getattr(_mod, classname)
         low = float(attr.get("min")); high = float(attr.get("max"));
@@ -88,7 +90,7 @@ class Environment(XMLObject):
     elif len(bag) == 1:
       self._req = bag[0]
     elif len(bag) > 1:
-      print("Environment._check_structure - Merging multiple requires not implemented")
+      self.l.error("Environment._check_structure - Merging multiple requires not implemented")
 
     bag = root.findall(_els[1])
     if not bag:
@@ -96,7 +98,7 @@ class Environment(XMLObject):
     elif len(bag) == 1:
       self._prov = bag[0]      
     elif len(bag) > 1:
-      print("Environment._check_structure - Merging multiple requires not implemented")
+      self.l.error("Environment._check_structure - Merging multiple requires not implemented")
 
     bag = root.findall(_els[2])      
     if not bag:
@@ -104,7 +106,7 @@ class Environment(XMLObject):
     elif len(bag) == 1:
       self._aa = bag[0]      
     elif len(bag) > 1:
-      print("Environment._check_structure - Merging multiple requires not implemented")
+      self.l.error("Environment._check_structure - Merging multiple requires not implemented")
       
     bag = root.findall(_els[3])      
     if not bag:
@@ -112,7 +114,7 @@ class Environment(XMLObject):
     elif len(bag) == 1:
       self._bhv = bag[0]      
     elif len(bag) > 1:
-      print("Environment._check_structure - Merging multiple requires not implemented")
+      self.l.error("Environment._check_structure - Merging multiple requires not implemented")
       
     bag = root.findall(_els[4])      
     if not bag:
@@ -120,7 +122,7 @@ class Environment(XMLObject):
     elif len(bag) == 1:
       self._ras = bag[0]      
     elif len(bag) > 1:
-      print("Environment._check_structure - Merging multiple requires not implemented")                  
+      self.l.error("Environment._check_structure - Merging multiple requires not implemented")                  
       
    
 def create_demography_env():

@@ -24,6 +24,7 @@ from .brains import BaseBrain, WorldState
 from .behaviours.actions import Action
 
 import pandas as pd
+import numpy as np
 
 class PopulationRequest(object):
   def __init__(self):
@@ -81,6 +82,11 @@ class XAgent(Agent):
     self.exists = False
     self._brain = BaseBrain(self)
     self.pos = (0,0)
+
+  def _postInit(self):
+    self.l.warn("You are calling virtual XAgent._postInit()")
+    self.l.warn("This is to allow late initialization of you agent code")            
+    self.l.warn("Consider overriding it in you agent")                
 
   @property
   def id(self):
@@ -170,6 +176,9 @@ class XAgent(Agent):
   def addReward(self, reward):
     self.l.debug("Agent %s received reward %f"%(self.id, reward))          
     self._next_reward += reward
+
+  def step(self):
+    self.updateState()
 
   def updateState(self):
     #self._brain.setActions(self._behaviours)
@@ -269,6 +278,28 @@ class MultiEnvironmentWorld(Model):
     self._deathsinturn = []
     self._totCreated = 0
     self._totDestroyed = 0    
+    self.currentStep = 0    
+
+
+  def info(self):
+    self.l.info("TOTAL agent types %d"%len(self._agents))    
+    for k,v in self._agents.items():
+      self.l.info("%s:%d"%(k, len(v)))  
+
+  def step(self):
+    self.schedule.step()
+    
+  def run(self, n):
+    self.l.info("***** STARTING SIMULATION *******")
+    for i in range(n):
+      self.l.info("Step %d of %d"%(i, n))    
+      self.info()          
+      self.stepEnvironment()
+      self.step()
+      self.currentStep+=1
+      
+
+    self.l.info("***** FINISHED SIMULATION *******")
 
   def getAgents(self):
     return self._agentsById.values()
@@ -291,7 +322,12 @@ class MultiEnvironmentWorld(Model):
     self._onEvent(event)
     _a, _t, _b = event._a, event._type, event._b
     self.l.debug("Agent %s notified %s on %s"%(_a, _t, _b))
-    _agent = self.getAgent(_a)    
+    _agent = self.getAgent(_a)   
+    if _agent is None:
+      self.l.debug("Agent %s WON'T be notified %s on %s"%(_a, _t, _b))       
+      self.l.debug("Can't notify because agent does not exists!")
+      self.l.debug("Maybe it was already removed? Check agent logs for details...")      
+      return 
     if _t == "death":
       self._deathsinturn.append(_a)
       _agent.toXmlFile(odir=self._aodir)
@@ -320,17 +356,19 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
-    self.grid.place_agent(agent, agent.pos)
+    self.space.place_agent(agent, agent.pos)
     self.schedule.add(agent)
+    
     self._totCreated += 1
     self._agents.setdefault(type(agent),[]).append(agent)
     self._agentsById[agent.id]=agent
+    agent.model = self
     agent.exists=True
     agent._postInit()
 
   def removeAgent(self, agent):
     self.schedule.remove(agent)
-    self.grid.remove_agent(agent)
+    self.space.remove_agent(agent)
     self._agents[type(agent)].remove(agent)
     if not self._agents[type(agent)]:
       del self._agents[type(agent)]
@@ -380,6 +418,7 @@ class MultiEnvironmentWorld(Model):
       _d = pr._data[_prefix]
       _num = _d["num"]
       _agtClass = _d["type"]
+      _gridSize = _d.get("gridSize", None)
       _templates = _d.get("templates", [])
       _behavs = _d.get("defaultBehaviours",[])
       _varsToSet =  _d.get("varsToSet",[])
@@ -396,7 +435,7 @@ class MultiEnvironmentWorld(Model):
 
         # Load templates if needed
         _agent.addTemplates(_templates)
-        self._prepareAgentForAdd(_agent)
+        self._prepareAgentForAdd(_agent, _gridSize)
         for _v in _varsToSet:
           item, value = _v.split(":")
           env, attr = item.split(".")
@@ -419,11 +458,13 @@ class MultiEnvironmentWorld(Model):
 
     self._agentsToAdd = []
         
-  def _prepareAgentForAdd(self, agent):
+  def _prepareAgentForAdd(self, agent, size):
     # Generate random position
-    _x = random.randint(0, self.config["size"]["width"]-1)
-    _y = random.randint(0, self.config["size"]["height"]-1)
-    agent.position = (_x, _y)
+
+    if size is None: size = (self.config["size"]["width"], self.config["size"]["height"])
+    
+    agent.pos = tuple([np.random.randint(0,_i) for _i in size])
+   
     # Configure environments
     self._applyEnvRequir(agent)
     

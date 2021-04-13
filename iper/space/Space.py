@@ -1,11 +1,237 @@
 from mesa_geo import GeoSpace, GeoAgent
-from mesa.space import MultiGrid
+from mesa.space import MultiGrid, NetworkGrid
 import logging
 _log = logging.getLogger(__name__)
 
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Polygon, LineString, Point
+import trimesh
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.tri import Triangulation, LinearTriInterpolator, CubicTriInterpolator
+from mpl_toolkits.mplot3d import Axes3D
+from scipy.spatial import Delaunay
+from trimesh import Trimesh
+import meshio
+from mesa.agent import Agent
+
+
+class MeshSpace(NetworkGrid):
+  """
+    _mesh
+    _v
+    _tri
+    _elev
+    G
+    _adj
+  """
+
+  @staticmethod
+  def read(filename, debug=False):
+    mesh = meshio.read(filename)
+    return MeshSpace(mesh, name=filename, debug=debug), mesh
+
+  def from_meshio(points, cells):
+    mesh = meshio.Mesh(points, cells)
+    return MeshSpace(mesh, name="Meshio object")
+
+  @staticmethod
+  def from_vertices(points, elevation=None):
+    tess = Delaunay(points)
+    #triang = mtri.Triangulation(x=points[:, 0], y=points[:, 1], triangles=tri)
+    if elevation is not None:
+      nx, ny = points.shape
+      _tp = np.zeros((nx, ny+1))
+      _tp[:,:-1] = points 
+      _tp[:,-1] = elevation
+      points = _tp    
+
+    cells = [("triangle", tess.simplices)]
+    mesh = meshio.Mesh(points, cells)
+    ms = MeshSpace(mesh)
+    return ms
+
+
+  @staticmethod
+  def from_meshgrid(xmin=0.0, ymin=0.0, xmax=1.0, ymax=1.0, z=0.0, xp=10, yp=10):
+    nx, ny = (xp, yp)
+    x = np.linspace(xmin, xmax, nx)
+    y = np.linspace(ymin, ymax, ny)
+    xx, yy= np.meshgrid(x, y)
+    points = np.vstack(list(map(np.ravel, [xx,yy] ))).T
+    ms = MeshSpace.from_vertices(points, z)
+    #plt.triplot(points[:,0], points[:,1], tri.simplices)
+    #plt.plot(xx, yy, "o")
+    #plt.show()
+  
+
+    return ms, [xx, yy]    
+
+
+
+  def __init__(self, mesh, debug=False, name="New MeshSpace"): 
+    self.name = name
+    self._mesh = mesh
+    self._info = {}
+    self.has_surface = False
+    self.has_volume = False
+
+    self._v = self._mesh.points;
+    self._info["points"] = self._v.shape
+
+    self._tri = self._mesh.cells_dict.get("triangle",np.asarray([]))
+    self._info["triangle"] = self._tri.shape
+    if self._info["triangle"][0] > 0: self.has_surface = True
+
+    self._tetra = self._mesh.cells_dict.get("tetra",np.asarray([]))
+    self._info["tetra"] = self._tetra.shape
+    if self._info["tetra"][0] > 0: self.has_surface = True
+    
+    self._pyramid = self._mesh.cells_dict.get("pyramid",np.asarray([]))
+    self._info["pyramid"] = self._tetra.shape
+    if self._info["pyramid"][0] > 0: self.has_volume = True    
+
+    #import ipdb
+    #ipdb.set_trace()
+
+    g = self._processMesh(debug)
+    self._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))
+
+    super().__init__(g)
+
+  def place_agent(self, agent, agent_pos):
+    node_id = agent_pos[0]  
+    self._place_agent(agent, node_id)
+    agent.pos = agent_pos
+
+  def _remove_agent(self, agent: Agent, node_id: int) -> None:
+    """ Remove an agent from a node. """
+
+    self.G.nodes[node_id]["agent"].remove(agent)
+
+  def getSurfaceSize(self):
+    return (self._info["triangle"][0], )
+
+  def _processMesh(self, debug=False):
+    # Generate triangulation
+
+    _log.info("Processing mesh %s"%self.name)
+    _v = self._v
+    x, y, z = _v[:,0], _v[:,1], _v[:,2]
+    if debug:
+      _log.info(str(self._info))
+
+    # Transform to a graph
+    g = nx.Graph()
+
+    if self.has_surface:
+      _surface = trimesh.Trimesh(vertices=self._v, faces=self._tri)
+      triang = Triangulation(x, y, triangles=self._tri)
+      self._plt_tri = triang; self._elev = z
+      self._surface = _surface
+
+      _ad = trimesh.graph.face_adjacency(mesh=_surface, return_edges=False)
+      self._adj = _ad
+      _nodes = []
+      for i, f in enumerate(self._tri):
+        loop = (_v[f[0]], _v[f[1]], _v[f[2]])
+        _c = np.mean(np.asarray(loop), axis=0)
+        _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
+
+      g.add_nodes_from(_nodes)
+      g.add_edges_from(_ad)
+
+    return g
+
+  def find_cell(self, pos):
+
+    pos = np.asarray([pos])
+    print(pos, len(pos))
+
+    _cp, _dist, _cellid = trimesh.proximity.closest_point(
+      self._surface,
+      pos
+    )
+    
+    return int(_cellid)
+    
+
+
+#  def getNodeField(self, field):
+#    for node_id in self.G.nodes:
+#      _n = self.G.nodes[node_id]
+#      if field in _n:
+#        yield self.G.nodes[node_id][field]
+#      else:
+#        yield np.nan
+
+  def getField(self, name): 
+    return nx.get_node_attributes(self.G, name)
+  
+  def getFieldArray(self, name):
+    return np.asarray(
+      [self.G.nodes[node_id][name] if name in self.G.nodes[node_id] 
+        else np.nan
+        for node_id in self.G.nodes 
+          
+      ])
+
+    
+  def setField(self, name, values): 
+    nx.set_node_attributes(self.G, values, name) 
+  
+#  def getField(self, field):
+#    """ Go through all the nodes and get the correspondig value
+#    """
+#    for node_id in self.G.nodes:
+#      _n = self.G.nodes[node_id]
+#      _c = _n["centroid"]
+#      if field in _n:
+#        yield _c, self.G.nodes[node_id][field]
+#      else:
+#        yield _c, np.nan
+        
+  def plotSurface(self, alpha=1.0, savefig=None, field=None, 
+      show=True, 
+      title=None,
+      cmap="Blues",
+      ax=None
+      ):
+
+    if not self.has_surface:
+      print("*"*5 + 
+        "Mesh %s has NO surface??"%self.name, 
+        self._info)
+
+      return None, None
+
+    if ax is None:
+      fig, ax = plt.subplots(figsize=(12,9),subplot_kw =dict(projection="3d"))
+    
+    collec = ax.plot_trisurf(self._plt_tri, 
+      self._elev, 
+      cmap=cmap,
+      alpha=alpha,
+      antialiased=True,
+      linewidth=1.0,
+      shade=False
+      )
+
+    if field is not None:
+      collec.set_array(field)
+      collec.autoscale()
+
+    if title is None: title = self.name
+    ax.set_title(title)
+    if savefig:
+      plt.savefig(savefig)
+    
+    if show:
+      plt.show()
+
+    return ax, collec
+
 
 
 class GeoSpaceQR(GeoSpace):

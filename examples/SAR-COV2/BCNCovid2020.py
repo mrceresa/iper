@@ -26,14 +26,19 @@ import logging
 _log = logging.getLogger(__name__)
 import mapclassify
 import geoplot
+import attributes_Agent
 class VirusInformation(object):
   def __init__(self):
     self.r0 = 2.5
 
 class Human(GeoAgent):
-  def __init__(self, unique_id, model, shape, probs=None):
+  def __init__(self, unique_id, model, shape,family, job, age_group, probs=None):
     super().__init__(unique_id, model, shape)
     # Markov transition matrix
+    self.family = family
+    self.job = job
+    #self.state = state
+    self.age_group=age_group
     self._trans = probs
     self._vel1step = 0.4 #Km per hora
 
@@ -59,10 +64,13 @@ class Human(GeoAgent):
     
 class BCNCovid2020(Model):
 
-  def __init__(self, N, basemap):
+  def __init__(self, N, basemap, distr_family, distr_job, distr_age):
     super().__init__()
-    _log.info("Initalizing model")    
-    
+    _log.info("Initalizing model")
+    self.distr_family=distr_family        
+    self.families = attributes_Agent.create_families(N,distr_family)
+    self.distr_job=distr_job   
+    self.distr_age=distr_age
     self._basemap = basemap
     self.grid = GeoSpacePandas()
     self.schedule = RandomActivation(self)
@@ -74,18 +82,31 @@ class BCNCovid2020(Model):
     self.loadShapefiles()
     
     _log.info("Initalizing agents")
-    self.createAgents(N)   
+    self.createAgents(N,self.families,self.distr_job,self.distr_age)   
 
   def place_at(self, agent, loc):
     if self._xs["bbox"].contains(loc):
       self.grid.update_shape(agent, loc)
 
-  def createAgents(self, N):
-      
+  def createAgents(self, N, families, distr_job, distr_age):
+    indice_family=0
+    families_progressiv=[]
+    families_progressiv.append(families[0]) 
+
     base = self._xs["centroid"]
-    AC = AgentCreator(Human, {"model": self})
+    #AC = AgentCreator(Human, {"model": self,"family":"1-2","job":"1-2","age_group":"1-2"})
     agents = []
     for i in range(N):
+      contatore_fam=1+i           
+      if sum(families_progressiv)<contatore_fam:
+        indice_family+=1
+        families_progressiv.append(families[indice_family])
+      age=attributes_Agent.age_(distr_age)
+      if age<=18:
+        work="student"
+      else:
+        work=attributes_Agent.job(distr_job)
+      AC = AgentCreator(Human, {"model": self,"family":indice_family,"job":work,"age_group":age})
       _a = AC.create_agent( 
         Point( 
           random.uniform(self._xs["w"],self._xs["e"]),
