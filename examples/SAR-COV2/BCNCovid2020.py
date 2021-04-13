@@ -40,7 +40,8 @@ class BCNCovid2020(Model):
 
   def __init__(self, N, basemap):
     super().__init__()
-    _log.info("Initalizing model")    
+    _log.info("Initalizing model")   
+    self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
     
     self._basemap = basemap
     self.grid = GeoSpacePandas()
@@ -61,7 +62,7 @@ class BCNCovid2020(Model):
     _log.info("Initializing Routes")
     #self.createRouteAgents() 
 
-    self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0)
+    
 
   def place_at(self, agent, loc):
     #if self.boundaries["bbox"].contains(loc):
@@ -102,19 +103,15 @@ class BCNCovid2020(Model):
     self.walkMap = Map_to_Graph(self._basemap, 'walk')  #Load the shapefiles 
     self.boundaries = self.walkMap.get_boundaries()
     print(self.boundaries) 
-
     self.boundaries['centroid'] = LineString(
         (
           (self.boundaries["w"], self.boundaries["s"]),
           (self.boundaries["e"], self.boundaries["n"])
         )
       ).centroid
-
     self.boundaries["bbox"] = Polygon.from_bounds(
       self.boundaries["w"], self.boundaries["s"],
       self.boundaries["e"], self.boundaries["n"])
-
-
     self.boundaries["dx"] = 111.32; #One degree in longitude is this in KM 
     self.boundaries["dy"] = 40075 * math.cos( self.boundaries["centroid"].y ) / 360 
     _log.info("Arc amplitude at this latitude %f, %f"%(self.boundaries["dx"], self.boundaries["dy"]))
@@ -179,3 +176,11 @@ class BCNCovid2020(Model):
 
     
 
+#https://opendata-ajuntament.barcelona.cat/data/en/dataset/qualitat-aire-detall-bcn
+
+
+#Modelo regression linial cuando contaminacion hay si hay tanto trafico. 
+
+#TIempo Dinero
+
+#Gerarchicla planing   https://github.com/oubiwann/pyhop

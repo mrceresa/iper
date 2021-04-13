@@ -12,6 +12,7 @@ import numpy as np
 from pyproj import CRS
 import copy
 import random
+import pickle
 
 
 import timeit
@@ -38,6 +39,8 @@ class pygtfs_Schedule():
 # -----------------------------------------   
 
 # Don't really know if it needs to be GEOAGENT
+# Dictionary Route_dict --> Dictionary with services as keys and gorup of traj as items
+# Dictionary traj_dict 
 class RouteAgent(Agent):                       
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
@@ -53,7 +56,7 @@ class RouteAgent(Agent):
 
         self.service_by_days = self.getRunningDays()
 
-        self.trips_currently_running = []
+        self.trips_currently_running = {}
 
     def get_name_transport(self, transport_type):
         dictionary = {'0':'Tram', '1':'Subway', '3':'Bus', '7':'Funicular'}
@@ -85,14 +88,14 @@ class RouteAgent(Agent):
 
     def check_init_traj(self):
         for key_traj, value_traj in self.traj_today_service.items():
-            if value_traj.get_start_time() == timedate:
-                createTransportAgent(trajectory = value_traj, traj_id = key_traj, transport_type = self.name_transport_type)
-                self.trips_currently_running.append(key_traj)
+            if value_traj.get_start_time() == self.model.DateTime:
+                self.createTransportAgent(trajectory = value_traj, traj_id = key_traj, transport_type = self.name_transport_type)
+                self.trips_currently_running[key_traj] = value_traj
 
     def check_finish_traj(self):
-        pass
-        #for key_traj in self.trips_currently_running:
-        #    trajecotry = 
+        for key_traj, value_traj in self.trips_currently_running.items():
+            if value_traj.get_end_time() == self.model.DateTime:
+                self.removeTransportAgent(key_traj)
 
     def createTransportAgent(self, trajectory, traj_id, transport_type): 
         ######## Vull tmb passar-li la trajectoria.#######
@@ -106,25 +109,23 @@ class RouteAgent(Agent):
         self.model.transport_grid.add_agents(_a)
         self.model.schedule.add(_a)
 
-    def removeTransportAgents(self):
-        # Two options:
-        # 1: Create a get_end_times and perform like the creation of instances but to eraise them, 
-        # 2: Check when ever they arrived at its end location and eraise them then. 
-        pass
+    def removeTransportAgent(self, agent_id):
+        self.model.transport_grid.remove_agent(agent_id)
+        self.model.schedule.remove(agent_id)
 
     def step(self):
         # Check every midnight the service running this day and load all the trajectories from that service
-        #if self.model.time = datetime.min.time():
-        if True:
-            today_service = self.service_by_days.loc[self.service_by_days['date'] == timedate.date()].service_id.item()
+        if self.model.DateTime.time() == datetime.min.time():
+            today_service = self.service_by_days.loc[self.service_by_days['date'] == self.model.DateTime.date()].service_id.item()
 
             self.traj_today_service = copy.deepcopy(self.route_dict[today_service])
             for key, traj in self.traj_today_service.items():
-                traj.df.loc[:,'time'] = traj.df.loc[:,'time'] + datetime.combine(timedate.date(), datetime.min.time())
+                traj.df.loc[:,'time'] = traj.df.loc[:,'time'] + datetime.combine(self.model.DateTime.date(), datetime.min.time())
                 traj.df.set_index('time', inplace=True)
 
 
-        check_init_traj()
+        self.check_init_traj()
+        self.check_finsih_traj()
 
 class TransportAgent(GeoAgent):
     def __init__(self, unique_id, model, shape):
@@ -144,6 +145,8 @@ class Human(GeoAgent):
         super().__init__(unique_id, model, shape)
         self.has_goal = False
         self.life_goals = 0  
+        self.has_car = random.random() < 0.39
+        self.has_bike = random.random() < 0.05
         self.record_trajectories = {}
 
     def place_at(self, newPos):
@@ -155,8 +158,11 @@ class Human(GeoAgent):
     def define_goal(self):
         random_node = random.choice(list(self.model.walkMap.G_proj.nodes))
         node = self.model.walkMap.G_proj.nodes[random_node]
-        return (node['x'], node['y'])
-    
+        if node['x'] == self.shape.x and node['y'] == self.shape.y:
+            self.define_goal()
+        else:
+            return (node['x'], node['y'])
+        
     def init_goal_traj(self):
         route = self.model.walkMap.routing_by_travel_time(self.get_pos(), self.goal)
         self.model.walkMap.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(self.unique_id) + '_num' + str(self.life_goals) + '.png')
@@ -209,18 +215,21 @@ class Human(GeoAgent):
     def step(self):
         if self.has_goal == False:
             self.goal = self.define_goal()
+            print('new goal added')
+            # CHECK THE NETWORK PLANNING FOR FINDING THE OPTIM PATH
             self.goal_traj = self.init_goal_traj()
             self.life_goals += 1
             self.has_goal = True
         else: 
-            currentPos = self.get_pos()
-            goal_df = self.goal_traj.df
-            print(len(goal_df))
-            newPos = self.goal_traj.get_position_at(self.model.DateTime)
-            self.place_at(newPos)
-
-            self.goal_traj = self.update_goal_traj()
-
+            end_time = self.goal_traj.get_end_time()
+            if self.goal_traj.get_end_time() == self.model.DateTime:
+                self.has_goal = False
+            else:
+                newPos = self.goal_traj.get_position_at(self.model.DateTime)
+                self.place_at(newPos)
+            
+            # I would use it for print only the trajectory left... 
+            # self.goal_traj = self.update_goal_traj()
             #neighbors = self.model.grid.get_neighbors(self)
 
     def __repr__(self):
@@ -280,30 +289,28 @@ class Map_to_Graph():
     def __init__(self, place, net_type):
         self.net_type = net_type
         root_path = os.getcwd()
-        path_name = '/BCNgraphs/'+net_type+'.graphml'
+        path_name = '/Mobility Jupyter Files/OSMnx/pickle_objects/'
         cheat = True
         if cheat == True:
-            try: 
-                self.G = ox.load_graphml(root_path + '/BCNgraphs/'+'cheat'+'.graphml')
-            except:
-                self.G = ox.graph_from_address('Plaça Catalunya, Barcelona, Spain', dist = 1000, network_type = 'walk')
-                self.G_proj = ox.project_graph(self.G)
-                self.graph_consolidation()
-                ox.save_graphml(self.G_proj, root_path + '/BCNgraphs/'+'cheat'+'.osm')  
-                
-            
+            with open(root_path + path_name + 'PlaçaCat_walk_proj.p', 'rb') as f:
+                self.G_proj = pickle.load(f)
+            #self.graph_consolidation()  
             self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G_proj, nodes=True, edges=True)
+
         else:
-            try:  
-                self.G = ox.load_graphml(root_path + path_name)
-            except:
-                self.G = ox.graph_from_place(place, network_type = net_type)
-                ox.save_graphml(self.G, root_path + path_name)  
             start = timeit.default_timer()
-            self.G_proj = ox.project_graph(self.G)
-            self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G_proj, nodes=True, edges=True)
-            #self.nodes_proj = self.nodes_proj.reset_index() # Sets the name index on the columns key names
-            #self.edges_proj = self.edges_proj.reset_index() # Sets the name index on the columns key names
+            with open(root_path + path_name + 'road_network_projected.p', 'rb') as f:
+                self.G_proj = pickle.load(f)
+            try:
+                with open(root_path + path_name + 'road_network_projected_db.p', 'rb') as f:
+                    db = pickle.load(f)
+                self.nodes_proj = db[0]
+                self.edges_proj = db[1]
+            except:  
+                self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G_proj, nodes=True, edges=True)
+                with open(root_path + path_name + 'road_network_projected_db.p', 'wb') as f:
+                    pickle.dump([self.nodes_proj, self.edges_proj], f)
+            
             stop = timeit.default_timer()
             print('Time: ', stop - start)
 
@@ -353,23 +360,6 @@ class Map_to_Graph():
         #_log.info("Origin dist to node: %d"%dist)
         destination_node, dist = ox.get_nearest_node(self.G_proj, (destination_coord[1],destination_coord[0]), method='euclidean', return_dist=True)
         #_log.info("Destination dist to node: %d"%dist)
-        if self.net_type == 'drive':
-            hwy_speeds = {'residential': 35,
-                        'living_street': 20,
-                        'secondary': 50,
-                        'tertiary': 60}
-        elif self.net_type == 'walk':
-            hwy_speeds = {'residential': 3,
-                    'living_street': 3,
-                    'secondary': 3,
-                    'tertiary': 3}
-        elif self.net_type == 'bike':
-            hwy_speeds = {'residential': 20,
-                    'living_street': 15,
-                    'secondary': 25,
-                    'tertiary': 25}
-        self.G_proj = ox.add_edge_speeds(self.G_proj, hwy_speeds)
-        self.G_proj = ox.add_edge_travel_times(self.G_proj)
         route = ox.shortest_path(self.G_proj ,origin_node, destination_node, weight='travel_time')
         return route 
 
@@ -440,4 +430,4 @@ class Map_to_Graph():
 
 
 
-# El start hauria de coincidir amb el inici de ruta. 
+# Juntar tots els trensports per que el shortest path els tingui en compte. 

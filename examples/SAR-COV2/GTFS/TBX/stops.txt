@@ -1,4 +1,4 @@
-﻿stop_id,stop_name,stop_desc,stop_lat,stop_lon,stop_url,wheelchair_boarding
+stop_id,stop_name,stop_desc,stop_lat,stop_lon,stop_url,wheelchair_boarding
 1,Francesc Macià,,41.392206,2.143175,http://www.tram.cat/linies-i-horaris/linea-t1/,1
 2,L'Illa,,41.390508,2.136522,http://www.tram.cat/linies-i-horaris/linea-t1/,1
 3,Numància,,41.389342,2.131953,http://www.tram.cat/linies-i-horaris/linea-t1/,1
@@ -28,6 +28,3 @@ Baixador,Llevant-Les Planes,,41.370869,2.076117,http://www.tram.cat/linies-i-hor
 30,Walden,,41.379719,2.066897,http://www.tram.cat/linies-i-horaris/linea-t3/,1
 31,Torreblanca,,41.379758,2.060825,http://www.tram.cat/linies-i-horaris/linea-t3/,1
 32,Sant Feliu | Consell Comarcal,,41.379356,2.0533720,http://www.tram.cat/linies-i-horaris/linea-t3/,1
-
-
-
