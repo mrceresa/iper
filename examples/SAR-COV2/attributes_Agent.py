@@ -4,6 +4,8 @@ def age_(distr_age):
     """
     distr_age is a dictionary containing age groups with their probabilities
     the function returns a random age according to the probabilities contained in distr_age
+    for Barcellona:
+    diz_eta={"00-10":8.89,"11-20":8.58,"21-30":13.04,"31-40":15.41,"41-50":15.34,"51-60":13.06,"61-70":10.53,"71-80":8.41,"81-90":5.46,"91-99":1.28}
     """
     distr2=[]
     distr3=[]
@@ -50,6 +52,8 @@ def create_families(N,distr):
     It generates a number of families given a number of individuals from a distribution list
     each term in the distr list represents the probability of generating a family
     with a number of individuals equal to the index of that element of distr
+    for Barcellona:
+        distr=[19.9 ,23.8 ,20.4, 24.8, 8.9, 2.2]
     """    
     distr2=[]
     distr3=[]
