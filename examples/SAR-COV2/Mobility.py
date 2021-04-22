@@ -174,6 +174,8 @@ class Human(GeoAgent):
 
         for u, v in zip(route[:-1], route[1:]):
             travel_time = round(self.model.walkMap.G_proj.edges[(u, v, 0)]['travel_time'])
+            if travel_time == 0:
+                travel_time = 1
             
             if first_node == True:
                 nodes.append(u)
@@ -218,6 +220,7 @@ class Human(GeoAgent):
             print('new goal added')
             # CHECK THE NETWORK PLANNING FOR FINDING THE OPTIM PATH
             self.goal_traj = self.init_goal_traj()
+            print(self.goal_traj.to_linestring())
             self.life_goals += 1
             self.has_goal = True
         else: 
@@ -225,7 +228,15 @@ class Human(GeoAgent):
             if self.goal_traj.get_end_time() == self.model.DateTime:
                 self.has_goal = False
             else:
-                newPos = self.goal_traj.get_position_at(self.model.DateTime)
+                try: 
+                    print(self.model.DateTime)
+                    newPos = self.goal_traj.get_position_at(self.model.DateTime)
+                except: 
+                    print('---------------------')
+                    print(self.get_pos())
+                    print(self.goal_traj.df)
+                    print('---------------------')
+                    #exit()
                 self.place_at(newPos)
             
             # I would use it for print only the trajectory left... 
@@ -291,10 +302,9 @@ class Map_to_Graph():
         root_path = os.getcwd()
         path_name = '/Mobility Jupyter Files/OSMnx/pickle_objects/'
         cheat = True
-        if cheat == True:
+        if cheat == True: 
             with open(root_path + path_name + 'PlaçaCat_walk_proj.p', 'rb') as f:
                 self.G_proj = pickle.load(f)
-            #self.graph_consolidation()  
             self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G_proj, nodes=True, edges=True)
 
         else:
