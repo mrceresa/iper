@@ -23,7 +23,7 @@ def main(args):
   model.plotAll()
   plt.savefig("start.png")
   model.run_model(args.steps)
-  model.plotAll()
+  model.plot_results(title='run_stats', hosp_title='run_hosp_stats')
 
   plt.savefig("end.png")
   return model
@@ -32,8 +32,8 @@ def main(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('-v','--verbose', action="store_true", help="Print additional information" )
-  parser.add_argument('-s','--steps', type=int, default=100, help="Timesteps to run the model for" )          
-  parser.add_argument('-n','--agents', type=int, default=1, help="Numer of starting agents" )
+  parser.add_argument('-s','--steps', type=int, default=10, help="Timesteps to run the model for" )
+  parser.add_argument('-n','--agents', type=int, default=3, help="Numer of starting agents" )
   parser.add_argument('-b','--basemap', type=str, default="Barcelona, Spain", 
     help="Basemap for geo referencing the model" )      
   parser.set_defaults(func=main)
