@@ -102,16 +102,18 @@ class TestMeshAsGraph(unittest.TestCase):
     short_path = (nx.shortest_path(ms.G,starting_node,ending_node))
     # check short path 
     self.assertEqual(short_path, [0, 19, 10])
-    ms.place_agent(a, starting_node)
+    ms.place_agent(a, (starting_node,) )
     track_move = 0
 
-    while a.pos != ending_node:
+    while a.pos != (ending_node, ):
+      print("POS:", a.pos)
       possible_steps = ms.get_neighbors(a.pos,include_center=False)
+      print("STEPS:",possible_steps)
       #check neighbors for pos 0 pos 1 and pos 2
       if a.pos == short_path[0]:
-        self.assertEqual(possible_steps, [4, 19, 2])
+        self.assertEqual(possible_steps, [(4,), (19,), (2,)])
       elif a.pos == short_path[1]:
-        self.assertEqual(possible_steps, [14, 10, 0])
+        self.assertEqual(possible_steps, [(14,), (10,), (0,)])
      
       
       for neighbor in possible_steps: 
@@ -119,11 +121,11 @@ class TestMeshAsGraph(unittest.TestCase):
           new_position = neighbor
           break
       
-      #check we have found the new path 
-      self.assertNotEqual(a.pos, new_position)
-
       #new_position = random.choice(possible_steps)
+      print("MOVE_TO:",new_position)
+      print("MOVE_FROM:",a.pos)
       ms.move_agent(a, new_position)
+      print("NOW IN:",a.pos)      
       self.assertTrue(a.pos == new_position)
       track_move += 1
 
@@ -134,14 +136,14 @@ class TestMeshAsGraph(unittest.TestCase):
 
     ms, _grid = MeshSpace.read("test/meshes/sphere.msh")
     nodes = ms.G.nodes
-    starting_node = 0
+    starting_node = (0,)
     a = Agent(0, None)
     ms.place_agent(a, starting_node)
     possible_steps = ms.get_neighbors(
         a.pos,
         include_center=False
     )
-    self.assertEqual(possible_steps, [31, 43, 6])
+    self.assertEqual(possible_steps, [(31,), (43,), (6,)])
     new_position = random.choice(possible_steps)
     ms.move_agent(a, new_position)
     self.assertTrue(a.pos == new_position)  
@@ -151,9 +153,17 @@ class TestMeshAsGraph(unittest.TestCase):
     home = expanduser("~")
     fname = os.path.join(home, "Downloads","malla-Mario_0_0.vtu")
     self.assertTrue(os.path.exists(fname), "Missing mesh file %s"%fname)
-    ms, _grid = MeshSpace.read(fname)
+    ms, _grid = MeshSpace.read(fname, debug=True)
     ms.plotSurface()
     plt.close()
+    
+  def testHexa(self):
+    home = expanduser("~")
+    fname = os.path.join(home, "Downloads","alveolar_sac_Oriol_Cuxart.msh")
+    self.assertTrue(os.path.exists(fname), "Missing mesh file %s"%fname)
+    ms, _grid = MeshSpace.read(fname, debug=True)
+    ms.plotSurface()
+    plt.close()    
 
   def testPolydata(self):
     from vtkmodules.vtkIOLegacy import vtkPolyDataReader

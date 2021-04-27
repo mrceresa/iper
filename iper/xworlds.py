@@ -356,6 +356,7 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
+  
     self.space.place_agent(agent, agent.pos)
     self.schedule.add(agent)
     
@@ -460,8 +461,7 @@ class MultiEnvironmentWorld(Model):
         
   def _prepareAgentForAdd(self, agent, size):
     # Generate random position
-
-    if size is None: size = (self.config["size"]["width"], self.config["size"]["height"])
+    if size is None: self = (size.config["size"]["width"], self.config["size"]["height"])
     
     agent.pos = tuple([np.random.randint(0,_i) for _i in size])
    

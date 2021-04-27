@@ -29,12 +29,46 @@ class MeshSpace(NetworkGrid):
 
   @staticmethod
   def read(filename, debug=False):
-    mesh = meshio.read(filename)
-    return MeshSpace(mesh, name=filename, debug=debug), mesh
+    if filename.endswith(".vtk"):
+      ms, mesh = MeshSpace.read_vtk(filename)
+    else:
+      mesh = meshio.read(filename)
+      ms = MeshSpace(mesh, name=filename, debug=debug)
+    return ms, mesh
 
   def from_meshio(points, cells):
     mesh = meshio.Mesh(points, cells)
     return MeshSpace(mesh, name="Meshio object")
+
+  @staticmethod
+  def read_vtk(filename, debug=False):
+    from vtkmodules.vtkIOLegacy import vtkPolyDataReader
+    from vtk.util.numpy_support import vtk_to_numpy
+    from vtkmodules.vtkCommonCore import vtkIdList
+    
+    reader = vtkPolyDataReader()
+    reader.SetFileName(filename)
+    reader.ReadAllScalarsOn()
+    reader.ReadAllVectorsOn()
+    reader.Update()
+    polydata = reader.GetOutput()
+
+    points = vtk_to_numpy(polydata.GetPoints().GetData())
+    
+    cells = polydata.GetPolys()
+    nCells = cells.GetNumberOfCells()
+    array = cells.GetData()
+    # This holds true if all polys are of the same kind, e.g. triangles.
+    assert(array.GetNumberOfValues()%nCells==0)
+    nCols = array.GetNumberOfValues()//nCells
+    numpy_cells = vtk_to_numpy(array)
+    numpy_cells = numpy_cells.reshape((-1,nCols))
+    # Drop first cell that is only the number of points
+    numpy_cells = [("triangle", numpy_cells[::10,1:])] 
+    mesh = meshio.Mesh(points, numpy_cells)
+    ms = MeshSpace(mesh, name="VTK object")
+
+    return ms, mesh
 
   @staticmethod
   def from_vertices(points, elevation=None):
@@ -91,9 +125,10 @@ class MeshSpace(NetworkGrid):
     self._pyramid = self._mesh.cells_dict.get("pyramid",np.asarray([]))
     self._info["pyramid"] = self._tetra.shape
     if self._info["pyramid"][0] > 0: self.has_volume = True    
-
-    #import ipdb
-    #ipdb.set_trace()
+    
+    self._hexa = self._mesh.cells_dict.get("hexahedron",np.asarray([]))
+    self._info["hexahedron"] = self._hexa.shape
+    if self._info["hexahedron"][0] > 0: self.has_volume = True    
 
     g = self._processMesh(debug)
     self._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))
@@ -105,10 +140,23 @@ class MeshSpace(NetworkGrid):
     self._place_agent(agent, node_id)
     agent.pos = agent_pos
 
-  def _remove_agent(self, agent: Agent, node_id: int) -> None:
+  def move_agent(self, agent , agent_pos):
+    node_id = agent_pos[0]  
+    self._remove_agent(agent, agent.pos)
+    self.place_agent(agent, agent_pos)
+
+  def remove_agent(self, agent: Agent) -> None:
     """ Remove an agent from a node. """
 
-    self.G.nodes[node_id]["agent"].remove(agent)
+    node_id = agent.pos
+    self._remove_agent(agent, agent.pos)
+    
+  def _remove_agent(self, agent, pos):
+    """ Remove an agent from a node. """
+
+    node_id = agent.pos
+    if type(node_id) is tuple: node_id = node_id[0] 
+    self.G.nodes[node_id]["agent"].remove(agent)    
 
   def getSurfaceSize(self):
     return (self._info["triangle"][0], )
@@ -180,6 +228,20 @@ class MeshSpace(NetworkGrid):
     
   def setField(self, name, values): 
     nx.set_node_attributes(self.G, values, name) 
+ 
+  def out_of_bounds(self, pos):
+    if type(pos) is tuple: pos = pos[0]
+
+    if pos in self.G.nodes:
+      return False
+      
+    return True
+ 
+  def get_neighbors(self, agent_pos, include_center):
+    agent_pos = agent_pos[0]
+    _neighs = super().get_neighbors(agent_pos, include_center)
+    _neighs_t = [(_i,) for _i in _neighs]
+    return _neighs_t
   
 #  def getField(self, field):
 #    """ Go through all the nodes and get the correspondig value
