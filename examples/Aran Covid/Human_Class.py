@@ -26,6 +26,8 @@ class BasicHuman(Agent):
         self.obj_place = None  # agent places to go
         self.friend_to_meet = set()  # to fill with Agent to meet
 
+        self.R0_contacts = []
+
     def __repr__(self):
         return "Agent " + str(self.unique_id)
 
@@ -171,7 +173,7 @@ class BasicHuman(Agent):
                 inf_time = self.model.get_infection_time()
                 self.infecting_time = inf_time
                 # if self.unique_id < 5: print(f"Agent {self.unique_id} is now infected for {inf_time} days ")
-
+                self.R0_contacts = [0, self.infecting_time, 0]
                 self.days_in_current_state = self.model.DateTime
 
 
@@ -187,6 +189,7 @@ class BasicHuman(Agent):
                     self.adjust_init_stats("INF", "HOSP", State.HOSP)
                     self.model.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
                     self.model.hosp_collector_counts['H-HOSP'] += 1
+                    self.R0_contacts = []
 
                     sev_time = self.model.get_severe_time()
                     self.hospitalized_time = sev_time
@@ -215,6 +218,7 @@ class BasicHuman(Agent):
                 self.presents_virus = False
                 im_time = self.model.get_immune_time()
                 self.immune_time = im_time
+                self.R0_contacts = []
                 # if self.unique_id < 5: print(f"Agent {self.unique_id} is now immune for {im_time} days ")
 
                 self.days_in_current_state = self.model.DateTime
@@ -273,10 +277,12 @@ class BasicHuman(Agent):
                     trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
                     if trans == 0 and (
                             self.state is State.INF or self.state is State.EXP) and other.state is State.SUSC:
+                        self.model.collector_counts['SUSC'] -= 1
+                        self.model.collector_counts['EXP'] += 1
                         other.state = State.EXP
                         other.days_in_current_state = self.model.DateTime
-                        in_time = self.model.get_incubation_time()
-                        other.exposing_time = in_time
+                        other.exposing_time = self.model.get_incubation_time()
+                        other.R0_contacts = [0, other.exposing_time, 0]
 
     def update_stats(self):
         """ Update Status dictionaries for data collector. """
@@ -308,7 +314,17 @@ class BasicHuman(Agent):
         else:
             self.contacts[self.model.DateTime.strftime('%Y-%m-%d')].add(contact)  # add contact to now's date
 
-        # print(f"Agent {self.unique_id} has now these contacts {self.contacts}")
+        # add contacts of infected people for R0 calculations
+        if self.state == State.INF or self.state == State.EXP:
+            if not self.R0_contacts:
+                if self.state == State.INF:
+                    self.R0_contacts = [self.model.virus.pTrans(self.mask, Mask.NONE), self.infecting_time, 1]
+                else:
+                    self.R0_contacts = [self.model.virus.pTrans(self.mask, Mask.NONE), self.exposing_time + self.model.virus.infection_days, 1]
+
+            else:
+                self.R0_contacts[0] += self.model.virus.pTrans(self.mask, Mask.NONE)
+                self.R0_contacts[2] += 1
 
     def step(self):
         """ Run one step taking into account the status, move, contact, and update_stats function. """

@@ -95,6 +95,8 @@ infected_chart = ChartModule(
         {"Label": "REC", "Color": "Blue"},
         {"Label": "HOSP", "Color": "Gray"},
         {"Label": "DEAD", "Color": "Black"},
+        {"Label": "R0", "Color": "Orange"},
+
     ], data_collector_name="datacollector"
 )
 

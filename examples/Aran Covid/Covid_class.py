@@ -5,7 +5,8 @@ import random, numpy
 class VirusCovid(object):
     def __init__(self, incubation_days, incubation_days_sd, infection_days, infection_days_sd, immune_days,
                  immune_days_sd, severe_days, severe_days_sd, ptrans, pSympt, pTest, death_rate,severe_rate):
-        # self.r0 = 2.5
+
+        self.R0 = 0
 
         # from EXP to INF
         self.incubation_days = incubation_days
@@ -33,6 +34,7 @@ class VirusCovid(object):
         pMask1 = Mask1.maskPtrans(Mask1)
         pMask2 = Mask2.maskPtrans(Mask2)
         return self.ptrans * pMask1 * pMask2
+
 
 
     def pDeathRate(self, model):

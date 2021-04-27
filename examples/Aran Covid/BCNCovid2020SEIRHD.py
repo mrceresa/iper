@@ -26,7 +26,7 @@ import contextily as ctx
 from io import StringIO
 import json
 
-from iper import GeoSpacePandas
+#from iper import GeoSpacePandas
 
 import logging
 
@@ -65,9 +65,9 @@ class BCNCovid2020(Model):
 
         self.datacollector = DataCollector(
             {"SUSC": get_susceptible_count, "EXP": get_exposed_count, "INF": get_infected_count,
-             "REC": get_recovered_count, "HOSP": get_hosp_count, "DEAD": get_dead_count, },
+             "REC": get_recovered_count, "HOSP": get_hosp_count, "DEAD": get_dead_count, "R0": get_R0},
             tables={"Model_DC_Table": {"Day": [], "Susceptible": [], "Exposed": [], "Infected": [], "Recovered": [],
-                                 "Hospitalized": [], "Dead": []}}
+                                 "Hospitalized": [], "Dead": [], "R0": []}}
         )
 
         # variables for hospital data collector
@@ -121,6 +121,7 @@ class BCNCovid2020(Model):
                 self.collector_counts["SUSC"] -= 1
                 self.collector_counts["INF"] += 1  # Adjust initial counts
                 a.infecting_time = self.get_infection_time()
+                a.R0_contacts = [0, a.infecting_time, 0]
             print("Human agent " + str(a.unique_id) + " created")
 
         self.update_DC_table()  # record the first day stats on table
@@ -216,7 +217,7 @@ class BCNCovid2020(Model):
 
     def reset_counts(self):
         """ Sets to 0 the counts for the model datacollector """
-        self.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, }
+        self.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, "R0": 0, }
 
     def reset_hosp_counts(self):
         """ Sets to 0 the counts for the hospital datacollector """
@@ -226,7 +227,7 @@ class BCNCovid2020(Model):
         """Plot cases per country"""
         X = self.datacollector.get_table_dataframe("Model_DC_Table")
         X.to_csv(title+'.csv', index=False)  # get the csv
-        colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
+        colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black", "Orange"]
         X.set_index('Day').plot.line(color=colors).get_figure().savefig(title)  # plot the stats
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
@@ -239,7 +240,7 @@ class BCNCovid2020(Model):
         next_row = {'Day': self.DateTime.day, 'Susceptible': get_susceptible_count(self),
                     'Exposed': get_exposed_count(self),
                     'Infected': get_infected_count(self), 'Recovered': get_recovered_count(self),
-                    'Hospitalized': get_hosp_count(self), 'Dead': get_dead_count(self)}
+                    'Hospitalized': get_hosp_count(self), 'Dead': get_dead_count(self), 'R0': get_R0(self)}
         self.datacollector.add_table_row("Model_DC_Table", next_row, ignore_missing=True)
 
         next_row2 = {'Day': self.DateTime.day, 'Hosp-Susceptible': get_h_susceptible_count(self),
@@ -262,6 +263,7 @@ class BCNCovid2020(Model):
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
+            self.calculate_R0()
             self.update_DC_table()
             self.clean_contact_list(current_step, Adays=2,
                                     Hdays=5, Tdays=10)  # clean contact lists from agents for faster computations
@@ -307,6 +309,33 @@ class BCNCovid2020(Model):
         #print(f"Lista total de testeados: {self.peopleTested}")
         #print(f"Lista total de agentes a testear: {self.peopleToTest}")
 
+    def calculate_R0(self):
+        """ R0: prob of transmission x contacts x days with disease """
+        R0_values = [1, 0, 0]
+        for human in [agent for agent in self.schedule.agents if isinstance(agent, BasicHuman)]:
+            if human.state == State.INF or human.state == State.EXP:
+                print(R0_values, human.R0_contacts, human.state)
+                contacts = human.R0_contacts[2]
+                if contacts == 0: contacts = 1
+                R0_values[0] += human.R0_contacts[0] / contacts
+                R0_values[1] += human.R0_contacts[1]
+                R0_values[2] += human.R0_contacts[2]
+
+                if human.state == State.INF:
+                    human.R0_contacts = [0, human.infecting_time, 0]
+                else:
+                    human.R0_contacts = [0, human.exposing_time, 0]
+
+        total_inf_exp = self.collector_counts["INF"] + self.collector_counts["EXP"]
+        if total_inf_exp == 0: total_inf_exp = 1
+        self.virus.R0 = round((R0_values[0] * R0_values[1] * R0_values[2])/total_inf_exp, 2)
+
+
+
+        #get agent.exposing_time
+        #get agent.infecting_time
+        pass
+
     def run_model(self, n):
         """ Runs the model for the 'n' number of steps """
         for i in range(n):
@@ -345,6 +374,10 @@ def get_hosp_count(model):
 def get_dead_count(model):
     """ Returns the Dead human agents in the model """
     return model.collector_counts["DEAD"]
+
+def get_R0(model):
+    """ Returns the R0 value of the model """
+    return model.virus.R0
 
 
 def get_h_susceptible_count(model):
