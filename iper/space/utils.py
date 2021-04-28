@@ -5,13 +5,13 @@ import meshio
 from iper.space.Space import MeshSpace
 import logging
 _log = logging.getLogger(__name__)
-#import trimesh
+from trimesh.grouping import group_rows, hashable_rows, float_to_int
 #from matplotlib.tri import Triangulation
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def parse_connectivity_3d_triangles(space, g):
+def parse_connectivity_3d_triangles(space):
   _log.info("Parsing 3d triangular surface...")
   _v = space._v
   x, y, z = _v[:,0], _v[:,1], _v[:,2]  
@@ -21,22 +21,23 @@ def parse_connectivity_3d_triangles(space, g):
   #space._plt_tri = triang; space._elev = z
   #space._surface = _surface
 
-  _ad, _ed = face_adjacency(faces=space._tri, return_edges=True)
-  space._adj = _ad
+  _ad = face_adjacency(faces=space._tri)
+   #space._adj = _ad
   _nodes = []
   for i, f in enumerate(space._tri):
     loop = (_v[f[0]], _v[f[1]], _v[f[2]])
     _c = np.mean(np.asarray(loop), axis=0)
     _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
 
+  g = nx.Graph()
   g.add_nodes_from(_nodes)
   g.add_edges_from(_ad)  
   
-  space._adj2 = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
+  space._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
   return g
 
-def parse_connectivity_3d_quads(space, g):
-  _log.info("Parsing 3d triangular surface...")
+def parse_connectivity_3d_quads(space):
+  _log.info("Parsing 3d quadrangular surface...")
   _v = space._v
   x, y, z = _v[:,0], _v[:,1], _v[:,2]  
   
@@ -45,18 +46,24 @@ def parse_connectivity_3d_quads(space, g):
   #space._plt_tri = triang; space._elev = z
   #space._surface = _surface
 
-  _ad, _ed = face_adjacency(faces=space._tri, return_edges=True)
-  space._adj = _ad
+  _ad = face_adjacency(faces=space._quad)
+
+  #space._adj = _ad
   _nodes = []
-  for i, f in enumerate(space._tri):
-    loop = (_v[f[0]], _v[f[1]], _v[f[2]])
+  for i, f in enumerate(space._quad):
+    loop = (_v[f[0]], _v[f[1]], _v[f[2]], _v[f[3]])
     _c = np.mean(np.asarray(loop), axis=0)
     _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
 
+  g = nx.Graph()
   g.add_nodes_from(_nodes)
   g.add_edges_from(_ad)  
   
-  space._adj2 = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
+  space._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
+  return g
+  
+def parse_connectivity_3d_tetra(space):
+  g = nx.Graph()  
   return g
 
 def face_adjacency(faces=None, return_edges=False):
@@ -64,6 +71,7 @@ def face_adjacency(faces=None, return_edges=False):
     # first generate the list of edges for the current faces
     # also return the index for which face the edge is from
     edges, edges_face = faces_to_edges(faces, return_index=True)
+     
     # make sure edge rows are sorted
     edges.sort(axis=1)
 
@@ -110,165 +118,24 @@ def faces_to_edges(faces, return_index=False):
       Vertex indices representing edges
     """
     faces = np.asanyarray(faces)
-
-    # each face has three edges
-    edges = faces[:, [0, 1, 1, 2, 2, 0]].reshape((-1, 2))
+    faces_dim = faces.shape[1]
+    if faces_dim == 3: #We are working with triangles
+      # each face has three edges
+      edges = faces[:, [0, 1, 1, 2, 2, 0]].reshape((-1, 2))    
+    elif faces_dim == 4: #We are working with quads
+      # each face has four edges
+      edges = faces[:, [0, 1, 1, 2, 2, 3, 3, 0]].reshape((-1, 2))    
+      
+    edges = edges.reshape((-1, 2))
 
     if return_index:
         # edges are in order of faces due to reshape
         face_index = np.tile(np.arange(len(faces)),
-                             (3, 1)).T.reshape(-1)
+                             (faces_dim, 1)).T.reshape(-1)
         return edges, face_index
     return edges
 
-def group_rows(data, require_count=None, digits=None):
-    """
-    Returns index groups of duplicate rows, for example:
-    [[1,2], [3,4], [1,2]] will return [[0,2], [1]]
-    Note that using require_count allows numpy advanced
-    indexing to be used in place of looping and
-    checking hashes and is ~10x faster.
-    Parameters
-    ----------
-    data : (n, m) array
-      Data to group
-    require_count : None or int
-      Only return groups of a specified length, eg:
-      require_count =  2
-      [[1,2], [3,4], [1,2]] will return [[0,2]]
-    digits : None or int
-    If data is floating point how many decimals
-    to consider, or calculated from tol.merge
-    Returns
-    ----------
-    groups : sequence (*,) int
-      Indices from in indicating identical rows.
-    """
 
-    # create a representation of the rows that can be sorted
-    hashable = hashable_rows(data, digits=digits)
-    # record the order of the rows so we can get the original indices back
-    # later
-    order = np.argsort(hashable)
-    # but for now, we want our hashes sorted
-    hashable = hashable[order]
-    # this is checking each neighbour for equality, example:
-    # example: hashable = [1, 1, 1]; dupe = [0, 0]
-    dupe = hashable[1:] != hashable[:-1]
-    # we want the first index of a group, so we can slice from that location
-    # example: hashable = [0 1 1]; dupe = [1,0]; dupe_idx = [0,1]
-    dupe_idx = np.append(0, np.nonzero(dupe)[0] + 1)
-    # if you wanted to use this one function to deal with non- regular groups
-    # you could use: np.array_split(dupe_idx)
-    # this is roughly 3x slower than using the group_dict method above.
-    start_ok = np.diff(
-        np.concatenate((dupe_idx, [len(hashable)]))) == require_count
-    groups = np.tile(dupe_idx[start_ok].reshape((-1, 1)),
-                     require_count) + np.arange(require_count)
-    groups_idx = order[groups]
-    if require_count == 1:
-        return groups_idx.reshape(-1)
-    return groups_idx
-
-def hashable_rows(data, digits=None):
-    """
-    We turn our array into integers based on the precision
-    given by digits and then put them in a hashable format.
-    Parameters
-    ---------
-    data : (n, m) array
-      Input data
-    digits : int or None
-      How many digits to add to hash if data is floating point
-      If None, tol.merge will be used
-    Returns
-    ---------
-    hashable : (n,) array
-      Custom data type which can be sorted
-      or used as hash keys
-    """
-    # if there is no data return immediately
-    if len(data) == 0:
-        return np.array([])
-
-    # get array as integer to precision we care about
-    as_int = float_to_int(data, digits=digits)
-
-    # if it is flat integers already, return
-    if len(as_int.shape) == 1:
-        return as_int
-
-    # if array is 2D and smallish, we can try bitbanging
-    # this is significantly faster than the custom dtype
-    if len(as_int.shape) == 2 and as_int.shape[1] <= 4:
-        # time for some righteous bitbanging
-        # can we pack the whole row into a single 64 bit integer
-        precision = int(np.floor(64 / as_int.shape[1]))
-        # if the max value is less than precision we can do this
-        if np.abs(as_int).max() < 2**(precision - 1):
-            # the resulting package
-            hashable = np.zeros(len(as_int), dtype=np.int64)
-            # loop through each column and bitwise xor to combine
-            # make sure as_int is int64 otherwise bit offset won't work
-            for offset, column in enumerate(as_int.astype(np.int64).T):
-                # will modify hashable in place
-                np.bitwise_xor(hashable,
-                               column << (offset * precision),
-                               out=hashable)
-            return hashable
-
-    # reshape array into magical data type that is weird but hashable
-    dtype = np.dtype((np.void, as_int.dtype.itemsize * as_int.shape[1]))
-    # make sure result is contiguous and flat
-    hashable = np.ascontiguousarray(as_int).view(dtype).reshape(-1)
-    return hashable
-
-
-def float_to_int(data, digits=None, dtype=np.int32):
-    """
-    Given a numpy array of float/bool/int, return as integers.
-    Parameters
-    -------------
-    data :  (n, d) float, int, or bool
-      Input data
-    digits : float or int
-      Precision for float conversion
-    dtype : numpy.dtype
-      What datatype should result be returned as
-    Returns
-    -------------
-    as_int : (n, d) int
-      Data as integers
-    """
-    # convert to any numpy array
-    data = np.asanyarray(data)
-
-    # if data is already an integer or boolean we're done
-    # if the data is empty we are also done
-    if data.dtype.kind in 'ib' or data.size == 0:
-        return data.astype(dtype)
-    elif data.dtype.kind != 'f':
-        data = data.astype(np.float64)
-
-    # populate digits from kwargs
-    if digits is None:
-        digits = util.decimal_to_digits(tol.merge)
-    elif isinstance(digits, float) or isinstance(digits, np.float64):
-        digits = util.decimal_to_digits(digits)
-    elif not (isinstance(digits, int) or isinstance(digits, np.integer)):
-        log.warning('Digits were passed as %s!', digits.__class__.__name__)
-        raise ValueError('Digits must be None, int, or float!')
-
-    # data is float so convert to large integers
-    data_max = np.abs(data).max() * 10**digits
-    # ignore passed dtype if we have something large
-    dtype = [np.int32, np.int64][int(data_max > 2**31)]
-    # multiply by requested power of ten
-    # then subtract small epsilon to avoid "go either way" rounding
-    # then do the rounding and convert to integer
-    as_int = np.round((data * 10 ** digits) - 1e-6).astype(dtype)
-
-    return as_int
 
 def _graph_as_fig(figfile, g, colors=None, cm='gray', clim=None, pos=None):
   #spring_3D = nx.spring_layout(g, k = 0.5)

@@ -43,28 +43,49 @@ class MeshSpace(NetworkGrid):
     for k, v in _cd.items():
       self._info[k] = v.shape
 
-    if self._info["triangle"][0] > 0: 
+    if "triangle" in self._info and self._info["triangle"][0] > 0: 
       self._tri = _cd.get("triangle",np.asarray([]))
       self.has_surface = True
+      
+    if "quad" in self._info and self._info["quad"][0] > 0: 
+      self._quad = _cd.get("quad",np.asarray([]))
+      self.has_surface = True
+      
+    if "tetra" in self._info and self._info["tetra"][0] > 0: 
+      self._tetra = _cd.get("tetra",np.asarray([]))
+      self.has_volume = True                  
 
-    print(self)  
-
-    g = self._computeConnectivity(debug=True)
-
+    gs = self._computeConnectivity(debug=True)
+    
+    assert(len(gs) == 1) # For now we do not support multiple graphs
+    g = gs[0]
+  
     super().__init__(g)
 
   def _computeConnectivity(self, debug=False):
     # Generate triangulation
-    from iper.space.utils import parse_connectivity_3d_triangles
+    from iper.space.utils import \
+      parse_connectivity_3d_triangles, \
+      parse_connectivity_3d_quads, \
+      parse_connectivity_3d_tetra
     _log.info("Calculating connectivity...")
 
     # Transform to a graph
-    g = nx.Graph()
+    gs = []
 
-    if self.has_surface:
-      g = parse_connectivity_3d_triangles(self, g)      
+    if self.has_surface and "triangle" in self._info:
+      g = parse_connectivity_3d_triangles(self)      
+      gs.append(g)
 
-    return g
+    if self.has_surface and "quad" in self._info:
+      g = parse_connectivity_3d_quads(self)      
+      gs.append(g)
+      
+    if self.has_volume and "tetra" in self._info:
+      g = parse_connectivity_3d_tetra(self)      
+      gs.append(g)      
+      
+    return gs
     
 
   def __repr__(self):
