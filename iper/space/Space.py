@@ -25,6 +25,8 @@ class MeshSpace(NetworkGrid):
     self.has_volume = False
     self.is2d = False
     self.is3d = False
+    self._2g =  None
+    self._3g =  None
 
     self._parseMesh()
 
@@ -55,11 +57,19 @@ class MeshSpace(NetworkGrid):
       self._tetra = _cd.get("tetra",np.asarray([]))
       self.has_volume = True                  
 
-    gs = self._computeConnectivity(debug=True)
+    self._computeConnectivity()
+    print(self)
+    # In case of multiple connectivities, which one to use?
+    g = None
+    if self.has_volume: 
+      g = self._3g # If we have a volume connectivity we always use it
+    else:
+      if self.has_surface: 
+        g = self._2g  # Otherwise use the 2D one
+        
+    # If none we will have an error
+    assert(g is not None)
     
-    assert(len(gs) == 1) # For now we do not support multiple graphs
-    g = gs[0]
-  
     super().__init__(g)
 
   def _computeConnectivity(self, debug=False):
@@ -71,23 +81,22 @@ class MeshSpace(NetworkGrid):
     _log.info("Calculating connectivity...")
 
     # Transform to a graph
-    gs = []
 
     if self.has_surface and "triangle" in self._info:
-      g = parse_connectivity_3d_triangles(self)      
-      gs.append(g)
+      g = parse_connectivity_3d_triangles(self)    
+      assert(g is not None)  
+      self._2g = g
 
     if self.has_surface and "quad" in self._info:
       g = parse_connectivity_3d_quads(self)      
-      gs.append(g)
+      assert(g is not None)        
+      self._2g = g
       
     if self.has_volume and "tetra" in self._info:
       g = parse_connectivity_3d_tetra(self)      
-      gs.append(g)      
-      
-    return gs
+      assert(g is not None)        
+      self._3g = g      
     
-
   def __repr__(self):
     s = "<MeshSpace>\n"
     
@@ -102,11 +111,21 @@ class MeshSpace(NetworkGrid):
       
     if "triangle" in self._info:
       s += "\t Triangles: %d\n"%self._info["triangle"][0]                  
+      
+    if "quad" in self._info:
+      s += "\t Quads: %d\n"%self._info["quad"][0]                 
+      
+    if "tetra" in self._info:
+      s += "\t Tetrahedrons: %d\n"%self._info["tetra"][0]                             
 
     if self.is2d: s+= "\t Mesh is 2D\n"
     if self.is3d: s+= "\t Mesh is 3D\n"
     
-    if self.has_surface: s+= "\t Mesh contains 2D surfaces\n"        
+    if self.has_surface: s+= "\t Mesh contains 2D surfaces\n"
+    if self.has_volume: s+= "\t Mesh contains 3D volume\n"
+    
+    if self._2g is not None: s+= "\t Mesh has 2D connectivity graph\n"
+    if self._3g is not None: s+= "\t Mesh has 3D connectivity graph\n" 
    
     s += "</MeshSpace>"
     return s

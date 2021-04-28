@@ -40,7 +40,6 @@ class TestMeshAsGraph(unittest.TestCase):
     #for _l in ms._adj:
     #  assert(ms._adj2[_l[0], _l[1]] == 1)
     
-
   def test2DQuads(self):
    
     fname = os.path.join("test","meshes","a_2D_quads.msh")
@@ -76,6 +75,7 @@ class TestMeshAsGraph(unittest.TestCase):
     
     #for _l in ms._adj:
     #  assert(ms._adj2[_l[0], _l[1]] == 1)
+
 
         
 if __name__ == "__main__":

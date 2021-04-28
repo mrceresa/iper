@@ -21,7 +21,7 @@ def parse_connectivity_3d_triangles(space):
   #space._plt_tri = triang; space._elev = z
   #space._surface = _surface
 
-  _ad = face_adjacency(faces=space._tri)
+  _ad = face_adjacency(faces=space._tri, eltype="triang")
    #space._adj = _ad
   _nodes = []
   for i, f in enumerate(space._tri):
@@ -46,7 +46,7 @@ def parse_connectivity_3d_quads(space):
   #space._plt_tri = triang; space._elev = z
   #space._surface = _surface
 
-  _ad = face_adjacency(faces=space._quad)
+  _ad = face_adjacency(faces=space._quad, eltype="quad")
 
   #space._adj = _ad
   _nodes = []
@@ -63,15 +63,37 @@ def parse_connectivity_3d_quads(space):
   return g
   
 def parse_connectivity_3d_tetra(space):
-  g = nx.Graph()  
+  _log.info("Parsing 3d tetraedrical volume...")
+  _v = space._v
+  x, y, z = _v[:,0], _v[:,1], _v[:,2]  
+  
+  #_surface = trimesh.Trimesh(vertices=space._v, faces=space._tri)
+  #triang = Triangulation(x, y, triangles=space._tri)
+  #space._plt_tri = triang; space._elev = z
+  #space._surface = _surface
+
+  _ad = face_adjacency(faces=space._tetra, eltype="tetra", debug=True)
+
+  #space._adj = _ad
+  _nodes = []
+  for i, f in enumerate(space._tetra):
+    loop = (_v[f[0]], _v[f[1]], _v[f[2]], _v[f[3]])
+    _c = np.mean(np.asarray(loop), axis=0)
+    _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
+
+  g = nx.Graph()
+  g.add_nodes_from(_nodes)
+  g.add_edges_from(_ad)  
+  
+  space._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
   return g
 
-def face_adjacency(faces=None, return_edges=False):
+def face_adjacency(faces, eltype, return_edges=False, debug=False):
 
     # first generate the list of edges for the current faces
     # also return the index for which face the edge is from
-    edges, edges_face = faces_to_edges(faces, return_index=True)
-     
+    edges, edges_face = faces_to_edges(faces, eltype, return_index=True)
+    
     # make sure edge rows are sorted
     edges.sort(axis=1)
 
@@ -98,6 +120,7 @@ def face_adjacency(faces=None, return_edges=False):
     # sort pairs in-place so we can search for indexes with ordered pairs
     adjacency.sort(axis=1)
 
+
     if return_edges:
         adjacency_edges = edges[edge_groups[:, 0][nondegenerate]]
         assert len(adjacency_edges) == len(adjacency)
@@ -105,7 +128,7 @@ def face_adjacency(faces=None, return_edges=False):
     return adjacency
 
 
-def faces_to_edges(faces, return_index=False):
+def faces_to_edges(faces, eltype, return_index=False):
     """
     Given a list of faces (n,3), return a list of edges (n*3,2)
     Parameters
@@ -118,13 +141,18 @@ def faces_to_edges(faces, return_index=False):
       Vertex indices representing edges
     """
     faces = np.asanyarray(faces)
-    faces_dim = faces.shape[1]
-    if faces_dim == 3: #We are working with triangles
+    if eltype == "triang": #We are working with triangles
       # each face has three edges
       edges = faces[:, [0, 1, 1, 2, 2, 0]].reshape((-1, 2))    
-    elif faces_dim == 4: #We are working with quads
+      faces_dim = 3
+    elif eltype == "quad": #We are working with quads
       # each face has four edges
-      edges = faces[:, [0, 1, 1, 2, 2, 3, 3, 0]].reshape((-1, 2))    
+      edges = faces[:, [0, 1, 1, 2, 2, 3, 3, 0]].reshape((-1, 2))
+      faces_dim = 4
+    elif eltype == "tetra": #We are working with tetra
+      # each face has six edges
+      edges = faces[:, [0, 1, 1, 2, 1, 3, 2, 3, 2, 0, 3, 0]].reshape((-1, 2)) 
+      faces_dim = 6
       
     edges = edges.reshape((-1, 2))
 
