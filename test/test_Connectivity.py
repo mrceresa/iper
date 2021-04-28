@@ -23,26 +23,59 @@ import os
 from iper.space.utils import read as read_mesh, _graph_as_fig
 
 class TestMeshAsGraph(unittest.TestCase):
-    
+
   def test2DTriang(self):
    
     fname = os.path.join("test","meshes","a_2D_triang.msh")
     self.assertTrue(os.path.exists(fname), "Missing mesh file %s"%fname)
     
     ms, mesh = read_mesh(fname)
-    print(mesh)
-    print(ms._info)
-    print(ms)
+    centroids = ms.getFieldArray("centroid")    
+    _graph_as_fig("test/2D_triang.png", ms.G, pos=centroids)    
     
     num_triangles = ms._info["triangle"][0]
     num_cells = len(ms.G.nodes)
     assert(num_triangles == num_cells)
     
-    for _l in ms._adj:
-      assert(ms._adj2[_l[0], _l[1]] == 1)
+    #for _l in ms._adj:
+    #  assert(ms._adj2[_l[0], _l[1]] == 1)
     
-    centroids = ms.getFieldArray("centroid")
-    _graph_as_fig("2D_triang.png", ms.G, pos=centroids)
+
+  def test2DQuads(self):
+   
+    fname = os.path.join("test","meshes","a_2D_quads.msh")
+    self.assertTrue(os.path.exists(fname), "Missing mesh file %s"%fname)
+    
+    ms, mesh = read_mesh(fname)
+    centroids = ms.getFieldArray("centroid")    
+    _graph_as_fig("test/2D_quad.png", ms.G, pos=centroids)    
+    
+    num_quad = ms._info["quad"][0]
+    num_cells = len(ms.G.nodes)
+    assert(num_quad == num_cells)
+    
+    #for _l in ms._adj:
+    #  assert(ms._adj2[_l[0], _l[1]] == 1)
+    
+
+  def test3DTetra(self):
+   
+    fname = os.path.join("test","meshes","a_3D_tetra.msh")
+    self.assertTrue(os.path.exists(fname), "Missing mesh file %s"%fname)
+    
+    ms, mesh = read_mesh(fname)
+    centroids = ms.getFieldArray("centroid")    
+    _graph_as_fig("test/3D_tetra.png", ms.G, pos=centroids)    
+    
+    print(mesh)
+    print(ms)    
+    
+    num_triangles = ms._info["tetra"][0]
+    num_cells = len(ms.G.nodes)
+    assert(num_triangles == num_cells)
+    
+    #for _l in ms._adj:
+    #  assert(ms._adj2[_l[0], _l[1]] == 1)
 
         
 if __name__ == "__main__":
