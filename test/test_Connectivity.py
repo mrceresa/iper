@@ -55,7 +55,6 @@ class TestMeshAsGraph(unittest.TestCase):
     
     #for _l in ms._adj:
     #  assert(ms._adj2[_l[0], _l[1]] == 1)
-    
 
   def test3DTetra(self):
    
@@ -75,8 +74,6 @@ class TestMeshAsGraph(unittest.TestCase):
     
     #for _l in ms._adj:
     #  assert(ms._adj2[_l[0], _l[1]] == 1)
-
-
         
 if __name__ == "__main__":
   unittest.main()
