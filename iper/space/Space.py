@@ -1,7 +1,6 @@
 from mesa_geo import GeoSpace, GeoAgent
 from mesa.space import MultiGrid, NetworkGrid
 import logging
-_log = logging.getLogger(__name__)
 
 import pandas as pd
 import geopandas as gpd
@@ -14,10 +13,14 @@ from scipy.spatial import Delaunay
 from trimesh import Trimesh
 import meshio
 from mesa.agent import Agent
+import trimesh
+import pickle
+import os
 
 class MeshSpace(NetworkGrid):
 
   def __init__(self, mesh, debug=False, name="New MeshSpace"): 
+    self.l = logging.getLogger(self.__class__.__name__)  
     self.name = name
     self._mesh = mesh
     self._info = {}
@@ -58,7 +61,7 @@ class MeshSpace(NetworkGrid):
       self.has_volume = True                  
 
     self._computeConnectivity()
-    print(self)
+
     # In case of multiple connectivities, which one to use?
     g = None
     if self.has_volume: 
@@ -73,29 +76,51 @@ class MeshSpace(NetworkGrid):
     super().__init__(g)
 
   def _computeConnectivity(self, debug=False):
+    # Check if we have the info saved
+    basedir = os.getcwd()
+
+    self.l.info("Generating connectivity graphs for mesh %s"%self.name)
+    self.l.info(str(self._mesh))
+    
+    cache_fname = os.path.join(basedir, "%s.conn_cached"%self.name)
+
+    self.l.info("Looking for cache file %s"%cache_fname)    
+    if os.path.exists(cache_fname):
+      self.l.info("Loading connectivity from file %s"%cache_fname)        
+      with open(cache_fname, "rb") as fp:
+        self._2g, self._3g, self._adj = pickle.load(fp)
+      return
+
     # Generate triangulation
     from iper.space.utils import \
       parse_connectivity_3d_triangles, \
       parse_connectivity_3d_quads, \
       parse_connectivity_3d_tetra
-    _log.info("Calculating connectivity...")
 
+    self.l.info("Calculating connectivity...")
     # Transform to a graph
 
     if self.has_surface and "triangle" in self._info:
-      g = parse_connectivity_3d_triangles(self)    
+      g, adj = parse_connectivity_3d_triangles(self)    
       assert(g is not None)  
       self._2g = g
+      self._adj = adj
 
     if self.has_surface and "quad" in self._info:
-      g = parse_connectivity_3d_quads(self)      
+      g, adj = parse_connectivity_3d_quads(self)      
       assert(g is not None)        
       self._2g = g
+      self._adj = adj      
       
     if self.has_volume and "tetra" in self._info:
-      g = parse_connectivity_3d_tetra(self)      
+      g, adj = parse_connectivity_3d_tetra(self)      
       assert(g is not None)        
-      self._3g = g      
+      self._3g = g   
+      self._adj = adj         
+    
+    self.l.info("Caching connectivity graphs to file %s"%cache_fname)        
+    with open(cache_fname, "wb") as fp:
+      pickle.dump( (self._2g, self._3g, self._adj), fp, protocol=pickle.HIGHEST_PROTOCOL)
     
   def __repr__(self):
     s = "<MeshSpace>\n"
@@ -154,19 +179,25 @@ class MeshSpace(NetworkGrid):
     self.G.nodes[node_id]["agent"].remove(agent)    
 
   def getSurfaceSize(self):
-    return (self._info["triangle"][0], )
+    return (len(self._2g.nodes), )
+    
+  def getVolumeSize(self):
+    return (len(self._3g.nodes), )
+    
+  def getSize(self):
+    return (len(self.G.nodes), )
 
   
 
-  def find_cell(self, pos):
+  #def find_cell(self, pos):
 
-    pos = np.asarray([pos])
-    print(pos, len(pos))
+  #  pos = np.asarray([pos])
+  #  print(pos, len(pos))
 
-    _cp, _dist, _cellid = trimesh.proximity.closest_point(
-      self._surface,
-      pos
-    )
+  #  _cp, _dist, _cellid = trimesh.proximity.closest_point(
+  #    self._surface,
+  #    pos
+  #  )
     
     return int(_cellid)
     
@@ -264,10 +295,10 @@ class GeoSpaceQR(GeoSpace):
 
   def place_agent(self, agent, newShape):
     if hasattr(agent, "shape"):
-      _log.info("Deleting agent %d (%s)"%(id(agent),str(agent.shape.bounds)))
+      self.l.info("Deleting agent %d (%s)"%(id(agent),str(agent.shape.bounds)))
       self.idx.delete(id(agent), agent.shape.bounds)
       agent.shape = newShape
-      _log.info("Inserting agent %d (%s)"%(id(agent),str(agent.shape.bounds)))
+      self.l.info("Inserting agent %d (%s)"%(id(agent),str(agent.shape.bounds)))
       self.idx.insert(id(agent), agent.shape.bounds, agent)
     else:
       raise AttributeError("GeoAgents must have a shape attribute")

@@ -34,8 +34,8 @@ def parse_connectivity_3d_triangles(space):
   g.add_nodes_from(_nodes)
   g.add_edges_from(_ad)  
   
-  space._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
-  return g
+  _adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
+  return g, _adj
 
 def parse_connectivity_3d_quads(space):
   _log.info("Parsing 3d quadrangular surface...")
@@ -60,8 +60,8 @@ def parse_connectivity_3d_quads(space):
   g.add_nodes_from(_nodes)
   g.add_edges_from(_ad)
   
-  space._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
-  return g
+  _adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
+  return g, _adj
   
 def parse_connectivity_3d_tetra(space):
   _log.info("Parsing 3d tetraedrical volume...")
@@ -73,7 +73,7 @@ def parse_connectivity_3d_tetra(space):
   #space._plt_tri = triang; space._elev = z
   #space._surface = _surface
 
-  _ad = face_adjacency(faces=space._tetra, eltype="tetra", debug=False)
+  _ad = face_adjacency_tetra(cells=space._tetra, eltype="tetra")
   #space._adj = _ad
   _nodes = []
   for i, f in enumerate(space._tetra):
@@ -83,13 +83,38 @@ def parse_connectivity_3d_tetra(space):
 
   g = nx.Graph()
   g.add_nodes_from(_nodes)
-  import ipdb
-  #ipdb.set_trace()
-  for _c in [combinations(_r,2) for _r in _ad]:
-    g.add_edges_from( tuple(_c) )  
+  g.add_edges_from( _ad )  
   
-  space._adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
-  return g
+  _adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
+  return g, _adj
+
+def face_adjacency_tetra(cells, eltype):
+  cells = np.asanyarray(cells)
+  if eltype == "tetra": #We are working with triangles
+    # each face has six edges
+    faces = cells[:, [0, 1, 2, 0, 0, 1, 3, 0, 0, 2, 3, 0, 1, 2, 3, 1]]
+    faces_dim = 4
+   
+  faces = faces.reshape((-1, faces_dim))
+
+  # edges are in order of faces due to reshape
+  face_index = np.tile(np.arange(len(cells)),
+                       (faces_dim, 1)).T.reshape(-1)
+ 
+  # make sure face rows are sorted
+  faces.sort(axis=1)
+  
+  unq, cnt = np.unique(faces, axis=0, return_counts=True)
+  _, inv_idx = np.unique(faces, axis=0, return_inverse=True)   
+  
+  _shared = np.where(cnt>1)[0] #Position of shared edges
+  
+  adjacency = []
+  for _s in _shared:
+    adjacency.append(face_index[np.in1d(inv_idx, _s).nonzero()[0]])
+  
+  return adjacency
+
 
 def face_adjacency(faces, eltype, return_edges=False, debug=False):
 
@@ -100,19 +125,6 @@ def face_adjacency(faces, eltype, return_edges=False, debug=False):
   # make sure edge rows are sorted
   edges.sort(axis=1)
 
-  # this will return the indices for duplicate edges
-  # every edge appears twice in a well constructed mesh
-  # so for every row in edge_idx:
-  # edges[edge_idx[*][0]] == edges[edge_idx[*][1]]
-  # in this call to group rows we discard edges which
-  # don't occur twice
-  
-  #edge_groups = group_rows(edges, require_count=rc)
-
-  #print(edge_groups[:4])
-  #if len(edge_groups) == 0:
-  #    log.debug('No adjacent faces detected! Did you merge vertices?')
-
   ed_unq, ed_cnt = np.unique(edges, axis=0, return_counts=True)
   _, ed_inv_idx = np.unique(edges, axis=0, return_inverse=True)    
 
@@ -121,23 +133,17 @@ def face_adjacency(faces, eltype, return_edges=False, debug=False):
   for _s in _shared:
     adjacency.append(edges_face[np.in1d(ed_inv_idx, _s).nonzero()[0]])
   
-  #adjacency = np.asarray(_adj)
-  
   # the pairs of all adjacent faces
   # so for every row in face_idx, self.faces[face_idx[*][0]] and
   # self.faces[face_idx[*][1]] will share an edge
-  #adjacency = edges_face[edge_groups]
+  adjacency = edges_face[edge_groups]
 
   # degenerate faces may appear in adjacency as the same value
-  #nondegenerate = adjacency[:, 0] != adjacency[:, 1]
-  #adjacency = adjacency[nondegenerate]
+  nondegenerate = adjacency[:, 0] != adjacency[:, 1]
+  adjacency = adjacency[nondegenerate]
 
   # sort pairs in-place so we can search for indexes with ordered pairs
-  #adjacency.sort(axis=1)
-
-  if debug:
-    import ipdb
-    ipdb.set_trace()
+  adjacency.sort(axis=1)
 
   return adjacency
 
@@ -178,7 +184,6 @@ def faces_to_edges(faces, eltype, return_index=False):
   return edges
 
 
-
 def _graph_as_fig(figfile, g, colors=None, cm='gray', clim=None, pos=None):
   #spring_3D = nx.spring_layout(g, k = 0.5)
   fig = plt.figure()
@@ -200,13 +205,15 @@ def _graph_as_fig(figfile, g, colors=None, cm='gray', clim=None, pos=None):
   plt.close(fig)
 
 
+
+
   
 def read(filename, debug=False):
   if filename.endswith(".vtk"):
-    ms, mesh = MeshSpace.read_vtk(filename)
+    ms, mesh = read_vtk(filename)
   else:
     mesh = meshio.read(filename)
-    ms = MeshSpace(mesh, name=filename, debug=debug)
+    ms = MeshSpace(mesh, name=os.path.basename(filename), debug=debug)
   return ms, mesh
 
 def from_meshio(points, cells):
@@ -235,12 +242,11 @@ def read_vtk(filename, debug=False):
   nCols = array.GetNumberOfValues()//nCells
   numpy_cells = vtk_to_numpy(array)
   numpy_cells = numpy_cells.reshape((-1,nCols))
-  import ipdb
-  ipdb.set_trace()
+
   # Drop first cell that is only the number of points
   numpy_cells = [("triangle", numpy_cells[::10,1:])] 
   mesh = meshio.Mesh(points, numpy_cells)
-  ms = MeshSpace(mesh, name="VTK object")
+  ms = MeshSpace(mesh, name=os.path.basename(filename))
 
   return ms, mesh
 
@@ -266,7 +272,7 @@ def from_meshgrid(xmin=0.0, ymin=0.0, xmax=1.0, ymax=1.0, z=0.0, xp=10, yp=10):
   y = np.linspace(ymin, ymax, ny)
   xx, yy= np.meshgrid(x, y)
   points = np.vstack(list(map(np.ravel, [xx,yy] ))).T
-  ms = MeshSpace.from_vertices(points, z)
+  ms = from_vertices(points, z)
   #plt.triplot(points[:,0], points[:,1], tri.simplices)
   #plt.plot(xx, yy, "o")
   #plt.show()
