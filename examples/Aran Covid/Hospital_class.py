@@ -47,6 +47,7 @@ class Hospital(Agent):
             if agentStatus == State.EXP or agentStatus == State.INF:
                 self.model.hosp_collector_counts['H-SUSC'] -= 1
                 self.model.hosp_collector_counts['H-INF'] += 1
+                agent.HospDetected = True
                 agentcontacts = agent.contacts
                 #print(f"Resulta que es positivo, da sus contactos {agentcontacts}")
                 # save agent contacts for future tests

@@ -7,6 +7,7 @@ class VirusCovid(object):
                  immune_days_sd, severe_days, severe_days_sd, ptrans, pSympt, pTest, death_rate,severe_rate):
 
         self.R0 = 0
+        self.R0_obs = 0
 
         # from EXP to INF
         self.incubation_days = incubation_days
