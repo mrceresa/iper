@@ -1,6 +1,7 @@
 from Covid_class import VirusCovid, State
 from Human_Class import BasicHuman
 from Hospital_class import Hospital, Workplace
+from attributes_Agent import job, create_families
 
 from mesa import Model
 from mesa.time import RandomActivation
@@ -109,24 +110,37 @@ class BCNCovid2020(Model):
 
     def createBasicAgents(self, N):
         """ Create and place the Human agents into the map"""
-        for i in range(N):
-            a = BasicHuman(i, self)
-            self.schedule.add(a)
-            # Add the agent to a random grid cell
+        family_dist = create_families(N)
+        print(family_dist)
+
+        index = 0
+        agent = 0
+
+        while agent < N:
+            if family_dist[index] == 0: index += 1
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
-            a.house = (x, y)  # set a random place to be the house of agent
-            self.grid.place_agent(a, (x, y))  # the agent starts at their house
 
-            # make some agents infected at start
-            infected = np.random.choice([0, 1], p=[0.9, 0.1])
-            if infected == 1:
-                a.state = State.INF
-                self.collector_counts["SUSC"] -= 1
-                self.collector_counts["INF"] += 1  # Adjust initial counts
-                a.infecting_time = self.get_infection_time()
-                a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.infecting_time, 0]
-            print("Human agent " + str(a.unique_id) + " created")
+            for i in range(0, family_dist[index]):
+                a = BasicHuman(agent + i, self)
+                self.schedule.add(a)
+                a.house = (x, y)  # set a random place to be the house of agent
+                self.grid.place_agent(a, (x, y))  # the agent starts at their house
+
+                # make some agents infected at start
+                infected = np.random.choice([0, 1], p=[0.9, 0.1])
+                if infected == 1:
+                    a.state = State.INF
+                    self.collector_counts["SUSC"] -= 1
+                    self.collector_counts["INF"] += 1  # Adjust initial counts
+                    a.infecting_time = self.get_infection_time()
+                    a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.infecting_time, 0]
+                print("Human agent " + str(a.unique_id) + " created in place ", a.house, "and is age: ", a.age)
+
+
+            agent += family_dist[index]
+            family_dist[index] = 0
+
 
         self.update_DC_table()  # record the first day stats on table
 
@@ -340,14 +354,14 @@ class BCNCovid2020(Model):
                         yesterday = today
 
                     if contacts == 0: contacts = 1
-                    print("Human DETECTED", human.R0_contacts)
+                    #print("Human DETECTED", human.R0_contacts)
                     # sorted(h.keys())[-1]
                     R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
                     R0_obs_values[1] += human.R0_contacts[yesterday][1]
                     R0_obs_values[2] += human.R0_contacts[yesterday][2]
 
 
-                print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
+                #print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
                 contacts = human.R0_contacts[today][2]
                 if contacts == 0: contacts = 1
                 R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission

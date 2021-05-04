@@ -1,6 +1,7 @@
 from mesa import Agent
 from Covid_class import State, Mask
 from Hospital_class import Workplace
+from attributes_Agent import age_
 
 import random
 import numpy as np
@@ -12,6 +13,7 @@ class BasicHuman(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.house = None
+        self.age = age_()
         self.state = State.SUSC
         self.mask = Mask.NONE
         # variable to calculate time passed since last state transition
@@ -202,6 +204,7 @@ class BasicHuman(Agent):
 
                     # adds patient to hospital patients list
                     h = self.model.getHospitalPosition(self.obj_place)
+                    print(f"Agent {self.unique_id} hospitalized in {h.unique_id} at place {h.place}, {self.obj_place}")
                     h.add_patient(self)
 
                     self.quarantined = None
@@ -247,6 +250,7 @@ class BasicHuman(Agent):
             if alive == 0:
                 # discharge patient
                 h = self.model.getHospitalPosition(self.obj_place)
+                print(f"Hospital {h.unique_id} at place {h.place} discharges human at {self.pos} with obj_place {self.obj_place} status DEATH!!")
                 h.discharge_patient(self)
 
                 self.adjust_init_stats("HOSP", "DEAD", State.DEAD)
@@ -257,6 +261,7 @@ class BasicHuman(Agent):
             if alive != 0 and t.days >= self.hospitalized_time:
                 # discharge patient
                 h = self.model.getHospitalPosition(self.obj_place)
+                print(f"Hospital {h.unique_id} at place {h.place} discharges human at {self.pos} with obj_place {self.obj_place} status RECOVERED!!")
                 h.discharge_patient(self)
 
                 self.adjust_init_stats("HOSP", "REC", State.REC)
