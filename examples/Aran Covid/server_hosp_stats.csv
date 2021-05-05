@@ -1,6 +1,0 @@
-Day,Hosp-Susceptible,Hosp-Infected,Hosp-Recovered,Hosp-Hospitalized,Hosp-Dead
-1,800,0,0,0,0
-2,799,0,0,1,0
-3,778,20,0,2,0
-4,719,50,4,28,0
-5,636,67,9,86,2

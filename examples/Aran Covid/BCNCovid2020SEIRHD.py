@@ -68,9 +68,8 @@ class BCNCovid2020(Model):
         self.collector_counts["SUSC"] = N
 
         self.datacollector = DataCollector(
-            {"SUSC": get_susceptible_count, "EXP": get_exposed_count, "INF": get_infected_count,
-             "REC": get_recovered_count, "HOSP": get_hosp_count, "DEAD": get_dead_count, "R0": get_R0,
-             "R0_Obs": get_R0_Obs},
+            {"SUSC":get_susceptible_count,"EXP":get_exposed_count,"INF": get_infected_count,"REC": get_recovered_count,
+             "HOSP":get_hosp_count, "DEAD": get_dead_count, "R0": get_R0,"R0_Obs": get_R0_Obs},
             tables={"Model_DC_Table": {"Day": [], "Susceptible": [], "Exposed": [], "Infected": [], "Recovered": [],
                                        "Hospitalized": [], "Dead": [], "R0": [], "R0_Obs": []}}
         )
@@ -80,8 +79,8 @@ class BCNCovid2020(Model):
         self.reset_hosp_counts()
         self.hosp_collector_counts["H-SUSC"] = N
         self.hosp_collector = DataCollector(
-            {"H-SUSC": get_h_susceptible_count, "H-INF": get_h_infected_count,
-             "H-REC": get_h_recovered_count, "H-HOSP": get_h_hospitalized_count, "H-DEAD": get_h_dead_count, },
+            {"H-SUSC": get_h_susceptible_count, "H-INF": get_h_infected_count, "H-REC": get_h_recovered_count,
+             "H-HOSP": get_h_hospitalized_count, "H-DEAD": get_h_dead_count, },
             tables={"Hosp_DC_Table": {"Day": [], "Hosp-Susceptible": [], "Hosp-Infected": [], "Hosp-Recovered": [],
                                       "Hosp-Hospitalized": [], "Hosp-Dead": []}}
         )
@@ -137,10 +136,8 @@ class BCNCovid2020(Model):
                     a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.infecting_time, 0]
                 print("Human agent " + str(a.unique_id) + " created in place ", a.house, "and is age: ", a.age)
 
-
             agent += family_dist[index]
             family_dist[index] = 0
-
 
         self.update_DC_table()  # record the first day stats on table
 
@@ -256,13 +253,13 @@ class BCNCovid2020(Model):
 
     def update_DC_table(self):
         """ Collects all statistics for the DC_Table """
-        next_row = {'Day': self.DateTime.day, 'Susceptible': get_susceptible_count(self),
+        next_row = {'Day': self.DateTime.strftime('%d-%m'), 'Susceptible': get_susceptible_count(self),
                     'Exposed': get_exposed_count(self), 'Infected': get_infected_count(self),
                     'Recovered': get_recovered_count(self), 'Hospitalized': get_hosp_count(self),
                     'Dead': get_dead_count(self), 'R0': get_R0(self), 'R0_Obs': get_R0_Obs(self)}
         self.datacollector.add_table_row("Model_DC_Table", next_row, ignore_missing=True)
 
-        next_row2 = {'Day': self.DateTime.day, 'Hosp-Susceptible': get_h_susceptible_count(self),
+        next_row2 = {'Day': self.DateTime.strftime('%d-%m'), 'Hosp-Susceptible': get_h_susceptible_count(self),
                      'Hosp-Infected': get_h_infected_count(self), 'Hosp-Recovered': get_h_recovered_count(self),
                      'Hosp-Hospitalized': get_hosp_count(self), 'Hosp-Dead': get_h_dead_count(self)}
         self.hosp_collector.add_table_row("Hosp_DC_Table", next_row2, ignore_missing=True)
@@ -286,7 +283,7 @@ class BCNCovid2020(Model):
             self.update_DC_table()
             self.clean_contact_list(current_step, Adays=2,
                                     Hdays=5, Tdays=10)  # clean contact lists from agents for faster computations
-            self.plot_results(title="server_stats", hosp_title="server_hosp_stats")
+            self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
 
     def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
         """ Function for deleting past day contacts sets and arrange today's tests"""
@@ -338,7 +335,8 @@ class BCNCovid2020(Model):
     def calculate_R0(self, current_step):
         """ R0: prob of transmission x contacts x days with disease """
         today = current_step.strftime('%Y-%m-%d')
-        yesterday = (current_step - timedelta(days=1)).strftime('%Y-%m-%d') # use yesterday for detected people since it is the data recorded and given to hosp
+        yesterday = (current_step - timedelta(days=1)).strftime(
+            '%Y-%m-%d')  # use yesterday for detected people since it is the data recorded and given to hosp
 
         R0_values = [0, 0, 0]
         R0_obs_values = [0, 0, 0]
@@ -349,19 +347,18 @@ class BCNCovid2020(Model):
                     hosp_count += 1
                     try:
                         contacts = human.R0_contacts[yesterday][2]
-                    except KeyError: # is a exp agent new from today
+                    except KeyError:  # is a exp agent new from today
                         contacts = human.R0_contacts[today][2]
                         yesterday = today
 
                     if contacts == 0: contacts = 1
-                    #print("Human DETECTED", human.R0_contacts)
+                    # print("Human DETECTED", human.R0_contacts)
                     # sorted(h.keys())[-1]
                     R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
                     R0_obs_values[1] += human.R0_contacts[yesterday][1]
                     R0_obs_values[2] += human.R0_contacts[yesterday][2]
 
-
-                #print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
+                # print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
                 contacts = human.R0_contacts[today][2]
                 if contacts == 0: contacts = 1
                 R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
