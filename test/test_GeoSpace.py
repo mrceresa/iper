@@ -63,7 +63,8 @@ class TestGeoSpace(unittest.TestCase):
         df, geometry=gpd.points_from_xy(df.Longitude, df.Latitude)
         )
 
-    gdf.crs = self.spacePandas.crs.crs.to_string()
+
+    gdf.crs = self.spacePandas.crs.to_string()
 
     model = MockModel()
     model.grid = self.spacePandas
