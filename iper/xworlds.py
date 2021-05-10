@@ -144,8 +144,8 @@ class XAgent(Agent):
 
       return _v
     else:
-      self.l.error("Failed to get attribute from XML: %s"%toStr(self._xd.rootNode.el))
-      raise RuntimeError("Attribute %s is not defined for object of class %s"%(name, self.__class__.__name__))
+    #  self.l.error("Failed to get attribute %s from XML: %s"%(name, toStr(self._xd.rootNode.el)))
+      raise AttributeError("Attribute %s is not defined for object of class %s"%(name, self.__class__.__name__))
   
   # This method is always needed or we have errors  
   def serialize(self):

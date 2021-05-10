@@ -16,6 +16,7 @@ from mesa.agent import Agent
 import trimesh
 import pickle
 import os
+from shapely.geometry import Point
 
 class MeshSpace(NetworkGrid):
 
@@ -311,16 +312,58 @@ class GeoSpacePandas(GeoSpace):
       super().__init__(*args, **kwargs)
       # Override Index
       del self.idx
+
+      self._agents = {}
+      self._clear_gdf()
+      self._gdf_is_dirty = False
+
+    def _clear_gdf(self):
       df = pd.DataFrame(
         {'agentid': [],
         'geometry': []
         })
 
-      self._agdf = gpd.GeoDataFrame(df)
-      self._agents = {}
+      self._agdf = gpd.GeoDataFrame(df)  
 
+    def get_agent(self, aid):
+      aid=str(aid)
+      if aid in self._agents:
+        return self._agents[aid]
 
-    def add_agents(self, agents):
+    def place_agent(self, agent, pos):
+      if not hasattr(agent, "shape"): agent.shape = Point(pos[0], pos[0])
+      if not agent.id in self._agents: self._agents[agent.id] = agent
+      self.move_agent(agent, pos)
+      self._gdf_is_dirty = True
+
+    def remove_agent(self, agent, pos):
+      if not agent.id in self._agents: return
+      del self._agents[agent.id]
+      self._gdf_is_dirty = True
+
+    def move_agent(self, agent, pos):
+      if agent.id in self._agents:
+        agent.pos = pos
+        agent.shape = Point(pos[0], pos[0])
+        self._gdf_is_dirty = True
+      else:
+        raise AttributeError("No agent %s"%agent.id)
+
+    def _create_gdf(self):
+      self._clear_gdf()
+      columns = list(self._agdf)
+      data = []
+      for agent in self._agents.values():
+        _aid = agent.id
+        values = [_aid, agent.shape]
+        zipped = zip(columns, values)
+        a_dictionary = dict(zipped)
+        data.append(a_dictionary)
+
+      self._agdf = self._agdf.append(data, ignore_index=True)   
+      self._dirty = False
+
+    def add_geo(self, agents):
 
       """Add a list of GeoAgents to the Geospace.
 
