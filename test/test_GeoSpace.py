@@ -6,9 +6,12 @@ import matplotlib.pyplot as plt
 from descartes.patch import PolygonPatch
 from random import uniform
 
+from iper import XAgent
 from mesa_geo import AgentCreator, GeoAgent
 import geopandas as gpd
 import pandas as pd
+from random import random
+import time
 
 #bounds = [
 #    ( uniform(x_min, x_Max), uniform(y_min, y_Max), uniform(x_min, x_Max), uniform(y_min, y_Max) ),
@@ -63,7 +66,8 @@ class TestGeoSpace(unittest.TestCase):
         df, geometry=gpd.points_from_xy(df.Longitude, df.Latitude)
         )
 
-    gdf.crs = self.spacePandas.crs.crs.to_string()
+
+    gdf.crs = self.spacePandas.crs.to_string()
 
     model = MockModel()
     model.grid = self.spacePandas
@@ -94,6 +98,38 @@ class TestGeoSpace(unittest.TestCase):
 
     _t = self.spacePandas._agents[id(_toMove)]
     self.assertTrue(newShape == _t.shape)
+
+  def testUpdateEfficency(self):
+    sp = GeoSpacePandas()
+
+    tic = time.perf_counter()
+    for i in range(1000):
+      a = XAgent(i)
+      sp.place_agent(a, (i,i))
+    toc = time.perf_counter()
+    _el1 = toc-tic
+    print("Place took:", _el1)
+
+    tic = time.perf_counter()
+    for i in range(1000):
+      sp.move_agent(sp.get_agent(i), (i**2,i**2))
+    toc = time.perf_counter()
+    _el1 = toc-tic
+    print("Move took:", _el1)
+
+    tic = time.perf_counter()
+    sp._create_gdf()
+    print(sp._agdf)
+    toc = time.perf_counter()
+    _el1 = toc-tic
+    print("To GDF took:", _el1)
+
+    tic = time.perf_counter()
+    for i in range(1000):
+      sp.remove_agent(sp.get_agent(i))
+    toc = time.perf_counter()
+    _el1 = toc-tic
+    print("Remove took:", _el1)
 
   def testGeoInterface(self):
     self.spacePandas.add_agents(self.agents)

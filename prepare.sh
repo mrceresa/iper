@@ -2,10 +2,11 @@
 ## Create iper environment
 CONDA_BASE=$(conda info --base)
 source $CONDA_BASE/etc/profile.d/conda.sh
-conda create -n iper -y python=3.8 fiona geopandas matplotlib ipython numpy scipy pandas lxml cython coloredlogs seaborn
+conda create -c conda-forge -n iper -y python=3.8 fiona geopandas geoplot \
+	matplotlib ipython numpy scipy pandas lxml cython coloredlogs seaborn
 conda activate iper
 
-pip install contextily
+pip install contextily trimesh meshio
 pip install git+https://github.com/projectmesa/mesa#egg=mesa
 pip install git+https://github.com/Corvince/mesa-geo.git#egg=mesa-geo
 
