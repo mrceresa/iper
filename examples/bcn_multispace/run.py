@@ -53,8 +53,12 @@ def main(args):
         }
 
   city.addPopulationRequest(pr)
-    
+  city.createAgents()    
+
+  city.plotAll(args.output_dir, "pre.png")  
   city.run(args.steps)
+  
+  l.info("Saving results to %s"%args.output_dir)
   city.plotAll(args.output_dir, "res.png")
   
   return city
@@ -62,10 +66,10 @@ def main(args):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('-o','--output_dir', type=str, default="results-%s"%datetime.today().strftime('%Y%m%d-%H%M%S'), help="Output dir" )
+  parser.add_argument('-o','--output_dir', type=str, default="results-%s"%datetime.today().strftime('%Y%m%d-%H'), help="Output dir" ) #%Y%m%d-%H%M%S
   parser.add_argument('-v','--verbose', action="store_true", help="Print additional information" )
   parser.add_argument('-s','--steps', type=int, default=10, help="Timesteps to run the model for" )          
-  parser.add_argument('-n','--agents', type=int, default=1000, help="Numer of starting agents" )
+  parser.add_argument('-n','--agents', type=int, default=10000, help="Numer of starting agents" )
   parser.add_argument('-b','--basemap', type=str, default="Barcelona, Spain", help="Basemap for geo referencing the model" )
   parser.add_argument('-f','--family', type=list, default=[19.9 ,23.8 ,20.4, 24.8, 8.9, 2.2], help="distribution listeach term in the distr list represents the probability of generating a familywith a number of individuals equal to the index of that element of distr" ) 
   parser.add_argument('-j','--job', type=dict, default={"unemployed":6.0,"type1":14.00,"type2":10.00,"type3":10.00,"type4":10.00,"type5":10.00,"type6":40.00,} , help="it is a dictionary containing workgroups" )

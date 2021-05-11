@@ -1,12 +1,12 @@
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 
-from mesa_geo.geoagent import GeoAgent, AgentCreator
+from mesa_geo.geoagent import GeoAgent
 
 import math
 import networkx as nx
 from mesa.datacollection import DataCollector
-from mesa.space import MultiGrid, NetworkGrid
+from mesa.space import NetworkGrid
 import random
 import numpy as np
 
@@ -22,10 +22,6 @@ from io import StringIO
 import json
 
 from iper import GeoSpacePandas
-
-import logging
-_log = logging.getLogger(__name__)
-
 from iper import MultiEnvironmentWorld, XAgent, PopulationRequest
 from iper.space.Space import MeshSpace
 
@@ -36,18 +32,21 @@ import mapclassify
 from shapely.geometry import Polygon
 import numpy as np
 
+import logging
+from random import uniform
+
 class CityModel(MultiEnvironmentWorld):
 
   def __init__(self, config):
     super().__init__(config)
-    _log.error("Initalizing model")
+    self.l.info("Initalizing model")
     self._basemap = config["basemap"]
     self.space = GeoSpacePandas()
     self.network = NetworkGrid(nx.Graph())
-    _log.info("Scheduler is " + str(self.schedule))
+    self.l.info("Scheduler is " + str(self.schedule))
     self.schedule = RandomActivation(self)
 
-    _log.info("Loading geodata")
+    self.l.info("Loading geodata")
     self._initGeo()
     self._loadGeoData()
   
@@ -60,7 +59,7 @@ class CityModel(MultiEnvironmentWorld):
     # Longitude w,e Latitude n,s
     for attr in ["w", "s", "e", "n", "place", "zoom", "n_tiles"]:
       self._xs[attr] = getattr(self._loc, attr)
-      print("{}: {}".format(attr, self._xs[attr]))
+      self.l.debug("{}: {}".format(attr, self._xs[attr]))
 
     self._xs["centroid"] = LineString(
         (
@@ -76,11 +75,19 @@ class CityModel(MultiEnvironmentWorld):
 
     self._xs["dx"] = 111.32; #One degree in longitude is this in KM 
     self._xs["dy"] = 40075 * math.cos( self._xs["centroid"].y ) / 360 
-    _log.info("Arc amplitude at this latitude %f, %f"%(self._xs["dx"], self._xs["dy"]))
+    self.l.info("Arc amplitude at this latitude %f, %f"%(self._xs["dx"], self._xs["dy"]))
+
+  def out_of_bounds(self, pos):
+    xmin, ymin, xmax, ymax = self._xs["w"], self._xs["s"], self._xs["e"], self._xs["n"]  
+  
+    if pos[0] < xmin or pos[0] > xmax: return True
+    if pos[1] < ymin or pos[1] > ymax: return True    
+    return False
+
      
   def _loadGeoData(self):
     path = os.getcwd()
-    _log.info("Loading geo data from path:"+path)
+    self.l.info("Loading geo data from path:"+path)
     blocks = gpd.read_file(os.path.join(path, "shapefiles","quartieriBarca1.shp"))
     self._blocks= blocks    
 
@@ -107,23 +114,24 @@ class CityModel(MultiEnvironmentWorld):
     plt.tight_layout()
 
     # Plot agents
-    #self.grid._agdf.plot(ax=ax1)
+    if self.space._gdf_is_dirty: self.space._create_gdf()
+    self.space._agdf.plot(ax=ax1)
 
-    xmin, ymin, xmax, ymax = self._xs["w"], self._xs["s"], self._xs["e"], self._xs["n"]
+    #xmin, ymin, xmax, ymax = self._xs["w"], self._xs["s"], self._xs["e"], self._xs["n"]
 
-    dy = (xmax-xmin)/10
-    dx = (ymax-ymin)/10
+    #dy = (xmax-xmin)/10
+    #dx = (ymax-ymin)/10
 
-    cols = list(np.arange(xmin, xmax + dx, dx))
-    rows = list(np.arange(ymin, ymax + dy, dy))
+    #cols = list(np.arange(xmin, xmax + dx, dx))
+    #rows = list(np.arange(ymin, ymax + dy, dy))
 
-    polygons = []
-    for x in cols[:-1]:
-        for y in rows[:-1]:
-            polygons.append(Polygon([(x,y), (x+dx, y), (x+dx, y+dy), (x, y+dy)]))
+    #polygons = []
+    #for x in cols[:-1]:
+    #    for y in rows[:-1]:
+    #        polygons.append(Polygon([(x,y), (x+dx, y), (x+dx, y+dy), (x, y+dy)]))
 
-    grid = gpd.GeoDataFrame({'geometry':polygons})
-    grid.plot(ax=ax1, facecolor='none', edgecolor="red")
+    #grid = gpd.GeoDataFrame({'geometry':polygons})
+    #grid.plot(ax=ax1, facecolor='none', edgecolor="red")
 
     plt.savefig(os.path.join(outdir, 'agents-'+figname))
 
@@ -132,9 +140,13 @@ class CityModel(MultiEnvironmentWorld):
 
   def run_model(self, n):
     for i in range(n):
-      _log.info("Step %d of %d"%(i, n))
+      self.l.info("Step %d of %d"%(i, n))
       self.step()
 
-    
+  def createAgents(self):
+    for _agent in self._agentsToAdd:
+      _agent.pos = (uniform(self._xs["w"], self._xs["e"]), 
+                 uniform(self._xs["s"], self._xs["n"]))   
+    super().createAgents()
     
 
