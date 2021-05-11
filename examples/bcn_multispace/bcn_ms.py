@@ -34,6 +34,7 @@ import numpy as np
 
 import logging
 from random import uniform
+import time
 
 class CityModel(MultiEnvironmentWorld):
 
@@ -137,11 +138,7 @@ class CityModel(MultiEnvironmentWorld):
 
   def step(self):
     self.schedule.step()
-
-  def run_model(self, n):
-    for i in range(n):
-      self.l.info("Step %d of %d"%(i, n))
-      self.step()
+    if self.space._gdf_is_dirty: self.space._create_gdf
 
   def createAgents(self):
     for _agent in self._agentsToAdd:

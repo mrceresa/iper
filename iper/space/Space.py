@@ -17,6 +17,11 @@ import trimesh
 import pickle
 import os
 from shapely.geometry import Point
+from sklearn.neighbors import BallTree
+from shapely.ops import nearest_points
+
+from sklearn.neighbors import BallTree
+import numpy as np
 
 class MeshSpace(NetworkGrid):
 
@@ -327,10 +332,16 @@ class GeoSpacePandas(GeoSpace):
         a_dictionary = dict(zipped)
         data.append(a_dictionary)
 
-      self._agdf = self._agdf.append(data, ignore_index=True)   
+      self._agdf = self._agdf.append(data, ignore_index=True)
+      # Ensure that index in right gdf is formed of sequential numbers
+      self._right = self._agdf.copy().reset_index(drop=True)      
+      _right_r = np.array(self._right["geometry"].apply(
+        lambda geom: (geom.x * np.pi / 180, geom.y * np.pi / 180)).to_list()
+        )      
+      # Create tree from the candidate points
+      self._tree = BallTree(_right_r, leaf_size=15, metric='haversine')        
+    
       self._gdf_is_dirty = False
-
-
 
     def add_geo(self, agents):
 
@@ -401,9 +412,48 @@ class GeoSpacePandas(GeoSpace):
       """
       raise ValueError("Not implemented") 
 
-    def agents_at(self, pos):
+    def get_nearest(self, src_points, k_neighbors=5):
+      """Find nearest neighbors for all source points from a set of candidate points"""
+
+      # Find closest points and distances
+      distances, indices = self._tree.query(src_points, k=k_neighbors)
+
+      # Transpose to get distances and indices into arrays
+      distances = distances.transpose()
+      indices = indices.transpose()
+
+      # Return indices and distances
+      return (indices, distances)
+
+
+    def agents_at(self, pos, max_num=5):
       """Return a list of agents at given pos."""
-      raise ValueError("Not implemented") 
+     
+      # Parse coordinates from points and insert them into a numpy array as RADIANS
+      left_r = np.array(
+         [ (pos[0] * np.pi / 180, pos[1] * np.pi / 180) ]
+        )
+      
+      # Find the nearest points
+      # -----------------------
+      # closest ==> index in right_gdf that corresponds to the closest point
+      # dist ==> distance between the nearest neighbors (in meters)
+      
+      closest, dist = self.get_nearest(
+        src_points=left_r, k_neighbors=max_num
+        )
+      
+      # Return points from right GeoDataFrame that are closest to points in left GeoDataFrame
+      closest_points = self._right.loc[closest.reshape(-1)]
+
+      # Ensure that the index corresponds the one in left_gdf
+      closest_points = closest_points.reset_index(drop=True)
+
+      # Convert to meters from radians
+      earth_radius = 6371000  # meters
+      closest_points['distance'] = dist * earth_radius
+      
+      return closest_points
 
     def distance(self, agent_a, agent_b):
       """Return distance of two agents."""

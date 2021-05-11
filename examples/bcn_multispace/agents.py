@@ -30,6 +30,7 @@ class HumanAgent(XAgent):
     _actions = self.think()
     _a = random.choice(_actions)
     _a.do(self)
+    others = self.getWorld().space.agents_at(self.pos, max_num=2)
     super().step()      
 
   def __repr__(self):
