@@ -19,6 +19,7 @@ import scipy.interpolate as interp
 from matplotlib.tri import Triangulation, LinearTriInterpolator, CubicTriInterpolator
 from os.path import expanduser
 import os
+import vtk
 
 from iper.space.utils import read as read_mesh, _graph_as_fig
 
@@ -36,7 +37,10 @@ class TestMeshAsGraph(unittest.TestCase):
     num_triangles = ms._info["triangle"][0]
     num_cells = len(ms.G.nodes)
     assert(num_triangles == num_cells)
-    
+   
+    import pickle
+    with open("2D_triang_MeshSpace.pkl", "wb") as fp:
+      pickle.dump(ms, fp) 
     #for _l in ms._adj:
     #  assert(ms._adj2[_l[0], _l[1]] == 1)
     
@@ -58,7 +62,7 @@ class TestMeshAsGraph(unittest.TestCase):
 
   def test3DTetra(self):
    
-    fname = os.path.join("test","meshes","a_3D_tetra.msh")
+    fname = os.path.join("test","meshes","a_3d_tetra.vtu")
     self.assertTrue(os.path.exists(fname), "Missing mesh file %s"%fname)
     
     ms, mesh = read_mesh(fname)
@@ -70,10 +74,24 @@ class TestMeshAsGraph(unittest.TestCase):
     
     num_triangles = ms._info["tetra"][0]
     num_cells = len(ms.G.nodes)
-    assert(num_triangles == num_cells)
+    #assert(num_triangles == num_cells)
     
     #for _l in ms._adj:
-    #  assert(ms._adj2[_l[0], _l[1]] == 1)
+    #  assert(ms._adj2[_l[0], _l[1]] == 1)ç
+    
+  def testMultiBlock(self):
+    filein="/home/mario/Downloads/alveolo/test_0_0.vtu"
+    #rd = vtk.vtkXMLMultiBlockDataReader()
+    rd = vtk.vtkXMLUnstructuredGridReader()
+    rd.SetFileName(filein)
+    rd.Update()
+    
+    mesh = rd.GetOutput()
+    pd = mesh.GetAttributes(0)
+    codno = pd.GetArray("CODNO")
+
+    import ipdb
+    ipdb.set_trace()
         
 if __name__ == "__main__":
   unittest.main()

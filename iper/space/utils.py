@@ -11,6 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from itertools import combinations
+from tqdm import tqdm
+import vtk
+from networkx.convert_matrix import from_scipy_sparse_matrix, to_scipy_sparse_matrix
 
 def parse_connectivity_3d_triangles(space):
   _log.info("Parsing 3d triangular surface...")
@@ -63,59 +66,6 @@ def parse_connectivity_3d_quads(space):
   _adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
   return g, _adj
   
-def parse_connectivity_3d_tetra(space):
-  _log.info("Parsing 3d tetraedrical volume...")
-  _v = space._v
-  x, y, z = _v[:,0], _v[:,1], _v[:,2]  
-  
-  #_surface = trimesh.Trimesh(vertices=space._v, faces=space._tri)
-  #triang = Triangulation(x, y, triangles=space._tri)
-  #space._plt_tri = triang; space._elev = z
-  #space._surface = _surface
-
-  _ad = face_adjacency_tetra(cells=space._tetra, eltype="tetra")
-  #space._adj = _ad
-  _nodes = []
-  for i, f in enumerate(space._tetra):
-    loop = (_v[f[0]], _v[f[1]], _v[f[2]], _v[f[3]])
-    _c = np.mean(np.asarray(loop), axis=0)
-    _nodes.append( (i, {"vertices":loop, "centroid":_c}) )
-
-  g = nx.Graph()
-  g.add_nodes_from(_nodes)
-  g.add_edges_from( _ad )  
-  
-  _adj = nx.adjacency_matrix(g, nodelist=sorted(g.nodes()))  
-  return g, _adj
-
-def face_adjacency_tetra(cells, eltype):
-  cells = np.asanyarray(cells)
-  if eltype == "tetra": #We are working with triangles
-    # each face has six edges
-    faces = cells[:, [0, 1, 2, 0, 0, 1, 3, 0, 0, 2, 3, 0, 1, 2, 3, 1]]
-    faces_dim = 4
-   
-  faces = faces.reshape((-1, faces_dim))
-
-  # edges are in order of faces due to reshape
-  face_index = np.tile(np.arange(len(cells)),
-                       (faces_dim, 1)).T.reshape(-1)
- 
-  # make sure face rows are sorted
-  faces.sort(axis=1)
-  
-  unq, cnt = np.unique(faces, axis=0, return_counts=True)
-  _, inv_idx = np.unique(faces, axis=0, return_inverse=True)   
-  
-  _shared = np.where(cnt>1)[0] #Position of shared edges
-  
-  adjacency = []
-  for _s in _shared:
-    adjacency.append(face_index[np.in1d(inv_idx, _s).nonzero()[0]])
-  
-  return adjacency
-
-
 def face_adjacency(faces, eltype, return_edges=False, debug=False):
 
   # first generate the list of edges for the current faces
@@ -136,14 +86,14 @@ def face_adjacency(faces, eltype, return_edges=False, debug=False):
   # the pairs of all adjacent faces
   # so for every row in face_idx, self.faces[face_idx[*][0]] and
   # self.faces[face_idx[*][1]] will share an edge
-  adjacency = edges_face[edge_groups]
+  #adjacency = edges_face[edge_groups]
 
   # degenerate faces may appear in adjacency as the same value
-  nondegenerate = adjacency[:, 0] != adjacency[:, 1]
-  adjacency = adjacency[nondegenerate]
+  #nondegenerate = adjacency[:, 0] != adjacency[:, 1]
+  #adjacency = adjacency[nondegenerate]
 
   # sort pairs in-place so we can search for indexes with ordered pairs
-  adjacency.sort(axis=1)
+  np.sort(adjacency, axis=1)
 
   return adjacency
 
@@ -205,12 +155,11 @@ def _graph_as_fig(figfile, g, colors=None, cm='gray', clim=None, pos=None):
   plt.close(fig)
 
 
-
-
-  
 def read(filename, debug=False):
   if filename.endswith(".vtk"):
     ms, mesh = read_vtk(filename)
+  elif filename.endswith(".vtu"):
+    ms, mesh = read_vtu(filename)
   else:
     mesh = meshio.read(filename)
     ms = MeshSpace(mesh, name=os.path.basename(filename), debug=debug)
@@ -219,6 +168,89 @@ def read(filename, debug=False):
 def from_meshio(points, cells):
   mesh = meshio.Mesh(points, cells)
   return MeshSpace(mesh, name="Meshio object")
+
+def read_vtu(filein, debug=False, fileout=None):
+  cells = []
+
+  rd = vtk.vtkXMLUnstructuredGridReader()
+  rd.SetFileName(filein)
+  rd.Update()
+  mesh = rd.GetOutput()
+
+  ptids = vtk.vtkIdList()
+  cell_ids = vtk.vtkIdList()
+  ncell_ptids = vtk.vtkIdList()
+
+  g = nx.Graph()
+
+  #Get point cells
+  cc = vtk.vtkCellCenters()
+  cc.SetInputData( mesh )
+  cc.Update()
+  centers = cc.GetOutput()
+
+  points = []
+  for pid in range(centers.GetNumberOfPoints()):
+    g.add_node(pid, centroid=centers.GetPoint(pid))  
+    points.append(centers.GetPoint(pid))
+
+  connectivity = []
+  for cellid in tqdm(range(mesh.GetNumberOfCells())):
+    cell = mesh.GetCell(cellid)
+    if cell.GetCellType() != vtk.VTK_TETRA:
+      continue
+    mesh.GetCellPoints(cellid,ptids)
+
+    central_cellpts = set( [ ptids.GetId(k) for k in range(ptids.GetNumberOfIds()) ] )
+
+    cells.append(list(central_cellpts))
+    aset = set()
+    for pti in range(ptids.GetNumberOfIds()):
+      mesh.GetPointCells( ptids.GetId(pti), cell_ids )
+
+      for neigh_cell_i in range(cell_ids.GetNumberOfIds()):
+        ncell = mesh.GetCell(neigh_cell_i)
+        if ncell.GetCellType() != vtk.VTK_TETRA:
+          continue
+        mesh.GetCellPoints( cell_ids.GetId(neigh_cell_i), ncell_ptids )
+        neighb_cellpts = set( [ ncell_ptids.GetId(k) for k in range(ncell_ptids.GetNumberOfIds()) ] )
+
+        #only cells connected to the face
+        if len( central_cellpts.intersection(neighb_cellpts) )==3:
+          aset.add( cell_ids.GetId(neigh_cell_i) )
+
+    connectivity.append( list(aset) ) #subtract middle cell
+    for l in list(aset):
+      g.add_edge( cellid, l )  
+
+
+  if fileout is not None:
+    lines = vtk.vtkCellArray()
+    for i, kkk in enumerate(connectivity):
+      for cellid in kkk:
+        lines.InsertNextCell(2)
+        lines.InsertCellPoint(i)
+        lines.InsertCellPoint(cellid)
+         
+
+    pd = vtk.vtkPolyData()
+    pd.SetPoints( centers.GetPoints() )
+    pd.SetLines(lines)
+
+    wr = vtk.vtkPolyDataWriter()
+    wr.SetFileName(fileout)
+    wr.SetInputData(pd)
+    wr.Write()
+
+  cells = [("tetra", np.asarray(cells))]
+  mesh = meshio.Mesh(np.asarray(points), cells)
+  ms = MeshSpace(mesh, name=os.path.basename(filein), 
+    compute_conn=False, g3=g)
+    
+  ms._adj = to_scipy_sparse_matrix(g)
+
+  return ms, mesh
+
 
 def read_vtk(filename, debug=False):
   from vtkmodules.vtkIOLegacy import vtkPolyDataReader

@@ -12,14 +12,16 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial import Delaunay
 from trimesh import Trimesh
 import meshio
-from mesa.agent import Agent
+#from mesa.agent import Agent
 import trimesh
 import pickle
 import os
 
 class MeshSpace(NetworkGrid):
 
-  def __init__(self, mesh, debug=False, name="New MeshSpace"): 
+  def __init__(self, mesh, debug=False, name="New MeshSpace", \
+              compute_conn=True, g2=None, g3=None): 
+              
     self.l = logging.getLogger(self.__class__.__name__)  
     self.name = name
     self._mesh = mesh
@@ -28,12 +30,12 @@ class MeshSpace(NetworkGrid):
     self.has_volume = False
     self.is2d = False
     self.is3d = False
-    self._2g =  None
-    self._3g =  None
+    self._2g =  g2
+    self._3g =  g3
 
-    self._parseMesh()
+    self._parseMesh(compute_conn)
 
-  def _parseMesh(self):
+  def _parseMesh(self, compute_conn):
     self._v = self._mesh.points;
     self._info["points"] = self._v.shape
     if self._info["points"][1] == 2: 
@@ -60,7 +62,8 @@ class MeshSpace(NetworkGrid):
       self._tetra = _cd.get("tetra",np.asarray([]))
       self.has_volume = True                  
 
-    self._computeConnectivity()
+    if compute_conn:
+      self._computeConnectivity()
 
     # In case of multiple connectivities, which one to use?
     g = None
@@ -82,20 +85,10 @@ class MeshSpace(NetworkGrid):
     self.l.info("Generating connectivity graphs for mesh %s"%self.name)
     self.l.info(str(self._mesh))
     
-    cache_fname = os.path.join(basedir, "%s.conn_cached"%self.name)
-
-    self.l.info("Looking for cache file %s"%cache_fname)    
-    if os.path.exists(cache_fname):
-      self.l.info("Loading connectivity from file %s"%cache_fname)        
-      with open(cache_fname, "rb") as fp:
-        self._2g, self._3g, self._adj = pickle.load(fp)
-      return
-
     # Generate triangulation
     from iper.space.utils import \
       parse_connectivity_3d_triangles, \
-      parse_connectivity_3d_quads, \
-      parse_connectivity_3d_tetra
+      parse_connectivity_3d_quads
 
     self.l.info("Calculating connectivity...")
     # Transform to a graph
@@ -111,17 +104,7 @@ class MeshSpace(NetworkGrid):
       assert(g is not None)        
       self._2g = g
       self._adj = adj      
-      
-    if self.has_volume and "tetra" in self._info:
-      g, adj = parse_connectivity_3d_tetra(self)      
-      assert(g is not None)        
-      self._3g = g   
-      self._adj = adj         
-    
-    self.l.info("Caching connectivity graphs to file %s"%cache_fname)        
-    with open(cache_fname, "wb") as fp:
-      pickle.dump( (self._2g, self._3g, self._adj), fp, protocol=pickle.HIGHEST_PROTOCOL)
-    
+              
   def __repr__(self):
     s = "<MeshSpace>\n"
     
@@ -165,7 +148,7 @@ class MeshSpace(NetworkGrid):
     self._remove_agent(agent, agent.pos)
     self.place_agent(agent, agent_pos)
 
-  def remove_agent(self, agent: Agent) -> None:
+  def remove_agent(self, agent):
     """ Remove an agent from a node. """
 
     node_id = agent.pos
