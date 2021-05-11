@@ -356,7 +356,6 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
-  
     self.space.place_agent(agent, agent.pos)
     self.schedule.add(agent)
     

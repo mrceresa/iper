@@ -275,26 +275,10 @@ class MeshSpace(NetworkGrid):
 
     return ax, collec
 
-class GeoSpaceQR(GeoSpace):
-
-  def place_agent(self, agent, newShape):
-    if hasattr(agent, "shape"):
-      self.l.info("Deleting agent %d (%s)"%(id(agent),str(agent.shape.bounds)))
-      self.idx.delete(id(agent), agent.shape.bounds)
-      agent.shape = newShape
-      self.l.info("Inserting agent %d (%s)"%(id(agent),str(agent.shape.bounds)))
-      self.idx.insert(id(agent), agent.shape.bounds, agent)
-    else:
-      raise AttributeError("GeoAgents must have a shape attribute")
-    
-    self.update_bbox()
-
-
 class GeoSpacePandas(GeoSpace):
     def __init__(self, *args, **kwargs):
       super().__init__(*args, **kwargs)
       # Override Index
-      del self.idx
 
       self._agents = {}
       self._clear_gdf()
@@ -314,7 +298,7 @@ class GeoSpacePandas(GeoSpace):
         return self._agents[aid]
 
     def place_agent(self, agent, pos):
-      if not hasattr(agent, "shape"): agent.shape = Point(pos[0], pos[0])
+      if not hasattr(agent, "shape"): agent.shape = Point(pos[0], pos[1])
       if not agent.id in self._agents: self._agents[agent.id] = agent
       self.move_agent(agent, pos)
       self._gdf_is_dirty = True
@@ -327,7 +311,7 @@ class GeoSpacePandas(GeoSpace):
     def move_agent(self, agent, pos):
       if agent.id in self._agents:
         agent.pos = pos
-        agent.shape = Point(pos[0], pos[0])
+        agent.shape = Point(pos[0], pos[1])
         self._gdf_is_dirty = True
       else:
         raise AttributeError("No agent %s"%agent.id)
@@ -344,7 +328,9 @@ class GeoSpacePandas(GeoSpace):
         data.append(a_dictionary)
 
       self._agdf = self._agdf.append(data, ignore_index=True)   
-      self._dirty = False
+      self._gdf_is_dirty = False
+
+
 
     def add_geo(self, agents):
 

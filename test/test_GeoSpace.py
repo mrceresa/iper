@@ -1,5 +1,5 @@
 import unittest
-from iper.space.Space import GeoSpacePandas, GeoSpaceQR
+from iper.space.Space import GeoSpacePandas
 from shapely.geometry import Polygon, LineString, Point
 from figures import BLUE, SIZE, set_limits, plot_coords, color_isvalid
 import matplotlib.pyplot as plt
@@ -45,7 +45,6 @@ class TestGeoSpace(unittest.TestCase):
 
   def setUp(self):
     self.spacePandas = GeoSpacePandas()
-    self.spaceRT = GeoSpaceQR()
     
     x_min, y_min, x_Max, y_Max = (2.052, 4.317, 2.228, 4.467)
     sheet = Polygon.from_bounds( x_min, y_min, x_Max, y_Max )
@@ -74,23 +73,15 @@ class TestGeoSpace(unittest.TestCase):
     AC = AgentCreator(GeoAgent, {"model": model})
     self.agents = AC.from_GeoDataFrame(gdf)
 
-    self.spaceRT.add_agents(self.agents)
-
-  def testInsertion(self):
-
-    self.spacePandas.add_agents(self.agents)
-    for _a in self.spacePandas.agents:
-      self.assertTrue(_a in self.spaceRT.agents)
-
   def testRemoval(self):
 
-    self.spacePandas.add_agents(self.agents)
+    self.spacePandas.add_geo(self.agents)
     _toDel = self.agents[0]
     self.spacePandas.remove_agent(_toDel)
     self.assertFalse(_toDel in self.spacePandas.agents)
 
   def testUpdate(self):
-    self.spacePandas.add_agents(self.agents)
+    self.spacePandas.add_geo(self.agents)
     _toMove = self.agents[0]
     oShape = _toMove.shape
     newShape = Point(oShape.x + 1 , oShape.y + 1)
@@ -132,11 +123,10 @@ class TestGeoSpace(unittest.TestCase):
     print("Remove took:", _el1)
 
   def testGeoInterface(self):
-    self.spacePandas.add_agents(self.agents)
+    self.spacePandas.add_geo(self.agents)
     _g1 = self.spacePandas.__geo_interface__
-    _g2 = self.spaceRT.__geo_interface__
 
-    self.assertEqual(_g1, _g2)
+
 
 if __name__ == '__main__':
     unittest.main()
