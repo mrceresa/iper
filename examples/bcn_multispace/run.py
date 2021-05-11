@@ -15,9 +15,15 @@ from datetime import datetime
 from iper import PopulationRequest
 
 from agents import HumanAgent, RandomWalk
+import contextily as ctx
+import time
 
 def main(args):
 
+  if not os.path.exists(args.cache_dir):
+    os.makedirs(args.cache_dir)
+    
+  ctx.set_cache_dir(args.cache_dir)
   # Set log level  
   if not os.path.exists(args.output_dir):
     os.makedirs(args.output_dir)
@@ -56,7 +62,10 @@ def main(args):
   city.createAgents()    
 
   city.plotAll(args.output_dir, "pre.png")  
+  tic = time.perf_counter()  
   city.run(args.steps)
+  toc = time.perf_counter()        
+  l.info("Simulation lasted %.1f seconds"%(toc-tic))    
   
   l.info("Saving results to %s"%args.output_dir)
   city.plotAll(args.output_dir, "res.png")
@@ -67,6 +76,7 @@ def main(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('-o','--output_dir', type=str, default="results-%s"%datetime.today().strftime('%Y%m%d-%H'), help="Output dir" ) #%Y%m%d-%H%M%S
+  parser.add_argument('-c','--cache_dir', type=str, default="ctx-cache", help="Dir to cache maps")
   parser.add_argument('-v','--verbose', action="store_true", help="Print additional information" )
   parser.add_argument('-s','--steps', type=int, default=10, help="Timesteps to run the model for" )          
   parser.add_argument('-n','--agents', type=int, default=10000, help="Numer of starting agents" )

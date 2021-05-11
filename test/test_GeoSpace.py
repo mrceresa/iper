@@ -127,6 +127,5 @@ class TestGeoSpace(unittest.TestCase):
     _g1 = self.spacePandas.__geo_interface__
 
 
-
 if __name__ == '__main__':
     unittest.main()
