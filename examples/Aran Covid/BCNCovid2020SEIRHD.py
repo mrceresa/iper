@@ -239,17 +239,21 @@ class BCNCovid2020(Model):
         """ Sets to 0 the counts for the hospital datacollector """
         self.hosp_collector_counts = {"H-SUSC": 0, "H-INF": 0, "H-REC": 0, "H-HOSP": 0, "H-DEAD": 0, }
 
-    def plot_results(self, title='sir_stats', hosp_title='hosp_sir_stats'):
+    def plot_results(self, title='stats', hosp_title='hosp_stats', R0_title='R0_stats'):
         """Plot cases per country"""
         X = self.datacollector.get_table_dataframe("Model_DC_Table")
         X.to_csv(title + '.csv', index=False)  # get the csv
-        colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black", "Orange"]
+        R_db = X[['Day', 'R0', 'R0_Obs']]
+        X = X.drop(['R0','R0_Obs'], axis=1)
+        colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
         X.set_index('Day').plot.line(color=colors).get_figure().savefig(title)  # plot the stats
+        R_db.set_index('Day').plot.line(color=["Orange", "Green"]).get_figure().savefig(R0_title)  # plot the stats
+
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
         Y.to_csv(hosp_title + '.csv', index=False)  # get the csv
         colors = ["Green", "Red", "Blue", "Gray", "Black"]
-        Y.set_index('Day').plot.line(color=colors).get_figure().savefig(hosp_title + '.png')  # plot the stats
+        Y.set_index('Day').plot.line(color=colors).get_figure().savefig(hosp_title)  # plot the stats
 
     def update_DC_table(self):
         """ Collects all statistics for the DC_Table """
@@ -375,7 +379,7 @@ class BCNCovid2020(Model):
         self.virus.R0_obs = round(
             (R0_obs_values[0] / HOSP_inf_exp) * (R0_obs_values[1] / HOSP_inf_exp) * (R0_obs_values[2] / HOSP_inf_exp),
             2)
-        print("HOSP count :", hosp_count, "and observed by model ", HOSP_inf_exp)
+        print("HOSP count :", hosp_count, "and observed by model ", HOSP_inf_exp, "with R0: ", self.virus.R0, self.virus.R0_obs)
 
     def run_model(self, n):
         """ Runs the model for the 'n' number of steps """

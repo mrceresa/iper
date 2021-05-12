@@ -18,7 +18,7 @@ def main(args):
   
   # Start model
   _log.info("Started BCN Mobility simulator with params %s"%str(args))
-  model = BCNCovid2020(args.agents, args.basemap, width= 50, height=50)
+  model = BCNCovid2020(args.agents, args.basemap, width=50, height=50) #50
   
   #model.plotAll() for geospacepandas
   #plt.savefig("start.png")

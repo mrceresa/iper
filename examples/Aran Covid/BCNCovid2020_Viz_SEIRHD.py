@@ -10,7 +10,7 @@ from mesa.visualization.ModularVisualization import ModularServer, Visualization
 # {"N":30, "basemap":"Barcelona, Spain", "width":10, "height":10}
 model_params = {
     "N": UserSettableParameter("slider", "Population size", 50, 100, 1000, 100),
-    "basemap": "Barcelona, Spain", "width": 100, "height": 100,
+    "basemap": "Barcelona, Spain", "width": 500, "height": 500,
     "incubation_days": UserSettableParameter("slider", "Incubation days", 3, 1, 5, 1),
     "infection_days": UserSettableParameter("slider", "Infection days", 5, 1, 10, 1),
     "immune_days": UserSettableParameter("slider", "Immune days", 3, 1, 5, 1),
@@ -86,7 +86,7 @@ def agent_portrayal(agent):
     return portrayal
 
 
-grid = CanvasGrid(agent_portrayal, 100, 100, 500, 500)
+grid = CanvasGrid(agent_portrayal, 500, 500, 1000, 1000)
 infected_chart = ChartModule(
     [
         {"Label": "SUSC", "Color": "Green"},
@@ -123,5 +123,5 @@ server = ModularServer(BCNCovid2020,
                        [show_time, grid, infected_chart, hospital_chart, R0_chart],
                        "Covid Model", model_params)
 
-server.port = 8521  # The default
+server.port = 8520  # The default
 server.launch()

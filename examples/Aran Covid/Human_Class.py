@@ -109,14 +109,14 @@ class BasicHuman(Agent):
                         # once at hospital, is tested and next step will go home to quarantine
                         self.mask = Mask.FFP2
                         h = self.model.getHospitalPosition(self.obj_place)
-                        h.doTest(self)
+                        h.doTest(self)  # H-SUSC H-INF
                         self.obj_place = None
 
         # Ill agents move to nearest hospital to be treated
         elif self.state == State.HOSP:
             if self.pos != self.obj_place:
                 new_position = min(possible_steps,
-                                   key=lambda c: euclidean(c, self.obj_place))  # check shortest path to work
+                                   key=lambda c: euclidean(c, self.obj_place))  # check shortest path to hospital
             else:  # agent is at hospital
                 self.mask = Mask.FFP2
 
@@ -202,9 +202,9 @@ class BasicHuman(Agent):
                     # look for the nearest hospital
                     self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
 
-                    # adds patient to hospital patients list
+                    # adds patient to nearest hospital patients list
                     h = self.model.getHospitalPosition(self.obj_place)
-                    print(f"Agent {self.unique_id} hospitalized in {h.unique_id} at place {h.place}, {self.obj_place}")
+                    print(f"Agent {self.unique_id} hospitalized in {h.unique_id} at place {h.place}, {self.obj_place} with their position at {self.pos} hospital position {self.model.getHospitalPosition()}")
                     h.add_patient(self)
 
                     self.quarantined = None
