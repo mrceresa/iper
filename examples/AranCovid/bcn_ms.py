@@ -36,6 +36,9 @@ import logging
 from random import uniform
 import time
 from datetime import datetime, timedelta
+from attributes_Agent import job, create_families
+from Hospital_class import Workplace, Hospital
+from agents import HumanAgent
 from Covid_class import VirusCovid, State
 
 
@@ -56,7 +59,6 @@ class CityModel(MultiEnvironmentWorld):
 
         self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
         self.virus = VirusCovid(config["virus"])
-        print(self.virus.pTrans, self.virus.immune_days_sd)
 
     def _initGeo(self):
         # Initialize geo data
@@ -146,10 +148,59 @@ class CityModel(MultiEnvironmentWorld):
         self.schedule.step()
         if self.space._gdf_is_dirty: self.space._create_gdf
 
-    def createAgents(self):
-        for _agent in self._agentsToAdd:
-            _agent.pos = (uniform(self._xs["w"], self._xs["e"]),
-                          uniform(self._xs["s"], self._xs["n"]))
+    def createAgents(self, Humanagents, friendsXagent = 3):
+
+        N = len(self._agentsToAdd)
+        family_dist = create_families(Humanagents)
+        agents_created = 0
+        index = 0
+
+        while agents_created < N:
+            if isinstance(self._agentsToAdd[agents_created], HumanAgent):
+                # FAMILY PART
+                if family_dist[index] == 0: index += 1
+                position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+
+                for i in range(0, family_dist[index]):
+                    print(agents_created+i)
+                    self._agentsToAdd[agents_created+i].pos = position
+                    self._agentsToAdd[agents_created+i].house = position
+
+                    #FRIENDS
+                    friends = random.sample([fr for fr in range(0, Humanagents) if fr != agents_created+i], friendsXagent) # get index position of random people to be friends
+                    for friend_index in friends:
+                        self._agentsToAdd[agents_created + i].friends.add(self._agentsToAdd[friend_index])
+                        self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agents_created + i])
+
+
+                agents_created += family_dist[index]
+                family_dist[index] = 0
+            elif isinstance(self._agentsToAdd[agents_created], Hospital):
+                position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                self._agentsToAdd[agents_created].place = position # redundant
+                self._agentsToAdd[agents_created].pos = position
+                print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
+                agents_created += 1
+            elif isinstance(self._agentsToAdd[agents_created], Workplace):
+                position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                self._agentsToAdd[agents_created].place = position # redundant
+                self._agentsToAdd[agents_created].pos = position
+                print(f"Workplace {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
+                agents_created += 1
+
+
         super().createAgents()
+
+
+
+    def printSocialNetwork(self):
+        """ Prints on the terminal screen the friends and workplace (if exists) of the human agents of the model. """
+        print("PRINTING SOCIAL NEEEEEEEEEEETWORK")
+        for a in self.schedule.agents:
+            print(a)
+            if isinstance(a, HumanAgent):
+                print(f'{a.unique_id} has {a.friends} these friends')
+
+
 
 

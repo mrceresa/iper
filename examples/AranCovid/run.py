@@ -16,6 +16,7 @@ from datetime import datetime
 from iper import PopulationRequest
 
 from agents import HumanAgent, RandomWalk
+from Hospital_class import Workplace, Hospital
 import contextily as ctx
 import time
 
@@ -58,11 +59,20 @@ def main(args):
                   "type": HumanAgent,
                   "defaultBehaviours": [RandomWalk],
                   "gridSize": (100,)
-                  }
+                  },
+        "Hospital": {"num": 10,
+                     "type": Hospital,
+                     "gridSize": (100,)
+                     },
+        "Workplace": {"num": 10,
+                      "type": Workplace,
+                      "gridSize": (100,)
+                      }
     }
 
     city.addPopulationRequest(pr)
-    city.createAgents()
+    city.createAgents(args.agents)
+    city.printSocialNetwork()
 
     city.plotAll(args.output_dir, "pre.png")
     tic = time.perf_counter()
@@ -71,7 +81,7 @@ def main(args):
     l.info("Simulation lasted %.1f seconds" % (toc - tic))
 
     l.info("Saving results to %s" % args.output_dir)
-    #city.plot_results()
+    # city.plot_results()
     city.plotAll(args.output_dir, "res.png")
 
     return city
@@ -92,15 +102,15 @@ if __name__ == '__main__':
     parser.add_argument('-j', '--job', type=dict,
                         default={"unemployed": 6.0, "type1": 14.00, "type2": 10.00, "type3": 10.00, "type4": 10.00,
                                  "type5": 10.00, "type6": 40.00, }, help="it is a dictionary containing workgroups")
-    parser.add_argument('-a', '--age', type=dict,default={"00-10": 8.89, "11-20": 8.58, "21-30": 13.04, "31-40": 15.41, "41-50": 15.34,"51-60": 13.06, "61-70": 10.53, "71-80": 8.41, "81-90": 5.46, "91-99": 1.28},
+    parser.add_argument('-a', '--age', type=dict,
+                        default={"00-10": 8.89, "11-20": 8.58, "21-30": 13.04, "31-40": 15.41, "41-50": 15.34,
+                                 "51-60": 13.06, "61-70": 10.53, "71-80": 8.41, "81-90": 5.46, "91-99": 1.28},
                         help="it is a dictionary containing age groups")
-    parser.add_argument('-w', '--virus', type=dict, default={"incubation_days": 3, "infection_days": 5, "immune_days": 3, "severe_days": 3, "pTrans": 0.7, "pSympt": 0.8, "pTest": 0.9, "death_rate": 0.002, "severe_rate": 0.005},
+    parser.add_argument('-w', '--virus', type=dict,
+                        default={"incubation_days": 3, "infection_days": 5, "immune_days": 3, "severe_days": 3,
+                                 "pTrans": 0.7, "pSympt": 0.8, "pTest": 0.9, "death_rate": 0.002, "severe_rate": 0.005},
                         help="it is a dictionary containing virus characteristics")
     parser.set_defaults(func=main)
 
     args = parser.parse_args()
     model = args.func(args)
-
-
-
-
