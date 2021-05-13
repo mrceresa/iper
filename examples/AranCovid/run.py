@@ -17,6 +17,7 @@ from iper import PopulationRequest
 
 from agents import HumanAgent, RandomWalk
 from Hospital_class import Workplace, Hospital
+import DataCollector_functions as dc
 import contextily as ctx
 import time
 
@@ -47,6 +48,7 @@ def main(args):
     config = {
         "logger": l,
         "basemap": args.basemap,
+        "agents": args.agents,
         "family": args.family,
         "age": args.age,
         "virus": args.virus
@@ -81,7 +83,7 @@ def main(args):
     l.info("Simulation lasted %.1f seconds" % (toc - tic))
 
     l.info("Saving results to %s" % args.output_dir)
-    # city.plot_results()
+    city.plot_results(args.output_dir)
     city.plotAll(args.output_dir, "res.png")
 
     return city
