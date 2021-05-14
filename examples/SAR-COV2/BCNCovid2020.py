@@ -57,12 +57,10 @@ class BCNCovid2020(Model):
     #self.load_public_transport_dataset()
 
     _log.info("Initalizing agents")
-    self.createAgents(N)  
+    self.createAgents(N) 
 
     _log.info("Initializing Routes")
     #self.createRouteAgents() 
-
-    
 
   def place_at(self, agent, loc):
     #if self.boundaries["bbox"].contains(loc):
@@ -172,7 +170,7 @@ class BCNCovid2020(Model):
     for i in range(n):
       _log.info("Step %d of %d"%(i, n))
       self.step()
-      self.DateTime += timedelta(seconds=1)
+      self.DateTime += timedelta(seconds=60)
 
     
 

@@ -32,7 +32,7 @@ def main(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('-v','--verbose', action="store_true", help="Print additional information" )
-  parser.add_argument('-s','--steps', type=int, default=100, help="Timesteps to run the model for" )          
+  parser.add_argument('-s','--steps', type=int, default=50, help="Timesteps to run the model for" )          
   parser.add_argument('-n','--agents', type=int, default=1, help="Numer of starting agents" )
   parser.add_argument('-b','--basemap', type=str, default="Barcelona, Spain", 
     help="Basemap for geo referencing the model" )      

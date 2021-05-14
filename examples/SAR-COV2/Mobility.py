@@ -214,30 +214,26 @@ class Human(GeoAgent):
             self.has_goal = False
             return None
 
+
     def step(self):
         if self.has_goal == False:
             self.goal = self.define_goal()
             print('new goal added')
             # CHECK THE NETWORK PLANNING FOR FINDING THE OPTIM PATH
             self.goal_traj = self.init_goal_traj()
-            print(self.goal_traj.to_linestring())
             self.life_goals += 1
             self.has_goal = True
         else: 
-            end_time = self.goal_traj.get_end_time()
-            if self.goal_traj.get_end_time() == self.model.DateTime:
+            if self.model.DateTime >= self.goal_traj.get_end_time():
+                #WAIT IN THE FINAL POSITION 
+                print('Waiting time: ' + str(self.model.DateTime - self.goal_traj.get_end_time()))
+                newPos = self.goal_traj.get_position_at(self.goal_traj.get_end_time())
                 self.has_goal = False
             else:
-                try: 
-                    print(self.model.DateTime)
-                    newPos = self.goal_traj.get_position_at(self.model.DateTime)
-                except: 
-                    print('---------------------')
-                    print(self.get_pos())
-                    print(self.goal_traj.df)
-                    print('---------------------')
-                    #exit()
-                self.place_at(newPos)
+                print(self.model.DateTime)
+                newPos = self.goal_traj.get_position_at(self.model.DateTime)
+
+            self.place_at(newPos)
             
             # I would use it for print only the trajectory left... 
             # self.goal_traj = self.update_goal_traj()
