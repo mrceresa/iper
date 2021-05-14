@@ -74,7 +74,6 @@ def main(args):
 
     city.addPopulationRequest(pr)
     city.createAgents(args.agents)
-    city.printSocialNetwork()
 
     city.plotAll(args.output_dir, "pre.png")
     tic = time.perf_counter()

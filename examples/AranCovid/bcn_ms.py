@@ -245,11 +245,3 @@ class CityModel(MultiEnvironmentWorld):
                 agents_created += 1
 
         super().createAgents()
-
-    def printSocialNetwork(self):
-        """ Prints on the terminal screen the friends and workplace (if exists) of the human agents of the model. """
-        print("PRINTING SOCIAL NEEEEEEEEEEETWORK")
-        for a in self.schedule.agents:
-            print(a)
-            if isinstance(a, HumanAgent):
-                print(f'{a.unique_id} these friends and {a.state} state')
