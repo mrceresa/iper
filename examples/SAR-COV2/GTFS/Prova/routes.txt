@@ -1,0 +1,3 @@
+route_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color
+1,FAM,Familia Ruta 1,,0,,008272,FFFFFF
+2,NOM,Nom Ruta 2,,0,,008972,FFFFFF

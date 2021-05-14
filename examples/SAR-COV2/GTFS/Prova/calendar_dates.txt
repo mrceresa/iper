@@ -1,0 +1,3 @@
+service_id,date,exception_type
+DIVENDRES,20210326,1
+DIVENDRES,20210327,1
