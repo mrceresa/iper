@@ -58,8 +58,16 @@ class CityModel(MultiEnvironmentWorld):
         self._initGeo()
         self._loadGeoData()
 
-        self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
+        self.DateTime = datetime(year=2021, month=1, day=1, hour=6, minute=0, second=0)
         self.virus = VirusCovid(config["virus"])
+
+        self.Hosp_capacity = config["hosp_capacity"]
+
+        self.peopleTested = {}
+        self.peopleToTest = {}
+
+        self.peopleInMeeting = config["peopleMeeting"]  # max people to meet with
+        self.peopleInMeetingSd = config["peopleMeeting"] * 0.4
 
         # variables for model data collector
         self.collector_counts = None
@@ -187,16 +195,40 @@ class CityModel(MultiEnvironmentWorld):
         Y.set_index('Day').plot.line(color=colors).get_figure().savefig(
             os.path.join(outdir, hosp_title))  # plot the stats
 
+    def getHospitalPosition(self, place=None):
+        """ Returns the position of the Hospitals or the Hospital agent if position is given """
+        if place is None:
+            return [i.place for i in self.schedule.agents if isinstance(i, Hospital)]
+        else:
+            return [i for i in self.schedule.agents if isinstance(i, Hospital) and i.place == place][0]
+
     def step(self):
+
+        current_step = self.DateTime
+        self.DateTime += timedelta(minutes=15)  # next step
+
+        # next day
+        dc.reset_counts(self)
+
         self.schedule.step()
         if self.space._gdf_is_dirty: self.space._create_gdf
 
-    def createAgents(self, Humanagents, friendsXagent=3):
+        self.datacollector.collect(self)
+        self.hosp_collector.collect(self)
+        if current_step.day != self.DateTime.day:
+            self.calculate_R0(current_step)
+            dc.update_DC_table(self)
+            self.clean_contact_list(current_step, Adays=2,
+                                    Hdays=5, Tdays=10)  # clean contact lists from agents for faster computations
+            #self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
+
+    def createAgents(self, Humanagents, friendsXagent=3, employment_rate = 0.95):
 
         N = len(self._agentsToAdd)
         family_dist = create_families(Humanagents)
         agents_created = 0
         index = 0
+        peopleToEmploy = set(range(0, Humanagents))
 
         while agents_created < N:
             if isinstance(self._agentsToAdd[agents_created], HumanAgent):
@@ -233,15 +265,126 @@ class CityModel(MultiEnvironmentWorld):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
                 self._agentsToAdd[agents_created].place = position  # redundant
                 self._agentsToAdd[agents_created].pos = position
-                print(
-                    f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
+                #print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
                 agents_created += 1
             elif isinstance(self._agentsToAdd[agents_created], Workplace):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
                 self._agentsToAdd[agents_created].place = position  # redundant
                 self._agentsToAdd[agents_created].pos = position
-                print(
-                    f"Workplace {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
+                self._agentsToAdd[agents_created].total_capacity = 10
+
+                # EMPLOYMENT
+                if len(peopleToEmploy) == 0:
+                    pass
+                else:
+                    if len(peopleToEmploy) > self._agentsToAdd[agents_created].total_capacity:
+                        employees = set(random.sample(peopleToEmploy, self._agentsToAdd[agents_created].total_capacity))
+                    else:
+                        employees = peopleToEmploy
+                    peopleToEmploy -= employees
+
+                    for employee in employees:
+                        self._agentsToAdd[employee].workplace = self._agentsToAdd[agents_created]
+                        self._agentsToAdd[agents_created].add_worker(self._agentsToAdd[employee])
+
+                #print(f"Workplace {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
                 agents_created += 1
 
+
         super().createAgents()
+
+        for a in self.schedule.agents:
+            if isinstance(a, HumanAgent):
+                print(f'{a.unique_id} has {a.friends} these friends and works at {a.workplace}')
+
+    def calculate_R0(self, current_step):
+        """ R0: prob of transmission x contacts x days with disease """
+        today = current_step.strftime('%Y-%m-%d')
+        yesterday = (current_step - timedelta(days=1)).strftime(
+            '%Y-%m-%d')  # use yesterday for detected people since it is the data recorded and given to hosp
+
+        R0_values = [0, 0, 0]
+        R0_obs_values = [0, 0, 0]
+        hosp_count = 0
+        for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
+            if (human.state == State.INF or human.state == State.EXP) and yesterday != '2020-12-31':
+                if human.HospDetected:  # calculate R0 observed
+                    hosp_count += 1
+                    try:
+                        contacts = human.R0_contacts[yesterday][2]
+                    except KeyError:  # is a exp agent new from today
+                        contacts = human.R0_contacts[today][2]
+                        yesterday = today
+
+                    if contacts == 0: contacts = 1
+                    # print("Human DETECTED", human.R0_contacts)
+                    # sorted(h.keys())[-1]
+                    R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
+                    R0_obs_values[1] += human.R0_contacts[yesterday][1]
+                    R0_obs_values[2] += human.R0_contacts[yesterday][2]
+
+                # print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
+                contacts = human.R0_contacts[today][2]
+                if contacts == 0: contacts = 1
+                R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
+                R0_values[1] += human.R0_contacts[today][1]
+                R0_values[2] += human.R0_contacts[today][2]
+
+        total_inf_exp = self.collector_counts["INF"] + self.collector_counts["EXP"]
+        if total_inf_exp == 0: total_inf_exp = 1
+        self.virus.R0 = round(
+            (R0_values[0] / total_inf_exp) * (R0_values[1] / total_inf_exp) * (R0_values[2] / total_inf_exp), 2)
+
+        HOSP_inf_exp = self.hosp_collector_counts['H-INF']
+        if HOSP_inf_exp == 0: HOSP_inf_exp = 1
+        self.virus.R0_obs = round(
+            (R0_obs_values[0] / HOSP_inf_exp) * (R0_obs_values[1] / HOSP_inf_exp) * (R0_obs_values[2] / HOSP_inf_exp),
+            2)
+        print("HOSP count :", hosp_count, "and observed by model ", HOSP_inf_exp, "with R0: ", self.virus.R0, self.virus.R0_obs)
+
+    def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
+        """ Function for deleting past day contacts sets and arrange today's tests"""
+        date = current_step.strftime('%Y-%m-%d')
+        Atime = (current_step - timedelta(days=Adays)).strftime('%Y-%m-%d')
+        Htime = (current_step - timedelta(days=Hdays)).strftime('%Y-%m-%d')
+
+        Ttime = (current_step - timedelta(days=Tdays)).strftime('%Y-%m-%d')
+        if Ttime in self.peopleTested: del self.peopleTested[Ttime]
+
+        # People tested in the last recorded days
+        peopleTested = set()
+        for key in self.peopleTested:
+            for elem in self.peopleTested[key]:
+                peopleTested.add(elem)
+
+        # print(f"Lista total de agentes a testear a primera hora: {self.peopleToTest}")
+
+        # shuffle agent list to distribute to test agents among the hospitals
+        agents_list = self.schedule.agents.copy()
+        random.shuffle(agents_list)
+        for a in agents_list:
+            # delete contacts of human agents of Adays time
+            if isinstance(a, HumanAgent):
+                if Atime in a.contacts: del a.contacts[Atime]
+                if Atime in a.R0_contacts: del a.R0_contacts[Atime]
+                # create dict R0 for infected people
+                if a.state == State.INF:
+                    a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.infecting_time, 0]
+                elif a.state == State.EXP:
+                    a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.exposing_time + self.virus.infection_days,
+                                                                         0]
+
+            elif isinstance(a, Hospital):
+                peopleTested = a.decideTesting(peopleTested)
+                """if date in a.PCR_results:
+                    if not date in self.peopleTested: self.peopleTested[date] = a.PCR_results[date]
+                    else:
+                        for elem in a.PCR_results[date]: self.peopleTested[date].add(elem)"""
+                # delete contact tracing of Hdays time
+                if Htime in a.PCR_testing: del a.PCR_testing[Htime]
+                if Htime in a.PCR_results: del a.PCR_results[Htime]
+
+                # print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}")
+
+        # print(f"Lista total de testeados: {self.peopleTested}")
+        # print(f"Lista total de agentes a testear: {self.peopleToTest}")

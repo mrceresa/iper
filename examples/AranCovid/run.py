@@ -51,7 +51,9 @@ def main(args):
         "agents": args.agents,
         "family": args.family,
         "age": args.age,
-        "virus": args.virus
+        "virus": args.virus,
+        "hosp_capacity": 10,
+        "peopleMeeting": args.meeting
     }
     city = CityModel(config)
     pr = PopulationRequest()
@@ -96,6 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action="store_true", help="Print additional information")
     parser.add_argument('-s', '--steps', type=int, default=10, help="Timesteps to run the model for")
     parser.add_argument('-n', '--agents', type=int, default=10000, help="Numer of starting agents")
+    parser.add_argument('-m', '--meeting', type=int, default=5, help="Numer of People on Meetings")
     parser.add_argument('-b', '--basemap', type=str, default="Barcelona, Spain",
                         help="Basemap for geo referencing the model")
     parser.add_argument('-f', '--family', type=list, default=[19.9, 23.8, 20.4, 24.8, 8.9, 2.2],

@@ -9,7 +9,7 @@ from iper import XAgent
 class Hospital(XAgent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id)
-        #self.total_capacity = int(random.normalvariate(model.Hosp_capacity, int(model.Hosp_capacity * 0.4)))  # 10% of population
+        self.total_capacity = int(random.normalvariate(model.Hosp_capacity, int(model.Hosp_capacity * 0.4)))  # 10% of population
         self.list_pacients = set()  # patients in the hospital
         self.PCR_availables = 2  # self.random.randrange(3, 5)
         self.PCR_testing = {}  # patients waiting for the testing
