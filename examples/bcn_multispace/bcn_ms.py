@@ -1,3 +1,4 @@
+from examples.EudaldMobility.Mobility import Map_to_Graph
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 
@@ -36,6 +37,8 @@ import logging
 from random import uniform
 import time
 
+from ...EudaldMobility.Mobility import Map_to_Graph
+
 class CityModel(MultiEnvironmentWorld):
 
   def __init__(self, config):
@@ -50,7 +53,27 @@ class CityModel(MultiEnvironmentWorld):
     self.l.info("Loading geodata")
     self._initGeo()
     self._loadGeoData()
+    
+    self.loadShapefiles() # Eudald Mobility
   
+  def loadShapefiles(self):
+    self.walkMap = Map_to_Graph(self._basemap, 'walk')  #Load the shapefiles 
+    self.boundaries = self.walkMap.get_boundaries()
+    
+    self.boundaries['centroid'] = LineString(
+        (
+          (self.boundaries["w"], self.boundaries["s"]),
+          (self.boundaries["e"], self.boundaries["n"])
+        )).centroid
+    
+    self.boundaries["bbox"] = Polygon.from_bounds(
+      self.boundaries["w"], self.boundaries["s"],
+      self.boundaries["e"], self.boundaries["n"])
+    
+    self.boundaries["dx"] = 111.32; #One degree in longitude is this in KM 
+    self.boundaries["dy"] = 40075 * math.cos( self.boundaries["centroid"].y ) / 360 
+    self.l.info("Arc amplitude at this latitude %f, %f"%(self.boundaries["dx"], self.boundaries["dy"]))
+
   def _initGeo(self):
     #Initialize geo data
     self._loc = ctx.Place(self._basemap, zoom_adjust=0)  # zoom_adjust modifies the auto-zoom
