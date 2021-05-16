@@ -27,15 +27,6 @@ def load_merged_GTFS(self):
     self.merged_GTFS = pd.read_csv((ROOT_DIR + '/GTFS/merged_GTFS.csv'), dtype = str)
 def save_merged_GTFS(self):
     self.merged_GTFS.to_csv(ROOT_DIR + '/GTFS/merged_GTFS.csv')
-class pygtfs_Schedule():
-    def __init__(self):
-        sched = pygtfs.Schedule(":memory:")
-        pygtfs.append_feed(sched, "GTFS/bus_metro")
-        print(sched.agencies)
-
-    def now(date, time):
-        self.date = date
-        self.time = time
 # -----------------------------------------   
 
 # Don't really know if it needs to be GEOAGENT
@@ -293,32 +284,17 @@ class Bike(TransportAgent):
         pass
 
 class Map_to_Graph():
-    def __init__(self, place, net_type):
-        self.net_type = net_type
+    def __init__(self):
         root_path = os.getcwd()
-        path_name = '/Mobility Jupyter Files/OSMnx/pickle_objects/'
-        cheat = True
-        if cheat == True: 
-            with open(root_path + path_name + 'PlaçaCat_walk_proj.p', 'rb') as f:
-                self.G_proj = pickle.load(f)
-            self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G_proj, nodes=True, edges=True)
-
-        else:
-            start = timeit.default_timer()
-            with open(root_path + path_name + 'road_network_projected.p', 'rb') as f:
-                self.G_proj = pickle.load(f)
-            try:
-                with open(root_path + path_name + 'road_network_projected_db.p', 'rb') as f:
-                    db = pickle.load(f)
-                self.nodes_proj = db[0]
-                self.edges_proj = db[1]
-            except:  
-                self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G_proj, nodes=True, edges=True)
-                with open(root_path + path_name + 'road_network_projected_db.p', 'wb') as f:
-                    pickle.dump([self.nodes_proj, self.edges_proj], f)
-            
-            stop = timeit.default_timer()
-            print('Time: ', stop - start)
+        path_name = './pickle_objects/'
+        try:
+            with open(root_path + path_name + 'BCN_Pedestrian.p', 'rb') as f:
+                db = pickle.load(f)
+            self.nodes_proj = db[0]
+            self.edges_proj = db[1]
+        except:  
+            print("Error loading the pickle file")
+    
 
     def get_boundaries(self):
         # Retrieve the maximum x value (i.e. the most eastern)
