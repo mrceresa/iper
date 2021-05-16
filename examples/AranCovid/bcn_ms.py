@@ -58,7 +58,7 @@ class CityModel(MultiEnvironmentWorld):
         self._initGeo()
         self._loadGeoData()
 
-        self.DateTime = datetime(year=2021, month=1, day=1, hour=6, minute=0, second=0)
+        self.DateTime = datetime(year=2021, month=1, day=1, hour=15, minute=0, second=0)
         self.virus = VirusCovid(config["virus"])
 
         self.Hosp_capacity = config["hosp_capacity"]
@@ -224,78 +224,68 @@ class CityModel(MultiEnvironmentWorld):
 
     def createAgents(self, Humanagents, friendsXagent=3, employment_rate = 0.95):
 
-        N = len(self._agentsToAdd)
         family_dist = create_families(Humanagents)
-        agents_created = 0
+        agentsToBecreated = len(self._agentsToAdd)-1
         index = 0
-        peopleToEmploy = set(range(0, Humanagents))
 
-        while agents_created < N:
-            if isinstance(self._agentsToAdd[agents_created], HumanAgent):
+        while agentsToBecreated >= 0:
+            if isinstance(self._agentsToAdd[agentsToBecreated], HumanAgent):
                 # FAMILY PART
                 if family_dist[index] == 0: index += 1
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
 
                 for i in range(0, family_dist[index]):
-                    self._agentsToAdd[agents_created + i].pos = position
-                    self._agentsToAdd[agents_created + i].house = position
+                    self._agentsToAdd[agentsToBecreated - i].pos = position
+                    self._agentsToAdd[agentsToBecreated - i].house = position
 
                     # FRIENDS
-                    friends = random.sample([fr for fr in range(0, Humanagents) if fr != agents_created + i],
+                    friends = random.sample([fr for fr in range(0, Humanagents) if fr != agentsToBecreated - i],
                                             friendsXagent)  # get index position of random people to be friends
                     for friend_index in friends:
-                        self._agentsToAdd[agents_created + i].friends.add(self._agentsToAdd[friend_index])
-                        self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agents_created + i])
+                        self._agentsToAdd[agentsToBecreated - i].friends.add(self._agentsToAdd[friend_index])
+                        self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i])
 
                     # INFECTION
                     infected = np.random.choice([0, 1], p=[0.8, 0.2])
                     if infected:
-                        self._agentsToAdd[agents_created + i].state = State.INF
+                        self._agentsToAdd[agentsToBecreated - i].state = State.INF
                         self.collector_counts["SUSC"] -= 1
                         self.collector_counts["INF"] += 1  # Adjust initial counts
                         infection_time = dc.get_infection_time(self)
-                        self._agentsToAdd[agents_created + i].infecting_time = infection_time
-                        self._agentsToAdd[agents_created + i].R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0,
-                                                                                                                 infection_time,
-                                                                                                                 0]
+                        self._agentsToAdd[agentsToBecreated - i].infecting_time = infection_time
+                        self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0,infection_time,0]
 
-                agents_created += family_dist[index]
+                    # EMPLOYMENT
+                    if np.random.choice([True, False], p=[employment_rate, 1-employment_rate]):
+                        workplaces = random.sample(list(range(len(self._agentsToAdd)-10, len(self._agentsToAdd))), 10)
+                        for workplace in workplaces:
+                            if self._agentsToAdd[workplace].total_capacity != len(self._agentsToAdd[workplace].get_workers()):
+                                self._agentsToAdd[agentsToBecreated - i].workplace = self._agentsToAdd[workplace]
+                                self._agentsToAdd[workplace].add_worker(self._agentsToAdd[agentsToBecreated - i])
+                                break
+
+                agentsToBecreated -= family_dist[index]
                 family_dist[index] = 0
-            elif isinstance(self._agentsToAdd[agents_created], Hospital):
+            elif isinstance(self._agentsToAdd[agentsToBecreated], Hospital):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
-                self._agentsToAdd[agents_created].place = position  # redundant
-                self._agentsToAdd[agents_created].pos = position
+                self._agentsToAdd[agentsToBecreated].place = position  # redundant
+                self._agentsToAdd[agentsToBecreated].pos = position
                 #print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
-                agents_created += 1
-            elif isinstance(self._agentsToAdd[agents_created], Workplace):
+                agentsToBecreated -= 1
+            elif isinstance(self._agentsToAdd[agentsToBecreated], Workplace):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
-                self._agentsToAdd[agents_created].place = position  # redundant
-                self._agentsToAdd[agents_created].pos = position
-                self._agentsToAdd[agents_created].total_capacity = 10
+                self._agentsToAdd[agentsToBecreated].place = position  # redundant
+                self._agentsToAdd[agentsToBecreated].pos = position
+                self._agentsToAdd[agentsToBecreated].total_capacity = 10
 
-                # EMPLOYMENT
-                if len(peopleToEmploy) == 0:
-                    pass
-                else:
-                    if len(peopleToEmploy) > self._agentsToAdd[agents_created].total_capacity:
-                        employees = set(random.sample(peopleToEmploy, self._agentsToAdd[agents_created].total_capacity))
-                    else:
-                        employees = peopleToEmploy
-                    peopleToEmploy -= employees
-
-                    for employee in employees:
-                        self._agentsToAdd[employee].workplace = self._agentsToAdd[agents_created]
-                        self._agentsToAdd[agents_created].add_worker(self._agentsToAdd[employee])
-
-                #print(f"Workplace {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
-                agents_created += 1
+                agentsToBecreated -= 1
 
 
         super().createAgents()
 
         for a in self.schedule.agents:
             if isinstance(a, HumanAgent):
-                print(f'{a.unique_id} has {a.friends} these friends and works at {a.workplace}')
+                print(f'{a.unique_id} has - these friends and works at {a.workplace}')
 
     def calculate_R0(self, current_step):
         """ R0: prob of transmission x contacts x days with disease """

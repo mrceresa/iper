@@ -214,14 +214,14 @@ class HumanAgent(XAgent):
                         #new_position = min(possible_steps,key=lambda c: euclidean(c,self.workplace.place))  # check shortest path to work
 
                         self.getWorld().space.move_agent(self, self.workplace.place)
-
+                        print("NEW POSITION BABY", self.pos, self.workplace.place)
                     # employee at workplace. Filter by time to avoid repeated loops
-                    elif self.workplace is not None and self.pos == self.workplace.place and self.model.DateTime.hour == 14:
+                    elif self.workplace is not None and self.pos == self.workplace.place and self.model.DateTime.hour == 14 and self.model.DateTime.minute == 0:
 
                         self.mask = self.workplace.mask
+                        self.getWorld().space._create_gdf()
                         cellmates = self.getWorld().space.agents_at(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
-                        cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 100)]  # filter out buildings and far away people .iloc[0:2]
-                        print(cellmates)
+                        cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
 
                         if len(cellmates) > 1:
                             for str_id in [x for x in cellmates['agentid'] if x != self.id]:
@@ -240,38 +240,35 @@ class HumanAgent(XAgent):
                         self.think()  # randomly
 
                     else:  # going to a meeting
-                        # check shortest step towards friend new position
+                        if self.pos != self.obj_place:
+                            # check shortest step towards friend new position
+                            self.getWorld().space.move_agent(self, self.obj_place)
+                            # new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
+                        else:
+                            self.getWorld().space._create_gdf()
+                            cellmates = self.getWorld().space.agents_at(self.pos, max_num=10)  # pandas df [agentid, geometry, distance]
+                            cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
 
-                        self.getWorld().space.move_agent(self, self.obj_place)
-                        # new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
-
-                        cellmates = self.getWorld().space.agents_at(self.pos, max_num=10)  # pandas df [agentid, geometry, distance]
-                        cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (
-                                cellmates['distance'] < 100)]  # filter out buildings and far away people .iloc[0:2]
-
-                        human_cellmates = set()
-                        for str_id in [x for x in cellmates['agentid'] if x != self.id]:
-                            index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id),-1)
-                            other = self.model.schedule.agents[index]
-                            human_cellmates.add(other)
+                            human_cellmates = set()
+                            for str_id in [x for x in cellmates['agentid'] if x != self.id]:
+                                index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id),-1)
+                                other = self.model.schedule.agents[index]
+                                human_cellmates.add(other)
 
 
-                        if self.pos == self.obj_place and self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
-                            print("FRIENDS TO MEET")
-                            print(self.friend_to_meet)
-                            print(human_cellmates)
-                            print(self.friend_to_meet.issubset(human_cellmates))
-                            for friend in self.friend_to_meet:
-                                self.add_contact(friend)
-                            self.friend_to_meet = set()
-                            self.obj_place = None
+                            if self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
+                                for friend in self.friend_to_meet:
+                                    self.add_contact(friend)
+                                self.friend_to_meet = set()
+                                self.obj_place = None
+
 
                 # go back home
                 else:  # Time to go home
                     if self.pos != self.house:
                         self.getWorld().space.move_agent(self, self.house)
                         #new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house
-                    else:  # agent at home
+                    #else:  # agent at home
                         self.mask = Mask.NONE
             # Agent is self.quarantined
             elif self.quarantined is not None:
@@ -308,9 +305,10 @@ class HumanAgent(XAgent):
 
     def contact(self):
         """ Find close contacts and infect """
+        self.getWorld().space._create_gdf()
         others = self.getWorld().space.agents_at(self.pos, max_num=10)  # pandas df [agentid, geometry, distance]
         others = others[(others['agentid'].str.contains('Human')) & (
-                others['distance'] < 100)]  # filter out buildings and far away people .iloc[0:2]
+                others['distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
 
         if len(others):  # and self.model.DateTime.hour > 7:
             for str_id in [x for x in others['agentid'] if x != self.id]:
