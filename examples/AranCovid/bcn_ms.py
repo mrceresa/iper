@@ -13,6 +13,7 @@ import numpy as np
 import geopandas as gpd
 import geoplot
 import pandas as pd
+from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
 import os
 from shapely.geometry import Polygon, LineString, Point
@@ -36,11 +37,12 @@ import logging
 from random import uniform
 import time
 from datetime import datetime, timedelta
-from attributes_Agent import job, create_families
+from attributes_Agent import job, create_families, age_
 from Hospital_class import Workplace, Hospital
 from agents import HumanAgent
 from Covid_class import VirusCovid, State
 import DataCollector_functions as dc
+from SEAIHRD_class import SEAIHRD_covid
 
 
 class CityModel(MultiEnvironmentWorld):
@@ -220,17 +222,20 @@ class CityModel(MultiEnvironmentWorld):
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
             self.calculate_R0(current_step)
+            dc.reset_counts(self)
+            dc.update_stats(self)
             dc.update_DC_table(self)
 
             # clean contact lists from agents for faster computations
-            self.clean_contact_list(current_step, Adays=2,Hdays=5, Tdays=10)
+            self.clean_contact_list(current_step, Adays=2, Hdays=5, Tdays=10)
+            self.changeAgentStates()
 
             # self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
 
-    def createAgents(self, Humanagents, friendsXagent=3, employment_rate = 0.95):
+    def createAgents(self, Humanagents, friendsXagent=3, employment_rate=0.95):
 
         family_dist = create_families(Humanagents)
-        agentsToBecreated = len(self._agentsToAdd)-1
+        agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
 
         while agentsToBecreated >= 0:
@@ -253,18 +258,27 @@ class CityModel(MultiEnvironmentWorld):
                     # INFECTION
                     infected = np.random.choice([0, 1], p=[0.8, 0.2])
                     if infected:
-                        self._agentsToAdd[agentsToBecreated - i].state = State.INF
+                        self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
+                                                                                         age_())
+                        # self._agentsToAdd[agentsToBecreated - i].state = State.INF
                         self.collector_counts["SUSC"] -= 1
                         self.collector_counts["INF"] += 1  # Adjust initial counts
                         infection_time = dc.get_infection_time(self)
                         self._agentsToAdd[agentsToBecreated - i].infecting_time = infection_time
-                        self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0,infection_time,0]
+                        self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0,
+                                                                                                                    infection_time,
+                                                                                                                    0]
+                    else:
+                        # self._agentsToAdd[agentsToBecreated - i].state = State.SUSC
+                        self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(
+                            self._agentsToAdd[agentsToBecreated - i].id, "S", age_())
 
                     # EMPLOYMENT
-                    if np.random.choice([True, False], p=[employment_rate, 1-employment_rate]):
-                        workplaces = random.sample(list(range(len(self._agentsToAdd)-10, len(self._agentsToAdd))), 10)
+                    if np.random.choice([True, False], p=[employment_rate, 1 - employment_rate]):
+                        workplaces = random.sample(list(range(len(self._agentsToAdd) - 10, len(self._agentsToAdd))), 10)
                         for workplace in workplaces:
-                            if self._agentsToAdd[workplace].total_capacity != len(self._agentsToAdd[workplace].get_workers()):
+                            if self._agentsToAdd[workplace].total_capacity != len(
+                                    self._agentsToAdd[workplace].get_workers()):
                                 self._agentsToAdd[agentsToBecreated - i].workplace = self._agentsToAdd[workplace]
                                 self._agentsToAdd[workplace].add_worker(self._agentsToAdd[agentsToBecreated - i])
                                 break
@@ -275,7 +289,7 @@ class CityModel(MultiEnvironmentWorld):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
                 self._agentsToAdd[agentsToBecreated].place = position  # redundant
                 self._agentsToAdd[agentsToBecreated].pos = position
-                #print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
+                # print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
                 agentsToBecreated -= 1
             elif isinstance(self._agentsToAdd[agentsToBecreated], Workplace):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
@@ -285,13 +299,13 @@ class CityModel(MultiEnvironmentWorld):
 
                 agentsToBecreated -= 1
 
-
         super().createAgents()
         dc.update_DC_table(self)
 
         for a in self.schedule.agents:
             if isinstance(a, HumanAgent):
-                print(f'{a.unique_id} has - these friends and works at {a.workplace}')
+                print(
+                    f'{a.unique_id} has {a.machine.age} these friends and works at {a.workplace} with state {a.machine.state}')
 
     def calculate_R0(self, current_step):
         """ R0: prob of transmission x contacts x days with disease """
@@ -303,7 +317,8 @@ class CityModel(MultiEnvironmentWorld):
         R0_obs_values = [0, 0, 0]
         hosp_count = 0
         for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
-            if (human.state == State.INF or human.state == State.EXP) and yesterday != '2020-12-31' and today in human.R0_contacts:
+            if (
+                    human.machine.state == "I" or human.machine.state == "E") and yesterday != '2020-12-31' and today in human.R0_contacts:
                 if human.HospDetected:  # calculate R0 observed
                     hosp_count += 1
                     try:
@@ -320,7 +335,7 @@ class CityModel(MultiEnvironmentWorld):
                     R0_obs_values[2] += human.R0_contacts[yesterday][2]
 
                 print("Today is ", today)
-                print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
+                print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.machine.state} ")
                 contacts = human.R0_contacts[today][2]
                 if contacts == 0: contacts = 1
                 R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
@@ -334,7 +349,7 @@ class CityModel(MultiEnvironmentWorld):
 
         if hosp_count == 0: hosp_count = 1
         self.virus.R0_obs = round(
-            (R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2]/hosp_count),2)
+            (R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2)
 
     def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
         """ Function for deleting past day contacts sets and arrange today's tests"""
@@ -362,11 +377,11 @@ class CityModel(MultiEnvironmentWorld):
                 if Atime in a.contacts: del a.contacts[Atime]
                 if Atime in a.R0_contacts: del a.R0_contacts[Atime]
                 # create dict R0 for infected people in case it is not updated during the day
-                if a.state == State.INF:
-                    a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.infecting_time, 0]
-                elif a.state == State.EXP:
-                    a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.exposing_time + self.virus.infection_days,
-                                                                         0]
+                if a.machine.state == "I" or a.machine.state == "A":
+                    a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / a.machine.rate['rIR']), 0]
+                elif a.machine.state == "E":
+                    a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / a.machine.rate['rEI']) + round(
+                        1 / a.machine.rate['rIR']), 0]
 
             elif isinstance(a, Hospital):
                 peopleTested = a.decideTesting(peopleTested)
@@ -382,3 +397,61 @@ class CityModel(MultiEnvironmentWorld):
 
         # print(f"Lista total de testeados: {self.peopleTested}")
         # print(f"Lista total de agentes a testear: {self.peopleToTest}")
+
+    def changeAgentStates(self):
+        """ UPDATE AGENTS STATE """
+        for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
+            s = human.machine.state
+            human.machine.check_state()
+
+            if s != human.machine.state:
+
+                if human.machine.state == "S" and human.HospDetected == True:  # if s == "R"
+                    self.hosp_collector_counts['H-REC'] -= 1
+                    self.hosp_collector_counts['H-SUSC'] += 1
+                    human.HospDetected = False
+
+                elif human.machine.state == "I":
+                    if s == "E":
+                        pass
+
+                elif human.machine.state == "A":  # if s == "E":
+                    human.quarantined = self.DateTime + timedelta(days=3)  # 3 day quarantine
+                    human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+
+                elif human.machine.state == "H":  # if s == "A":
+                    self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
+                    self.hosp_collector_counts['H-HOSP'] += 1
+                    human.HospDetected = False  # we assume hospitalized people do not transmit the virus
+
+                    # look for the nearest hospital
+                    human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+
+                    # adds patient to nearest hospital patients list
+                    h = self.getHospitalPosition(human.obj_place)
+                    h.add_patient(human)
+
+                    human.quarantined = None
+                    human.friend_to_meet = set()
+
+                elif human.machine.state == "R":
+                    if s == "I" or s == "A":
+                        if human.HospDetected:
+                            self.hosp_collector_counts['H-INF'] -= 1
+                            self.hosp_collector_counts['H-REC'] += 1
+
+                    elif s == "H":
+                        h = self.getHospitalPosition(human.obj_place)
+                        h.discharge_patient(human)
+                        self.hosp_collector_counts['H-HOSP'] -= 1
+                        self.hosp_collector_counts['H-REC'] += 1
+
+                elif human.machine.state == "D":  # if s == "H":
+                    h = self.getHospitalPosition(human.obj_place)
+                    h.discharge_patient(human)
+                    self.hosp_collector_counts['H-HOSP'] -= 1
+                    self.hosp_collector_counts['H-DEAD'] += 1
+
+            # change quarantine status if necessary
+            if human.quarantined is not None and self.DateTime.day == human.quarantined.day:
+                human.quarantined = None

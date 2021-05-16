@@ -1,4 +1,5 @@
 import os
+import agents
 
 
 def get_incubation_time(model):
@@ -38,6 +39,22 @@ def update_DC_table(model):
 def reset_counts(model):
     """ Sets to 0 the counts for the model datacollector """
     model.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, "R0": 0, "R0_Obs": 0, }
+
+def update_stats(model):
+    for human in [agent for agent in model.schedule.agents if isinstance(agent, agents.HumanAgent)]:
+        """ Update Status dictionaries for data collector. """
+        if human.machine.state == "S":
+            model.collector_counts['SUSC'] += 1
+        elif human.machine.state == "E":
+            model.collector_counts['EXP'] += 1
+        elif human.machine.state == "I" or human.machine.state == "A":
+            model.collector_counts['INF'] += 1
+        elif human.machine.state == "R":
+            model.collector_counts['REC'] += 1
+        elif human.machine.state == "H":
+            model.collector_counts['HOSP'] += 1
+        elif human.machine.state == "D":
+            model.collector_counts['DEAD'] += 1
 
 
 def reset_hosp_counts(model):
