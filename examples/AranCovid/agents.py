@@ -123,8 +123,6 @@ class HumanAgent(XAgent):
 
                     # adds patient to nearest hospital patients list
                     h = self.model.getHospitalPosition(self.obj_place)
-                    print(
-                        f"Agent {self.unique_id} hospitalized in {h.unique_id} at place {h.place}, {self.obj_place} with their position at {self.pos} hospital position {self.model.getHospitalPosition()}")
                     h.add_patient(self)
 
                     self.quarantined = None
@@ -168,8 +166,6 @@ class HumanAgent(XAgent):
             if alive == 0:
                 # discharge patient
                 h = self.model.getHospitalPosition(self.obj_place)
-                print(
-                    f"Hospital {h.unique_id} at place {h.place} discharges human at {self.pos} with obj_place {self.obj_place} status DEATH!!")
                 h.discharge_patient(self)
 
                 self.adjust_init_stats("HOSP", "DEAD", State.DEAD)
@@ -180,8 +176,6 @@ class HumanAgent(XAgent):
             if alive != 0 and t.days >= self.hospitalized_time:
                 # discharge patient
                 h = self.model.getHospitalPosition(self.obj_place)
-                print(
-                    f"Hospital {h.unique_id} at place {h.place} discharges human at {self.pos} with obj_place {self.obj_place} status RECOVERED!!")
                 h.discharge_patient(self)
 
                 self.adjust_init_stats("HOSP", "REC", State.REC)
@@ -214,7 +208,6 @@ class HumanAgent(XAgent):
                         #new_position = min(possible_steps,key=lambda c: euclidean(c,self.workplace.place))  # check shortest path to work
 
                         self.getWorld().space.move_agent(self, self.workplace.place)
-                        print("NEW POSITION BABY", self.pos, self.workplace.place)
                     # employee at workplace. Filter by time to avoid repeated loops
                     elif self.workplace is not None and self.pos == self.workplace.place and self.model.DateTime.hour == 14 and self.model.DateTime.minute == 0:
 
@@ -308,7 +301,7 @@ class HumanAgent(XAgent):
         self.getWorld().space._create_gdf()
         others = self.getWorld().space.agents_at(self.pos, max_num=10)  # pandas df [agentid, geometry, distance]
         others = others[(others['agentid'].str.contains('Human')) & (
-                others['distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
+                others['distance'] < 2)]
 
         if len(others):  # and self.model.DateTime.hour > 7:
             for str_id in [x for x in others['agentid'] if x != self.id]:
@@ -323,8 +316,7 @@ class HumanAgent(XAgent):
                     other.state = State.EXP
                     other.days_in_current_state = self.model.DateTime
                     other.exposing_time = dc.get_incubation_time(self.model)
-                    other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0,
-                                                                                   other.exposing_time + self.model.virus.infection_days,
+                    other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0,other.exposing_time + self.model.virus.infection_days,
                                                                                    0]
 
     def update_stats(self):

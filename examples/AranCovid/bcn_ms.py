@@ -58,7 +58,7 @@ class CityModel(MultiEnvironmentWorld):
         self._initGeo()
         self._loadGeoData()
 
-        self.DateTime = datetime(year=2021, month=1, day=1, hour=15, minute=0, second=0)
+        self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
         self.virus = VirusCovid(config["virus"])
 
         self.Hosp_capacity = config["hosp_capacity"]
@@ -92,6 +92,9 @@ class CityModel(MultiEnvironmentWorld):
             tables={"Hosp_DC_Table": {"Day": [], "Hosp-Susceptible": [], "Hosp-Infected": [], "Hosp-Recovered": [],
                                       "Hosp-Hospitalized": [], "Hosp-Dead": []}}
         )
+
+        self.datacollector.collect(self)
+        self.hosp_collector.collect(self)
 
     def _initGeo(self):
         # Initialize geo data
@@ -218,9 +221,11 @@ class CityModel(MultiEnvironmentWorld):
         if current_step.day != self.DateTime.day:
             self.calculate_R0(current_step)
             dc.update_DC_table(self)
-            self.clean_contact_list(current_step, Adays=2,
-                                    Hdays=5, Tdays=10)  # clean contact lists from agents for faster computations
-            #self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
+
+            # clean contact lists from agents for faster computations
+            self.clean_contact_list(current_step, Adays=2,Hdays=5, Tdays=10)
+
+            # self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
 
     def createAgents(self, Humanagents, friendsXagent=3, employment_rate = 0.95):
 
@@ -282,6 +287,7 @@ class CityModel(MultiEnvironmentWorld):
 
 
         super().createAgents()
+        dc.update_DC_table(self)
 
         for a in self.schedule.agents:
             if isinstance(a, HumanAgent):
@@ -297,7 +303,7 @@ class CityModel(MultiEnvironmentWorld):
         R0_obs_values = [0, 0, 0]
         hosp_count = 0
         for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
-            if (human.state == State.INF or human.state == State.EXP) and yesterday != '2020-12-31':
+            if (human.state == State.INF or human.state == State.EXP) and yesterday != '2020-12-31' and today in human.R0_contacts:
                 if human.HospDetected:  # calculate R0 observed
                     hosp_count += 1
                     try:
@@ -313,7 +319,8 @@ class CityModel(MultiEnvironmentWorld):
                     R0_obs_values[1] += human.R0_contacts[yesterday][1]
                     R0_obs_values[2] += human.R0_contacts[yesterday][2]
 
-                # print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
+                print("Today is ", today)
+                print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.state} ")
                 contacts = human.R0_contacts[today][2]
                 if contacts == 0: contacts = 1
                 R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
@@ -325,12 +332,9 @@ class CityModel(MultiEnvironmentWorld):
         self.virus.R0 = round(
             (R0_values[0] / total_inf_exp) * (R0_values[1] / total_inf_exp) * (R0_values[2] / total_inf_exp), 2)
 
-        HOSP_inf_exp = self.hosp_collector_counts['H-INF']
-        if HOSP_inf_exp == 0: HOSP_inf_exp = 1
+        if hosp_count == 0: hosp_count = 1
         self.virus.R0_obs = round(
-            (R0_obs_values[0] / HOSP_inf_exp) * (R0_obs_values[1] / HOSP_inf_exp) * (R0_obs_values[2] / HOSP_inf_exp),
-            2)
-        print("HOSP count :", hosp_count, "and observed by model ", HOSP_inf_exp, "with R0: ", self.virus.R0, self.virus.R0_obs)
+            (R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2]/hosp_count),2)
 
     def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
         """ Function for deleting past day contacts sets and arrange today's tests"""
@@ -357,7 +361,7 @@ class CityModel(MultiEnvironmentWorld):
             if isinstance(a, HumanAgent):
                 if Atime in a.contacts: del a.contacts[Atime]
                 if Atime in a.R0_contacts: del a.R0_contacts[Atime]
-                # create dict R0 for infected people
+                # create dict R0 for infected people in case it is not updated during the day
                 if a.state == State.INF:
                     a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, a.infecting_time, 0]
                 elif a.state == State.EXP:
