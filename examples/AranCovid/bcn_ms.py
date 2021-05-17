@@ -216,7 +216,8 @@ class CityModel(MultiEnvironmentWorld):
         dc.reset_counts(self)
 
         self.schedule.step()
-        if self.space._gdf_is_dirty: self.space._create_gdf
+
+        if self.space._gdf_is_dirty or self.DateTime.hour > 6: self.space._create_gdf
 
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
@@ -334,8 +335,6 @@ class CityModel(MultiEnvironmentWorld):
                     R0_obs_values[1] += human.R0_contacts[yesterday][1]
                     R0_obs_values[2] += human.R0_contacts[yesterday][2]
 
-                print("Today is ", today)
-                print(f"Agent {human.unique_id} contacts {human.R0_contacts} state {human.machine.state} ")
                 contacts = human.R0_contacts[today][2]
                 if contacts == 0: contacts = 1
                 R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
@@ -406,18 +405,18 @@ class CityModel(MultiEnvironmentWorld):
 
             if s != human.machine.state:
 
-                if human.machine.state == "S" and human.HospDetected == True:  # if s == "R"
+                if human.machine.state == "S" and human.HospDetected:  # if s == "R"
                     self.hosp_collector_counts['H-REC'] -= 1
                     self.hosp_collector_counts['H-SUSC'] += 1
                     human.HospDetected = False
 
-                elif human.machine.state == "I":
-                    if s == "E":
-                        pass
+                # elif human.machine.state == "I":
+                #     if s == "E":
+                #         pass
 
                 elif human.machine.state == "A":  # if s == "E":
                     human.quarantined = self.DateTime + timedelta(days=3)  # 3 day quarantine
-                    human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+                    human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
 
                 elif human.machine.state == "H":  # if s == "A":
                     self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
@@ -425,7 +424,7 @@ class CityModel(MultiEnvironmentWorld):
                     human.HospDetected = False  # we assume hospitalized people do not transmit the virus
 
                     # look for the nearest hospital
-                    human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+                    human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
 
                     # adds patient to nearest hospital patients list
                     h = self.getHospitalPosition(human.obj_place)
@@ -435,7 +434,7 @@ class CityModel(MultiEnvironmentWorld):
                     human.friend_to_meet = set()
 
                 elif human.machine.state == "R":
-                    if s == "I" or s == "A":
+                    if s in ["I", "A"]:
                         if human.HospDetected:
                             self.hosp_collector_counts['H-INF'] -= 1
                             self.hosp_collector_counts['H-REC'] += 1
