@@ -96,7 +96,7 @@ if __name__ == '__main__':
                         help="Output dir")  # %Y%m%d-%H%M%S
     parser.add_argument('-c', '--cache_dir', type=str, default="ctx-cache", help="Dir to cache maps")
     parser.add_argument('-v', '--verbose', action="store_true", help="Print additional information")
-    parser.add_argument('-s', '--steps', type=int, default=10, help="Timesteps to run the model for")
+    parser.add_argument('-s', '--steps', type=int, default=30, help="Timesteps to run the model for")
     parser.add_argument('-n', '--agents', type=int, default=10000, help="Numer of starting agents")
     parser.add_argument('-m', '--meeting', type=int, default=5, help="Numer of People on Meetings")
     parser.add_argument('-b', '--basemap', type=str, default="Barcelona, Spain",

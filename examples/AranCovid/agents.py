@@ -295,22 +295,24 @@ class HumanAgent(XAgent):
         others = self.getWorld().space.agents_at(self.pos, max_num=10)  # pandas df [agentid, geometry, distance]
         others = others[(others['agentid'].str.contains('Human')) & (
                 others['distance'] < 2)]
+        others_agents = [self.model.space.get_agent(aid) for aid in others['agentid'] if aid != self.id]
 
-        if len(others):  # contact during daytime
-            for str_id in [x for x in others['agentid'] if x != self.id]:
-                index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
-                other = self.model.schedule.agents[index]
+        for other in others_agents:
+            #if len(others):  # contact during daytime
+            #for str_id in [x for x in others['agentid'] if x != self.id]:
+            #index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
+            #other = self.model.schedule.agents[index]
 
-                # pTrans = self.model.virus.pTrans(self.mask, other.mask)
-                # trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
-                if other.machine.state is "S":  # trans == 0 and
-                    other.machine.contact()
-                    if other.machine.state == "E":
-                        self.model.collector_counts['SUSC'] -= 1
-                        self.model.collector_counts['EXP'] += 1
-                        other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(
-                            1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
-                    # other.machine.state = "E"
+            # pTrans = self.model.virus.pTrans(self.mask, other.mask)
+            # trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
+            if other.machine.state is "S":  # trans == 0 and
+                # other.machine.contact()
+                if other.machine.state == "E":
+                    self.model.collector_counts['SUSC'] -= 1
+                    self.model.collector_counts['EXP'] += 1
+                    other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(
+                        1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
+                # other.machine.state = "E"
                     # other.days_in_current_state = self.model.DateTime
                     # other.exposing_time = dc.get_incubation_time(self.model)
 
