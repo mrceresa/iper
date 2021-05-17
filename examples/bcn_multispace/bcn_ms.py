@@ -1,4 +1,3 @@
-from examples.EudaldMobility.Mobility import Map_to_Graph
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 
@@ -14,6 +13,7 @@ import numpy as np
 import geopandas as gpd
 import geoplot
 import pandas as pd
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import os
 from shapely.geometry import Polygon, LineString, Point
@@ -37,7 +37,7 @@ import logging
 from random import uniform
 import time
 
-from ...EudaldMobility.Mobility import Map_to_Graph
+from EudaldMobility.Mobility import Map_to_Graph
 
 class CityModel(MultiEnvironmentWorld):
 
@@ -55,10 +55,11 @@ class CityModel(MultiEnvironmentWorld):
     self._loadGeoData()
     
     self.loadShapefiles() # Eudald Mobility
+    self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
   
   def loadShapefiles(self):
-    self.walkMap = Map_to_Graph(self._basemap, 'walk')  #Load the shapefiles 
-    self.boundaries = self.walkMap.get_boundaries()
+    self.Map = Map_to_Graph('Pedestrian')  #Load the shapefiles 
+    self.boundaries = self.Map.get_boundaries()
     
     self.boundaries['centroid'] = LineString(
         (
@@ -161,12 +162,16 @@ class CityModel(MultiEnvironmentWorld):
 
   def step(self):
     self.schedule.step()
+    self.DateTime += timedelta(seconds=60)
     if self.space._gdf_is_dirty: self.space._create_gdf
 
   def createAgents(self):
     for _agent in self._agentsToAdd:
-      _agent.pos = (uniform(self._xs["w"], self._xs["e"]), 
-                 uniform(self._xs["s"], self._xs["n"]))   
+      random_node = random.choice(list(self.Map.G.nodes))
+      _agent.pos = (self.Map.G.nodes[random_node]['x'],
+                    self.Map.G.nodes[random_node]['y'])
+      #_agent.pos = (uniform(self._xs["w"], self._xs["e"]), 
+      #          uniform(self._xs["s"], self._xs["n"]))   
     super().createAgents()
     
 
