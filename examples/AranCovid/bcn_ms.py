@@ -217,7 +217,10 @@ class CityModel(MultiEnvironmentWorld):
 
         self.schedule.step()
 
-        if self.space._gdf_is_dirty or self.DateTime.hour > 6: self.space._create_gdf
+        if self.space._gdf_is_dirty or self.DateTime.hour > 6:
+            self.space._create_gdf()
+            #self.space._create_gdf
+
 
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
@@ -250,11 +253,10 @@ class CityModel(MultiEnvironmentWorld):
                     self._agentsToAdd[agentsToBecreated - i].house = position
 
                     # FRIENDS
-                    friends = random.sample([fr for fr in range(0, Humanagents) if fr != agentsToBecreated - i],
-                                            friendsXagent)  # get index position of random people to be friends
+                    friends = random.sample([fr for fr in range(0, Humanagents) if fr != agentsToBecreated - i],friendsXagent)  # get index position of random people to be friends
                     for friend_index in friends:
-                        self._agentsToAdd[agentsToBecreated - i].friends.add(self._agentsToAdd[friend_index])
-                        self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i])
+                        self._agentsToAdd[agentsToBecreated - i].friends.add(self._agentsToAdd[friend_index].id)
+                        self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
                     infected = np.random.choice([0, 1], p=[0.8, 0.2])
@@ -280,8 +282,8 @@ class CityModel(MultiEnvironmentWorld):
                         for workplace in workplaces:
                             if self._agentsToAdd[workplace].total_capacity != len(
                                     self._agentsToAdd[workplace].get_workers()):
-                                self._agentsToAdd[agentsToBecreated - i].workplace = self._agentsToAdd[workplace]
-                                self._agentsToAdd[workplace].add_worker(self._agentsToAdd[agentsToBecreated - i])
+                                self._agentsToAdd[agentsToBecreated - i].workplace = self._agentsToAdd[workplace].id
+                                self._agentsToAdd[workplace].add_worker(self._agentsToAdd[agentsToBecreated - i].id)
                                 break
 
                 agentsToBecreated -= family_dist[index]
@@ -318,8 +320,7 @@ class CityModel(MultiEnvironmentWorld):
         R0_obs_values = [0, 0, 0]
         hosp_count = 0
         for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
-            if (
-                    human.machine.state == "I" or human.machine.state == "E") and yesterday != '2020-12-31' and today in human.R0_contacts:
+            if human.machine.state in ["E", "I", "A"] and yesterday != '2020-12-31' and today in human.R0_contacts:
                 if human.HospDetected:  # calculate R0 observed
                     hosp_count += 1
                     try:
@@ -365,6 +366,7 @@ class CityModel(MultiEnvironmentWorld):
             for elem in self.peopleTested[key]:
                 peopleTested.add(elem)
 
+        print(peopleTested)
         # print(f"Lista total de agentes a testear a primera hora: {self.peopleToTest}")
 
         # shuffle agent list to distribute to test agents among the hospitals
@@ -376,7 +378,7 @@ class CityModel(MultiEnvironmentWorld):
                 if Atime in a.contacts: del a.contacts[Atime]
                 if Atime in a.R0_contacts: del a.R0_contacts[Atime]
                 # create dict R0 for infected people in case it is not updated during the day
-                if a.machine.state == "I" or a.machine.state == "A":
+                if a.machine.state in ["I", "A"]:
                     a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / a.machine.rate['rIR']), 0]
                 elif a.machine.state == "E":
                     a.R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / a.machine.rate['rEI']) + round(
@@ -391,6 +393,9 @@ class CityModel(MultiEnvironmentWorld):
                 # delete contact tracing of Hdays time
                 if Htime in a.PCR_testing: del a.PCR_testing[Htime]
                 if Htime in a.PCR_results: del a.PCR_results[Htime]
+
+        self.peopleTested[self.DateTime.strftime('%Y-%m-%d')] = set()
+        self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')] = set()
 
                 # print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}")
 
@@ -415,6 +420,7 @@ class CityModel(MultiEnvironmentWorld):
                 #         pass
 
                 elif human.machine.state == "A":  # if s == "E":
+                    print("NEW ASYMPTOMATIC")
                     human.quarantined = self.DateTime + timedelta(days=3)  # 3 day quarantine
                     human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
 

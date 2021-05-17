@@ -39,17 +39,16 @@ class Hospital(XAgent):
         # print(f"Agente {agent.unique_id} testeandose en hospital {self.unique_id}")
 
         today = self.model.DateTime.strftime('%Y-%m-%d')
-        if not today in self.model.peopleTested:
-            self.model.peopleTested[today] = {agent}
-        else:
-            self.model.peopleTested[today].add(agent)
+        self.model.peopleTested[today].add(agent)
 
-        agentStatus = agent.state
+        agentStatus = agent.machine.state
         pTest = self.model.virus.pTest
         true_pos = np.random.choice([True, False], p=[pTest, 1 - pTest])
         if true_pos:  # test knows true state
-            if agentStatus == State.EXP or agentStatus == State.INF:
+            print("TEST TRUE", agent.machine.state)
+            if agentStatus in ["E", "I", "A"]:
                 if not agent.HospDetected:
+                    print("AND DETECTED")
                     self.model.hosp_collector_counts['H-SUSC'] -= 1
                     self.model.hosp_collector_counts['H-INF'] += 1
                     agent.HospDetected = True
@@ -58,15 +57,12 @@ class Hospital(XAgent):
                 # save agent contacts for future tests
                 for key in agentcontacts:
                     for elem in agentcontacts[key]:
-                        # if not today in self.PCR_testing:
-                        if not today in self.model.peopleToTest:
-                            self.model.peopleToTest[today] = {elem}
-                        else:
-                            self.model.peopleToTest[today].add(elem)
+                        self.model.peopleToTest[today].add(elem)
 
     def decideTesting(self, patientsTested):
         """ Called by model function at midnight to decide which agents will be tested from the contact tracing set
         the next day with a 2-3 day delay."""
+
         PCRs = self.PCR_availables
         HospToTest = set()
 
@@ -74,11 +70,11 @@ class Hospital(XAgent):
 
         if ThreeD_ago in self.model.peopleToTest and PCRs:
             for elem in self.model.peopleToTest[ThreeD_ago]:
-                if elem not in patientsTested and PCRs > 0 and (elem.state != State.HOSP and elem.state != State.DEAD):
+                if elem not in patientsTested and PCRs > 0 and (self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    elem.quarantined = self.model.DateTime + timedelta(days=3)
-                    elem.obj_place = self.place
+                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=3)
+                    self.model.space.get_agent(elem).obj_place = self.place
 
             self.model.peopleToTest[ThreeD_ago] -= HospToTest
 
@@ -86,15 +82,14 @@ class Hospital(XAgent):
         TwoD_ago = (self.model.DateTime - timedelta(days=2)).strftime('%Y-%m-%d')
         if PCRs and TwoD_ago in self.model.peopleToTest:
             for elem in self.model.peopleToTest[TwoD_ago]:
-                if elem not in (patientsTested | HospToTest) and PCRs > 0 and (elem.state != State.HOSP and elem.state != State.DEAD):
+                if elem not in (patientsTested | HospToTest) and PCRs > 0 and (self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    elem.quarantined = self.model.DateTime + timedelta(days=3)
-                    elem.obj_place = self.place
+                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=3)
+                    self.model.space.get_agent(elem).obj_place = self.place
 
             self.model.peopleToTest[TwoD_ago] -= HospToTest
 
-        # print(f"Hoy el hospital {self.unique_id} testeara a {HospToTest} con tests {PCRs}")
         return patientsTested | HospToTest
 
 

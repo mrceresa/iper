@@ -44,7 +44,7 @@ class HumanAgent(XAgent):
         self.R0_contacts = {}
 
     def __repr__(self):
-        return "Agent " + str(self.id)
+        return "Agent id " + str(self.id)
 
     def _postInit(self):
         pass
@@ -62,7 +62,7 @@ class HumanAgent(XAgent):
         # self.think()
         self.move()
 
-        if self.machine.state in ["E","I"] and self.model.DateTime.hour > 7:
+        if self.machine.state in ["E", "I"] and self.model.DateTime.hour > 7:
             self.contact()
 
         super().step()
@@ -181,7 +181,7 @@ class HumanAgent(XAgent):
     def move(self):
         # new_position = None
         # possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-        if self.machine.state in ["S","E","I","R"]:
+        if self.machine.state in ["S", "E", "A", "I", "R"]:
             if self.quarantined is None:  # if agent not hospitalized or dead
                 # sleeping time
                 if self.model.DateTime.hour <= 6:
@@ -190,15 +190,16 @@ class HumanAgent(XAgent):
 
                 # working time
                 elif 6 < self.model.DateTime.hour <= 16:  # working time
-                    if self.workplace is not None and self.pos != self.workplace.place:  # Employed and not at workplace
+                    workplace = self.model.space.get_agent(self.workplace)
+                    if self.workplace is not None and self.pos != workplace.place:  # Employed and not at workplace
                         if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask()  # wear mask for walk
                         # new_position = min(possible_steps,key=lambda c: euclidean(c,self.workplace.place))  # check shortest path to work
 
-                        self.getWorld().space.move_agent(self, self.workplace.place)
+                        self.getWorld().space.move_agent(self, workplace.place)
                     # employee at workplace. Filter by time to avoid repeated loops
-                    elif self.workplace is not None and self.pos == self.workplace.place and self.model.DateTime.hour == 14 and self.model.DateTime.minute == 0:
+                    elif self.workplace is not None and self.pos == workplace.place and self.model.DateTime.hour == 14 and self.model.DateTime.minute == 0:
 
-                        self.mask = self.workplace.mask
+                        self.mask = workplace.mask
                         # self.getWorld().space._create_gdf()
                         cellmates = self.getWorld().space.agents_at(self.pos,
                                                                     max_num=10)  # pandas df [agentid, geometry, distance]
@@ -207,10 +208,9 @@ class HumanAgent(XAgent):
 
                         if len(cellmates) > 1:
                             for str_id in [x for x in cellmates['agentid'] if x != self.id]:
-                                index = next(
-                                    (i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
-                                if self.model.schedule.agents[index].workplace == self.workplace:
-                                    self.add_contact(self.model.schedule.agents[index])
+                                # index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
+                                if self.model.space.get_agent(str_id).workplace == workplace:
+                                    self.add_contact(str_id)
 
 
 
@@ -218,8 +218,8 @@ class HumanAgent(XAgent):
                 elif 16 < self.model.DateTime.hour <= 21:  # leisure time
                     if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask()  # wear mask for walk
                     if not self.friend_to_meet:
-                        if np.random.choice([0, 1],
-                                            p=[0.75, 0.25]): self.look_for_friend()  # probability to meet with a friend
+                        if np.random.choice([0, 1], p=[0.75,
+                                                       0.25]) and self.model.DateTime.minute == 0: self.look_for_friend()  # probability to meet with a friend
                         # new_position = self.random.choice(possible_steps)  # choose random step
                         self.think()  # randomly
 
@@ -230,17 +230,13 @@ class HumanAgent(XAgent):
                             # new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
                         else:
                             # self.getWorld().space._create_gdf()
+
                             cellmates = self.getWorld().space.agents_at(self.pos,
                                                                         max_num=10)  # pandas df [agentid, geometry, distance]
                             cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates[
                                                                                                       'distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
 
-                            human_cellmates = set()
-                            for str_id in [x for x in cellmates['agentid'] if x != self.id]:
-                                index = next(
-                                    (i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
-                                other = self.model.schedule.agents[index]
-                                human_cellmates.add(other)
+                            human_cellmates = set([x for x in cellmates['agentid'] if x != self.id])
 
                             if self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
                                 for friend in self.friend_to_meet:
@@ -258,6 +254,7 @@ class HumanAgent(XAgent):
                         self.mask = Mask.NONE
             # Agent is self.quarantined
             elif self.quarantined is not None:
+                print(f"QUARANTIEND with state {self.machine.state} pos {self.pos} and obj_place {self.obj_place}")
                 if self.pos != self.house and self.obj_place is None:  # if has been tested, go home
                     self.getWorld().space.move_agent(self, self.house)
                     # new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house
@@ -298,23 +295,23 @@ class HumanAgent(XAgent):
         others_agents = [self.model.space.get_agent(aid) for aid in others['agentid'] if aid != self.id]
 
         for other in others_agents:
-            #if len(others):  # contact during daytime
-            #for str_id in [x for x in others['agentid'] if x != self.id]:
-            #index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
-            #other = self.model.schedule.agents[index]
+            # if len(others):  # contact during daytime
+            # for str_id in [x for x in others['agentid'] if x != self.id]:
+            # index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
+            # other = self.model.schedule.agents[index]
 
             # pTrans = self.model.virus.pTrans(self.mask, other.mask)
             # trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
             if other.machine.state is "S":  # trans == 0 and
-                # other.machine.contact()
+                other.machine.contact()
                 if other.machine.state == "E":
                     self.model.collector_counts['SUSC'] -= 1
                     self.model.collector_counts['EXP'] += 1
                     other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(
                         1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
                 # other.machine.state = "E"
-                    # other.days_in_current_state = self.model.DateTime
-                    # other.exposing_time = dc.get_incubation_time(self.model)
+                # other.days_in_current_state = self.model.DateTime
+                # other.exposing_time = dc.get_incubation_time(self.model)
 
     def look_for_friend(self):
         """ Check the availability of friends to meet and arrange a meeting """
@@ -329,7 +326,9 @@ class HumanAgent(XAgent):
                 available_friends.append(index)"""
 
         available_friends = [friend for friend in self.friends if
-                             not friend.friend_to_meet and friend.quarantined is None and friend.machine.state not in ["H", "D"]]
+                             not self.model.space.get_agent(friend).friend_to_meet and self.model.space.get_agent(
+                                 friend).quarantined is None and self.model.space.get_agent(
+                                 friend).machine.state not in ["H", "D"]]
 
         peopleMeeting = int(self.random.normalvariate(self.model.peopleInMeeting,
                                                       self.model.peopleInMeetingSd))  # get total people meeting
@@ -340,11 +339,12 @@ class HumanAgent(XAgent):
 
             while peopleMeeting > len(
                     self.friend_to_meet) and available_friends:  # reaches max people in meeting or friends are unavailable
-                friend_agent = random.sample(available_friends, 1)[0]  # gets one random each time
-                available_friends.remove(friend_agent)
+                friend_agent = self.model.space.get_agent(
+                    random.sample(available_friends, 1)[0])  # gets one random each time
+                available_friends.remove(friend_agent.id)
 
-                self.friend_to_meet.add(friend_agent)
-                friend_agent.friend_to_meet.add(self)
+                self.friend_to_meet.add(friend_agent.id)
+                friend_agent.friend_to_meet.add(self.id)
 
                 pos_x.append(friend_agent.pos[0])
                 pos_y.append(friend_agent.pos[1])
@@ -354,9 +354,9 @@ class HumanAgent(XAgent):
             self.obj_place = meeting_position
 
             for friend in self.friend_to_meet:
-                friend.friend_to_meet.update(self.friend_to_meet)
-                friend.friend_to_meet.remove(friend)
-                friend.obj_place = meeting_position
+                self.model.space.get_agent(friend).friend_to_meet.update(self.friend_to_meet)
+                self.model.space.get_agent(friend).friend_to_meet.remove(friend)
+                self.model.space.get_agent(friend).obj_place = meeting_position
 
     # def adjust_init_stats(self, fr, to, state):
     #     self.model.collector_counts[fr] -= 1
@@ -372,7 +372,7 @@ class HumanAgent(XAgent):
             self.contacts[self.model.DateTime.strftime('%Y-%m-%d')].add(contact)  # add contact to now's date
 
         # add contacts of infected people for R0 calculations
-        if self.machine.state == "I" or self.machine.state == "E":
+        if self.machine.state in ["E", "A", "I"]:
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.model.virus.pTrans(self.mask,
                                                                                                      Mask.NONE)
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][2] += 1
