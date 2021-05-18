@@ -65,6 +65,11 @@ class Move(Action):
     agent.record_trajectories[traj.df.index[0]] = traj
     return traj
 
+  def accumulate_polution(self,agent):
+    local_pollution = 1 #get_pollution(agent.pos)
+    acc_traj_pollution = local_pollution * int(agent.model.time_step)
+    agent.exposure_pollution += acc_traj_pollution
+
   def do(self,agent):
     if agent.has_goal == False:
       agent.goal = self.define_goal(agent)
@@ -87,6 +92,7 @@ class HumanAgent(XAgent):
     self.has_goal = False
     self.life_goals = 0 
     self.record_trajectories = {}
+    self.exposure_pollution = 0
     super().__init__(unique_id)
 
   def _postInit(self):

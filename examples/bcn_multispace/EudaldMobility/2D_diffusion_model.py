@@ -10,7 +10,7 @@ path_name = "/EudaldMobility/diffusion_plots/"
 # (Square) grid side length.
 m = 50
 # Maximum numbter of iterations.
-nitmax = 100
+nitmax = 400
 # Number of particles in the simulation.
 nparticles = 50000
 # Output a frame (plot image) every nevery iterations.
@@ -31,7 +31,9 @@ vmin, vmax = 0, zmax
 norm = colors.Normalize(vmin=vmin, vmax=vmax)
 
 # Initialize the location of all the particles to the centre of the grid.
-locs = np.ones((nparticles, 2), dtype=int) * m//2
+loc_1 = np.ones((nparticles, 2), dtype=int) + 5
+loc_2 = np.ones((nparticles, 2), dtype=int) +45
+locs = np.concatenate((loc_1, loc_2))
 
 # Iterate for nitmax cycles.
 for j in range(nitmax):
@@ -42,7 +44,7 @@ for j in range(nitmax):
     if not (j+1) % nevery:
         # Create an updated grid and plot it.
         grid = np.zeros((m, m))
-        for i in range(nparticles):
+        for i in range(locs.shape[0]):
             x, y = locs[i]
             # Add a particle to the grid if it is actually on the grid!
             if 0 <= x < m and 0 <= y < m:

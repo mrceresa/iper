@@ -56,6 +56,7 @@ class CityModel(MultiEnvironmentWorld):
     
     self.loadShapefiles() # Eudald Mobility
     self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
+    self.time_step = timedelta(seconds=60)
   
   def loadShapefiles(self):
     self.Map = Map_to_Graph('Pedestrian')  #Load the shapefiles 
@@ -162,7 +163,7 @@ class CityModel(MultiEnvironmentWorld):
 
   def step(self):
     self.schedule.step()
-    self.DateTime += timedelta(seconds=60)
+    self.DateTime += self.time_step
     if self.space._gdf_is_dirty: self.space._create_gdf
 
   def createAgents(self):
