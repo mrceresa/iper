@@ -40,9 +40,8 @@ from datetime import datetime, timedelta
 from attributes_Agent import job, create_families, age_
 from Hospital_class import Workplace, Hospital
 from agents import HumanAgent
-from Covid_class import VirusCovid, State
 import DataCollector_functions as dc
-from SEAIHRD_class import SEAIHRD_covid
+from SEAIHRD_class import SEAIHRD_covid, Mask
 
 
 class CityModel(MultiEnvironmentWorld):
@@ -61,7 +60,11 @@ class CityModel(MultiEnvironmentWorld):
         self._loadGeoData()
 
         self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
-        self.virus = VirusCovid(config["virus"])
+        #self.virus = VirusCovid(config["virus"])
+        self.pTest = config["virus"]["pTest"]
+        self.R0 = 0
+        self.R0_obs = 0
+        self.quarantine_period = 10
 
         self.Hosp_capacity = config["hosp_capacity"]
 
@@ -188,11 +191,13 @@ class CityModel(MultiEnvironmentWorld):
         X = self.datacollector.get_table_dataframe("Model_DC_Table")
         X.to_csv(outdir + "/" + title + '.csv', index=False)  # get the csv
         R_db = X[['Day', 'R0', 'R0_Obs']]
+        print(R_db.tail(15))
+        R_db.set_index('Day').plot.line(color=["Orange", "Green"]).get_figure().savefig(os.path.join(outdir, R0_title))  # plot the stats
+
         X = X.drop(['R0', 'R0_Obs'], axis=1)
         colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
         X.set_index('Day').plot.line(color=colors).get_figure().savefig(os.path.join(outdir, title))  # plot the stats
-        R_db.set_index('Day').plot.line(color=["Orange", "Green"]).get_figure().savefig \
-            (os.path.join(outdir, R0_title))  # plot the stats
+
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
         Y.to_csv(outdir + "/" + hosp_title + '.csv', index=False)  # get the csv
@@ -217,7 +222,7 @@ class CityModel(MultiEnvironmentWorld):
 
         self.schedule.step()
 
-        if self.space._gdf_is_dirty or self.DateTime.hour > 6:
+        if self.space._gdf_is_dirty or (14 < self.DateTime.hour < 22 and self.DateTime.minute < 20):
             self.space._create_gdf()
             #self.space._create_gdf
 
@@ -225,9 +230,9 @@ class CityModel(MultiEnvironmentWorld):
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
-            self.calculate_R0(current_step)
             dc.reset_counts(self)
             dc.update_stats(self)
+            self.calculate_R0(current_step)
             dc.update_DC_table(self)
 
             # clean contact lists from agents for faster computations
@@ -266,10 +271,8 @@ class CityModel(MultiEnvironmentWorld):
                         # self._agentsToAdd[agentsToBecreated - i].state = State.INF
                         self.collector_counts["SUSC"] -= 1
                         self.collector_counts["INF"] += 1  # Adjust initial counts
-                        infection_time = dc.get_infection_time(self)
-                        self._agentsToAdd[agentsToBecreated - i].infecting_time = infection_time
                         self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0,
-                                                                                                                    infection_time,
+                                                                                                                    round(1 / self._agentsToAdd[agentsToBecreated - i].machine.rate['rHR']),
                                                                                                                     0]
                     else:
                         # self._agentsToAdd[agentsToBecreated - i].state = State.SUSC
@@ -330,7 +333,6 @@ class CityModel(MultiEnvironmentWorld):
                         yesterday = today
 
                     if contacts == 0: contacts = 1
-                    # print("Human DETECTED", human.R0_contacts)
                     # sorted(h.keys())[-1]
                     R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
                     R0_obs_values[1] += human.R0_contacts[yesterday][1]
@@ -344,11 +346,11 @@ class CityModel(MultiEnvironmentWorld):
 
         total_inf_exp = self.collector_counts["INF"] + self.collector_counts["EXP"]
         if total_inf_exp == 0: total_inf_exp = 1
-        self.virus.R0 = round(
+        self.R0 = round(
             (R0_values[0] / total_inf_exp) * (R0_values[1] / total_inf_exp) * (R0_values[2] / total_inf_exp), 2)
 
         if hosp_count == 0: hosp_count = 1
-        self.virus.R0_obs = round(
+        self.R0_obs = round(
             (R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2)
 
     def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
@@ -366,7 +368,6 @@ class CityModel(MultiEnvironmentWorld):
             for elem in self.peopleTested[key]:
                 peopleTested.add(elem)
 
-        print(peopleTested)
         # print(f"Lista total de agentes a testear a primera hora: {self.peopleToTest}")
 
         # shuffle agent list to distribute to test agents among the hospitals
@@ -420,8 +421,7 @@ class CityModel(MultiEnvironmentWorld):
                 #         pass
 
                 elif human.machine.state == "A":  # if s == "E":
-                    print("NEW ASYMPTOMATIC")
-                    human.quarantined = self.DateTime + timedelta(days=3)  # 3 day quarantine
+                    human.quarantined = self.DateTime + timedelta(days=self.quarantine_period)  # quarantine
                     human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
 
                 elif human.machine.state == "H":  # if s == "A":

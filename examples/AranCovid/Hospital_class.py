@@ -1,5 +1,5 @@
 from mesa import Agent
-from Covid_class import State, Mask
+from SEAIHRD_class import SEAIHRD_covid, Mask
 import numpy as np
 import random
 from datetime import datetime, timedelta
@@ -42,13 +42,11 @@ class Hospital(XAgent):
         self.model.peopleTested[today].add(agent)
 
         agentStatus = agent.machine.state
-        pTest = self.model.virus.pTest
+        pTest = self.model.pTest
         true_pos = np.random.choice([True, False], p=[pTest, 1 - pTest])
         if true_pos:  # test knows true state
-            print("TEST TRUE", agent.machine.state)
             if agentStatus in ["E", "I", "A"]:
                 if not agent.HospDetected:
-                    print("AND DETECTED")
                     self.model.hosp_collector_counts['H-SUSC'] -= 1
                     self.model.hosp_collector_counts['H-INF'] += 1
                     agent.HospDetected = True
@@ -73,7 +71,7 @@ class Hospital(XAgent):
                 if elem not in patientsTested and PCRs > 0 and (self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=3)
+                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=self.model.quarantine_period)
                     self.model.space.get_agent(elem).obj_place = self.place
 
             self.model.peopleToTest[ThreeD_ago] -= HospToTest
@@ -85,7 +83,7 @@ class Hospital(XAgent):
                 if elem not in (patientsTested | HospToTest) and PCRs > 0 and (self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=3)
+                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=self.model.quarantine_period)
                     self.model.space.get_agent(elem).obj_place = self.place
 
             self.model.peopleToTest[TwoD_ago] -= HospToTest
