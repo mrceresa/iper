@@ -34,7 +34,7 @@ if args.pedestrian == "True":
     #Convert to 
     nodes_proj, edges_proj = ox.graph_to_gdfs(G, nodes=True, edges=True)
 
-    #Picke
+    #Pickle
     with open(args.root_path + 'BCN_Pedestrian.p', 'wb') as f:
         pickle.dump([nodes_proj, edges_proj], f)
     print("Pickle Pedestrian Done")
@@ -63,7 +63,7 @@ if args.car == "True":
     #Convert to 
     nodes_proj, edges_proj = ox.graph_to_gdfs(G, nodes=True, edges=True)
 
-    #Picke
+    #Pickle
     with open(args.root_path + 'BCN_Car.p', 'wb') as f:
         pickle.dump([nodes_proj, edges_proj], f)
 
@@ -92,7 +92,7 @@ if args.bike == "True":
     #Convert to 
     nodes_proj, edges_proj = ox.graph_to_gdfs(G, nodes=True, edges=True)
 
-    #Picke
+    #Pickle
     with open(args.root_path + 'BCN_Bike.p', 'wb') as f:
         pickle.dump([nodes_proj, edges_proj], f)
     print("Pickle Bike Done")
