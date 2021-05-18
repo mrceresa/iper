@@ -6,7 +6,7 @@ conda create -c conda-forge -n iper -y python=3.8 fiona geopandas geoplot \
 	matplotlib ipython numpy scipy pandas lxml cython coloredlogs seaborn
 conda activate iper
 
-pip install contextily trimesh meshio
+pip install contextily trimesh meshio transitions
 pip install git+https://github.com/projectmesa/mesa#egg=mesa
 pip install git+https://github.com/Corvince/mesa-geo.git#egg=mesa-geo
 
