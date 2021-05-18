@@ -2,24 +2,24 @@ import os
 import agents
 
 
-def get_incubation_time(model):
-    """ Returns the incubation time (EXP state) following a normal distribution """
+"""def get_incubation_time(model):
+    Returns the incubation time (EXP state) following a normal distribution 
     return int(model.random.normalvariate(model.virus.incubation_days, model.virus.incubation_days_sd))
 
 
 def get_infection_time(model):
-    """ Returns the infeciton time (INF state) following a normal distribution """
+    Returns the infeciton time (INF state) following a normal distribution 
     return int(model.random.normalvariate(model.virus.infection_days, model.virus.infection_days_sd))
 
 
 def get_immune_time(model):
-    """ Returns the immune time (REC state) following a normal distribution """
+    Returns the immune time (REC state) following a normal distribution 
     return int(model.random.normalvariate(model.virus.immune_days, model.virus.immune_days_sd))
 
 
 def get_severe_time(model):
-    """ Returns the severe time (HOSP state) following a normal distribution """
-    return int(model.random.normalvariate(model.virus.severe_days, model.virus.severe_days_sd))
+    Returns the severe time (HOSP state) following a normal distribution 
+    return int(model.random.normalvariate(model.virus.severe_days, model.virus.severe_days_sd))"""
 
 
 def update_DC_table(model):
@@ -97,12 +97,12 @@ def get_dead_count(model):
 
 def get_R0(model):
     """ Returns the R0 value of the model """
-    return model.virus.R0
+    return model.R0
 
 
 def get_R0_Obs(model):
     """ Returns the R0_obs value of the model """
-    return model.virus.R0_obs
+    return model.R0_obs
 
 
 def get_h_susceptible_count(model):

@@ -1,4 +1,5 @@
 from transitions import Machine
+from enum import Enum
 import random
 import math
 
@@ -8,7 +9,7 @@ class SEAIHRD_covid(object):
     # A single center Chinese study of 221 discharged COVID-19
     # patients observed an average time to recovery of 10.63±1.93 days
     # for mild to moderate patients, compared with 18.70±2.50 for severe patients.
-    prob_inf = 0.9
+    prob_inf = 0.4
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10
@@ -16,9 +17,14 @@ class SEAIHRD_covid(object):
     def recovery_time(self):
         pass
 
-    def prob_infection(self):
+    def prob_infection(self, Mask1, Mask2):
         """ probability of infection after a risk contact. """
-        return random.random() < self.prob_inf
+        pMask1 = Mask1.maskPtrans(Mask1)
+        pMask2 = Mask2.maskPtrans(Mask2)
+        prob_inf = self.prob_inf * pMask1 * pMask2
+
+        #print("CONTACT", self.prob_inf, pMask1, pMask2, prob_inf)
+        return random.random() < prob_inf
 
     def prob_sintomatic(self):
         """ probability to become symptomatic. """
@@ -118,3 +124,25 @@ class SEAIHRD_covid(object):
 # covid_state.prob_inf=0.6
 # print(covid_state.state)
 # covid_state.contact()
+
+class Mask(Enum):
+    NONE = 0
+    HYGIENIC = 1
+    FFP2 = 2
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def maskPtrans(self, mask):
+        if mask == self.NONE:
+            return 1
+        elif mask == self.HYGIENIC:
+            return 0.50
+        elif mask == self.FFP2:
+            return 0.10
+
+    @classmethod
+    def RandomMask(self):
+        a = random.choices([0, 1, 2], weights=[0.05, 0.6, 0.35], k=1)
+        return Mask(a[0])

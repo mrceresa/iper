@@ -4,8 +4,7 @@ import logging
 import random, numpy as np
 from datetime import datetime, timedelta
 from scipy.spatial.distance import euclidean
-from Covid_class import State, Mask
-from SEAIHRD_class import SEAIHRD_covid
+from SEAIHRD_class import SEAIHRD_covid, Mask
 import DataCollector_functions as dc
 
 
@@ -183,10 +182,20 @@ class HumanAgent(XAgent):
         # possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
         if self.machine.state in ["S", "E", "A", "I", "R"]:
             if self.quarantined is None:  # if agent not hospitalized or dead
-                # sleeping time
-                if self.model.DateTime.hour <= 6:
+                if self.model.DateTime.hour == 0:
                     self.friend_to_meet = set()  # meetings are cancelled
                     self.obj_place = None
+
+                # sleeping time
+                elif self.model.DateTime.hour == 6:
+                    cellmates = self.getWorld().space.agents_at(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
+                    cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
+
+                    if len(cellmates) > 1:
+                        for str_id in [x for x in cellmates['agentid'] if x != self.id]:
+                            # index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
+                            if self.model.space.get_agent(str_id).house == self.house:
+                                self.add_contact(str_id)
 
                 # working time
                 elif 6 < self.model.DateTime.hour <= 16:  # working time
@@ -194,15 +203,13 @@ class HumanAgent(XAgent):
                     if self.workplace is not None and self.pos != workplace.place:  # Employed and not at workplace
                         if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask()  # wear mask for walk
                         # new_position = min(possible_steps,key=lambda c: euclidean(c,self.workplace.place))  # check shortest path to work
-
                         self.getWorld().space.move_agent(self, workplace.place)
                     # employee at workplace. Filter by time to avoid repeated loops
-                    elif self.workplace is not None and self.pos == workplace.place and self.model.DateTime.hour == 14 and self.model.DateTime.minute == 0:
+                    elif self.workplace is not None and self.pos == workplace.place and self.model.DateTime.hour == 15 and self.model.DateTime.minute == 0:
 
                         self.mask = workplace.mask
                         # self.getWorld().space._create_gdf()
-                        cellmates = self.getWorld().space.agents_at(self.pos,
-                                                                    max_num=10)  # pandas df [agentid, geometry, distance]
+                        cellmates = self.getWorld().space.agents_at(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
                         cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (
                                 cellmates['distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
 
@@ -246,7 +253,7 @@ class HumanAgent(XAgent):
 
 
                 # go back home
-                else:  # Time to go home
+                elif 21 < self.model.DateTime.hour <= 23:  # Time to go home
                     if self.pos != self.house:
                         self.getWorld().space.move_agent(self, self.house)
                         # new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house
@@ -254,7 +261,6 @@ class HumanAgent(XAgent):
                         self.mask = Mask.NONE
             # Agent is self.quarantined
             elif self.quarantined is not None:
-                print(f"QUARANTIEND with state {self.machine.state} pos {self.pos} and obj_place {self.obj_place}")
                 if self.pos != self.house and self.obj_place is None:  # if has been tested, go home
                     self.getWorld().space.move_agent(self, self.house)
                     # new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house
@@ -303,7 +309,7 @@ class HumanAgent(XAgent):
             # pTrans = self.model.virus.pTrans(self.mask, other.mask)
             # trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
             if other.machine.state is "S":  # trans == 0 and
-                other.machine.contact()
+                other.machine.contact(self.mask, other.mask)
                 if other.machine.state == "E":
                     self.model.collector_counts['SUSC'] -= 1
                     self.model.collector_counts['EXP'] += 1
@@ -373,6 +379,5 @@ class HumanAgent(XAgent):
 
         # add contacts of infected people for R0 calculations
         if self.machine.state in ["E", "A", "I"]:
-            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.model.virus.pTrans(self.mask,
-                                                                                                     Mask.NONE)
+            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_infection(self.mask,Mask.NONE) #self.model.virus.pTrans
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][2] += 1
