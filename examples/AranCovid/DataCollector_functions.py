@@ -45,16 +45,34 @@ def update_stats(model):
         """ Update Status dictionaries for data collector. """
         if human.machine.state == "S":
             model.collector_counts['SUSC'] += 1
+            model.hosp_collector_counts["H-SUSC"] += 1
         elif human.machine.state == "E":
             model.collector_counts['EXP'] += 1
+            if human.HospDetected:
+                model.hosp_collector_counts["H-INF"] += 1
+            else:
+                model.hosp_collector_counts["H-SUSC"] += 1
+
         elif human.machine.state == "I" or human.machine.state == "A":
             model.collector_counts['INF'] += 1
+            if human.HospDetected:
+                model.hosp_collector_counts["H-INF"] += 1
+            else:
+                model.hosp_collector_counts["H-SUSC"] += 1
+
         elif human.machine.state == "R":
             model.collector_counts['REC'] += 1
+            if human.HospDetected:
+                model.hosp_collector_counts["H-REC"] += 1
+            else:
+                model.hosp_collector_counts["H-SUSC"] += 1
+
         elif human.machine.state == "H":
             model.collector_counts['HOSP'] += 1
+            model.hosp_collector_counts["H-HOSP"] += 1
         elif human.machine.state == "D":
             model.collector_counts['DEAD'] += 1
+            model.hosp_collector_counts["H-DEAD"] += 1
 
 
 def reset_hosp_counts(model):

@@ -11,7 +11,7 @@ class Hospital(XAgent):
         super().__init__(unique_id)
         self.total_capacity = int(random.normalvariate(model.Hosp_capacity, int(model.Hosp_capacity * 0.4)))  # 10% of population
         self.list_pacients = set()  # patients in the hospital
-        self.PCR_availables = 2  # self.random.randrange(3, 5)
+        self.PCR_availables = 5  # self.random.randrange(3, 5)
         self.PCR_testing = {}  # patients waiting for the testing
         self.PCR_results = {}  # patients tested
         self.mask = Mask.FFP2
@@ -47,8 +47,8 @@ class Hospital(XAgent):
         if true_pos:  # test knows true state
             if agentStatus in ["E", "I", "A"]:
                 if not agent.HospDetected:
-                    self.model.hosp_collector_counts['H-SUSC'] -= 1
-                    self.model.hosp_collector_counts['H-INF'] += 1
+                    #self.model.hosp_collector_counts['H-SUSC'] -= 1
+                    #self.model.hosp_collector_counts['H-INF'] += 1
                     agent.HospDetected = True
                 agentcontacts = agent.contacts
                 # print(f"Resulta que es positivo, da sus contactos {agentcontacts}")

@@ -217,8 +217,6 @@ class CityModel(MultiEnvironmentWorld):
         current_step = self.DateTime
         self.DateTime += timedelta(minutes=15)  # next step
 
-        # next day
-        dc.reset_counts(self)
 
         self.schedule.step()
 
@@ -231,6 +229,7 @@ class CityModel(MultiEnvironmentWorld):
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
             dc.reset_counts(self)
+            dc.reset_hosp_counts(self)
             dc.update_stats(self)
             self.calculate_R0(current_step)
             dc.update_DC_table(self)
@@ -412,8 +411,8 @@ class CityModel(MultiEnvironmentWorld):
             if s != human.machine.state:
 
                 if human.machine.state == "S" and human.HospDetected:  # if s == "R"
-                    self.hosp_collector_counts['H-REC'] -= 1
-                    self.hosp_collector_counts['H-SUSC'] += 1
+                    #self.hosp_collector_counts['H-REC'] -= 1
+                    #self.hosp_collector_counts['H-SUSC'] += 1
                     human.HospDetected = False
 
                 # elif human.machine.state == "I":
@@ -425,8 +424,8 @@ class CityModel(MultiEnvironmentWorld):
                     human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
 
                 elif human.machine.state == "H":  # if s == "A":
-                    self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
-                    self.hosp_collector_counts['H-HOSP'] += 1
+                    #self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
+                    #self.hosp_collector_counts['H-HOSP'] += 1
                     human.HospDetected = False  # we assume hospitalized people do not transmit the virus
 
                     # look for the nearest hospital
@@ -440,22 +439,23 @@ class CityModel(MultiEnvironmentWorld):
                     human.friend_to_meet = set()
 
                 elif human.machine.state == "R":
-                    if s in ["I", "A"]:
+                    """if s in ["I", "A"]:
                         if human.HospDetected:
                             self.hosp_collector_counts['H-INF'] -= 1
-                            self.hosp_collector_counts['H-REC'] += 1
+                            self.hosp_collector_counts['H-REC'] += 1"""
 
-                    elif s == "H":
+                    if s == "H":
                         h = self.getHospitalPosition(human.obj_place)
                         h.discharge_patient(human)
-                        self.hosp_collector_counts['H-HOSP'] -= 1
-                        self.hosp_collector_counts['H-REC'] += 1
+                        human.HospDetected = True
+                        #self.hosp_collector_counts['H-HOSP'] -= 1
+                        #self.hosp_collector_counts['H-REC'] += 1
 
                 elif human.machine.state == "D":  # if s == "H":
                     h = self.getHospitalPosition(human.obj_place)
                     h.discharge_patient(human)
-                    self.hosp_collector_counts['H-HOSP'] -= 1
-                    self.hosp_collector_counts['H-DEAD'] += 1
+                    #self.hosp_collector_counts['H-HOSP'] -= 1
+                    #self.hosp_collector_counts['H-DEAD'] += 1
 
             # change quarantine status if necessary
             if human.quarantined is not None and self.DateTime.day == human.quarantined.day:

@@ -97,7 +97,7 @@ class HumanAgent(XAgent):
     # Agent is hospitalized
     # if not_severe == 0:
     #     self.adjust_init_stats("INF", "HOSP", "H")
-    #     self.model.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
+    #     self.model.hosp_collector_counts['INF'] -= 1  # doesnt need to be, maybe it was not in the record
     #     self.model.hosp_collector_counts['H-HOSP'] += 1
     #     self.HospDetected = False  # we assume hospitalized people do not transmit the virus
     #
