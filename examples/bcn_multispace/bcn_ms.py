@@ -59,7 +59,7 @@ class CityModel(MultiEnvironmentWorld):
     self.time_step = timedelta(seconds=60)
   
   def loadShapefiles(self):
-    self.Map = Map_to_Graph('Pedestrian')  #Load the shapefiles 
+    self.Map = Map_to_Graph('PedCar_lengths')  #Load the shapefiles 
     self.boundaries = self.Map.get_boundaries()
     
     self.boundaries['centroid'] = LineString(

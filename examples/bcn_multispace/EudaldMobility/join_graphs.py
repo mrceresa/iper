@@ -39,8 +39,8 @@ def main():
         v_id = 'P-' + str(nearest)
 
         # Add an edges to the joined graph with the ids of the separate graph nodes. 
-        G.add_edge(u_id,v_id,travel_time = dist/1.1, Type ='Link_Edge')
-        G.add_edge(v_id,u_id,travel_time = dist/1.1, Type ='Link_Edge')
+        G.add_edge(u_id,v_id,travel_time = dist/1.1, length =  dist, Type ='Link_Edge')
+        G.add_edge(v_id,u_id,travel_time = dist/1.1, length =  dist, Type ='Link_Edge')
 
         if i % 100 == 0:
             print(i)

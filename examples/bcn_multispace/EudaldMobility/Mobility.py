@@ -364,6 +364,30 @@ class Map_to_Graph():
     def plot_graph_routes(self, routes, route_colors ):
         fig, ax = ox.plot_graph_routes(self.G, routes=routes, route_colors=route_colors, route_linewidth=6, node_size=0)
 
+    def plot_route_by_transport_type(self, route, save, filepath):
+        node_pairs = zip(route[:-1], route[1:])
+        # plot graph
+        fig, ax = ox.plot_graph(self.G, show=False, close=False, node_size = 0)
+
+        # then plot colored route segments on top of it
+        for (u, v) in node_pairs:
+            data = min(self.G.get_edge_data(u, v).values(), key=lambda d: d["travel_time"])
+            #print(data['Type'])
+            if "geometry" in data:
+                x, y = data["geometry"].xy
+            else:
+                x = self.G.nodes[u]["x"], self.G.nodes[v]["x"]
+                y = self.G.nodes[u]["y"], self.G.nodes[v]["y"]       
+            if data['Type'] == 'Pedestrian':
+                ax.plot(x, y, color='r', lw=5)
+            elif data['Type'] == 'Car':
+                ax.plot(x, y, color='y', lw=5)
+            elif data['Type'] == 'Bike':
+                ax.plot(x,y, color='b', lw=5)
+        if save == True:
+            fig.savefig(filepath)
+        
+
 # DISCUSS
 # Work done: 
     # Download GTFS
