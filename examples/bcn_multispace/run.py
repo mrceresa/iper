@@ -18,6 +18,7 @@ from agents import HumanAgent, RandomWalk
 import contextily as ctx
 import time
 
+from EudaldMobility.experiments import experiment_one
 def main(args):
 
   if not os.path.exists(args.cache_dir):
@@ -59,7 +60,7 @@ def main(args):
         }
 
   city.addPopulationRequest(pr)
-  city.createAgents()    
+  city.createAgents()  
 
   city.plotAll(args.output_dir, "pre.png")  
   tic = time.perf_counter()  
@@ -70,6 +71,7 @@ def main(args):
   l.info("Saving results to %s"%args.output_dir)
   city.plotAll(args.output_dir, "res.png")
   
+  experiment_one(city.getAgents()) 
   return city
 
 

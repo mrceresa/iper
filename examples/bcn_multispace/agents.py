@@ -62,7 +62,6 @@ class Move(Action):
     traj = mpd.Trajectory(gdf_trajectory, agent.life_goals)
     traj.df.loc[:,'time'] = traj.df.loc[:,'time'] + agent.model.DateTime
     traj.df.set_index('time', inplace=True)
-
     agent.record_trajectories[traj.df.index[0]] = traj
     return traj
 
@@ -80,7 +79,7 @@ class Move(Action):
     else:
       if agent.model.DateTime >= agent.goal_traj.get_end_time():
         #WAIT IN THE FINAL POSITION 
-        print('Waiting time: ' + str(agent.model.DateTime - agent.goal_traj.get_end_time()))
+        #print('Waiting time: ' + str(agent.model.DateTime - agent.goal_traj.get_end_time()))
         newPos = agent.goal_traj.get_position_at(agent.goal_traj.get_end_time())
         agent.has_goal = False
       else:
