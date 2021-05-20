@@ -29,8 +29,8 @@ class Move(Action):
 
   def init_goal_traj(self,agent):
     route = agent.model.Map.routing_by_travel_time(agent.pos, agent.goal)
-    agent.model.Map.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + '.png')
-    agent.model.Map.plot_route_by_transport_type(route, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + 'colors' + '.png')
+    #agent.model.Map.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + '.png')
+    #agent.model.Map.plot_route_by_transport_type(route, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + 'colors' + '.png')
 
     df = pd.DataFrame()
     nodes, lats, lngs, times = [], [], [], []

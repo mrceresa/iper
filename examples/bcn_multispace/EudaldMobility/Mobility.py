@@ -307,7 +307,7 @@ class Map_to_Graph():
         return {'n': northern_node, 'e': eastern_node, 's': southern_node, 'w': western_node}
 
     def get_lat_lng_from_point(self, point):
-        node_from_point = ox.get_nearest_node(self.G, point)
+        node_from_point = ox.nearest_nodes(self.G, point[0], point[1], return_dist=False)
         lat = self.nodes_proj.loc[self.nodes_proj['osmid'] == node_from_point]['lat'].item()
         lon = self.nodes_proj.loc[self.nodes_proj['osmid'] == node_from_point]['lon'].item()
         return lat, lon
@@ -333,18 +333,17 @@ class Map_to_Graph():
         self.G = ox.consolidate_intersections(self.G, rebuild_graph=True, tolerance=8, dead_ends=True)
 
     def routing_by_distance(self, origin_coord, destination_coord):
-        origin_node = ox.get_nearest_node(self.G, origin_coord)
-        destination_node = ox.get_nearest_node(self.G, destination_coord)
+        origin_node = ox.nearest_nodes(self.G, origin_coord[0], origin_coord[1], return_dist=False)
+        destination_node = ox.nearest_nodes(self.G, destination_coord[0], destination_coord[1], return_dist=False)
         route = ox.shortest_path(self.G ,origin_node, destination_node, weight='length')
         return route 
     
     def routing_by_travel_time(self, origin_coord, destination_coord):
-        origin_node, dist = ox.get_nearest_node(self.G, (origin_coord[1],origin_coord[0]), method='euclidean', return_dist=True)
-        #_log.info("Origin dist to node: %d"%dist)
-        destination_node, dist = ox.get_nearest_node(self.G, (destination_coord[1],destination_coord[0]), method='euclidean', return_dist=True)
-        #_log.info("Destination dist to node: %d"%dist)
+        origin_node = ox.nearest_nodes(self.G, origin_coord[0], origin_coord[1], return_dist=False)
+        destination_node = ox.nearest_nodes(self.G, destination_coord[0], destination_coord[1], return_dist=False)
         route = ox.shortest_path(self.G ,origin_node, destination_node, weight='travel_time')
         return route 
+        #_log.info("Destination dist to node: %d"%dist)
 
     def compare_routes(self, route1, route2):
         route1_length = int(sum(ox.utils_graph.get_route_edge_attributes(self.G, route1, 'length')))
