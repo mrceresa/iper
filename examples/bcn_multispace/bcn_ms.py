@@ -54,13 +54,20 @@ class CityModel(MultiEnvironmentWorld):
     self._initGeo()
     self._loadGeoData()
     
-    self.loadShapefiles() # Eudald Mobility
+    # Eudald Mobility
+    self.PedCarBike_Map = Map_to_Graph('PedCarBike')  #Load the shapefiles 
+    print('Pedestrian + Car + Bike Loaded')
+    self.Ped_Map = Map_to_Graph('Pedestrian')  #Load the shapefiles 
+    print('Pedestrian Loaded')
+    self.PedCar_Map = Map_to_Graph('PedCar')  #Load the shapefiles 
+    print('Pedestrian + Car Loaded')
+    #self.PedBike_Map = Map_to_Graph('PedCar_lengths')  #Load the shapefiles 
+    self.define_boundaries_from_graphs(self.PedCarBike_Map) 
     self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
     self.time_step = timedelta(seconds=60)
   
-  def loadShapefiles(self):
-    self.Map = Map_to_Graph('PedCar_lengths')  #Load the shapefiles 
-    self.boundaries = self.Map.get_boundaries()
+  def define_boundaries_from_graphs(self, map):
+    self.boundaries = map.get_boundaries()
     
     self.boundaries['centroid'] = LineString(
         (

@@ -20,15 +20,15 @@ class RandomWalk(Action):
 
 class Move(Action):
   def define_goal(self,agent):
-        random_node = random.choice(list(agent.model.Map.G.nodes))
-        node = agent.model.Map.G.nodes[random_node]
+        random_node = random.choice(list(agent.map.G.nodes))
+        node = agent.map.G.nodes[random_node]
         if node['x'] == agent.pos[0] and node['y'] == agent.pos[1]: 
             self.define_goal()
         else:
             return (node['x'], node['y'])
 
   def init_goal_traj(self,agent):
-    route = agent.model.Map.routing_by_travel_time(agent.pos, agent.goal)
+    route = agent.map.routing_by_travel_time(agent.pos, agent.goal)
     #agent.model.Map.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + '.png')
     #agent.model.Map.plot_route_by_transport_type(route, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + 'colors' + '.png')
 
@@ -38,20 +38,20 @@ class Move(Action):
     first_node = True
 
     for u, v in zip(route[:-1], route[1:]):
-        travel_time = round(agent.model.Map.G.edges[(u, v, 0)]['travel_time'])
+        travel_time = round(agent.map.G.edges[(u, v, 0)]['travel_time'])
         if travel_time == 0:
             travel_time = 1
         
         if first_node == True:
             nodes.append(u)
-            lats.append(agent.model.Map.G.nodes[u]['y'])
-            lngs.append(agent.model.Map.G.nodes[u]['x'])
+            lats.append(agent.map.G.nodes[u]['y'])
+            lngs.append(agent.map.G.nodes[u]['x'])
             times.append(0)
             first_node = False
         
         nodes.append(v)
-        lats.append(agent.model.Map.G.nodes[v]['y'])
-        lngs.append(agent.model.Map.G.nodes[v]['x'])
+        lats.append(agent.map.G.nodes[v]['y'])
+        lngs.append(agent.map.G.nodes[v]['x'])
         times.append(total_time + travel_time)
         total_time += travel_time
         
@@ -93,7 +93,28 @@ class HumanAgent(XAgent):
     self.life_goals = 0 
     self.record_trajectories = {}
     self.exposure_pollution = 0
+    self.has_car = random.random() < 0.39
+    self.has_bike = random.random() < 0.05
+    self.which_map()
     super().__init__(unique_id)
+
+  def which_map(self):
+    map_name = ""
+    if self.has_car == True and self.has_bike == True:
+      map_name = "Pedestrian + Car + Bike"
+      self.map = self.model.PedCarBike_Map
+    elif self.has_car == True and self.has_bike == False:
+      map_name = "Pedestrian + Car"
+      self.map = self.model.PedCar_Map
+    elif  self.has_car == False and self.has_bike == True:
+      map_name = "Pedestrian + Bike"
+      #self.map = self.model.PedBike_Map
+      self.map = self.model.Ped_Map
+    else: 
+      map_name = "Pedestrian"
+      self.map = self.model.Ped_Map
+    
+    print('Agent: ' + str(self.unique_id) +  " is using the map: " +  map_name)
 
   def _postInit(self):
     pass
