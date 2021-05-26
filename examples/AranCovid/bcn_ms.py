@@ -22,7 +22,7 @@ import contextily as ctx
 from io import StringIO
 import json
 
-from iper import GeoSpacePandas
+from iper.space.geospacepandas import GeoSpacePandas
 from iper import MultiEnvironmentWorld, XAgent, PopulationRequest
 from iper.space.Space import MeshSpace
 
@@ -220,7 +220,7 @@ class CityModel(MultiEnvironmentWorld):
 
         self.schedule.step()
 
-        if self.space._gdf_is_dirty or (14 < self.DateTime.hour < 22 and self.DateTime.minute < 20):
+        if self.space._gdf_is_dirty:
             self.space._create_gdf()
             #self.space._create_gdf
 
@@ -307,10 +307,10 @@ class CityModel(MultiEnvironmentWorld):
         super().createAgents()
         dc.update_DC_table(self)
 
-        for a in self.schedule.agents:
-            if isinstance(a, HumanAgent):
-                print(
-                    f'{a.unique_id} has {a.machine.age} these friends and works at {a.workplace} with state {a.machine.state}')
+        #for a in self.schedule.agents:
+        #    if isinstance(a, HumanAgent):
+        #        print(
+        #            f'{a.unique_id} has {a.machine.age} these friends and works at {a.workplace} with state {a.machine.state}')
 
     def calculate_R0(self, current_step):
         """ R0: prob of transmission x contacts x days with disease """

@@ -59,127 +59,22 @@ class HumanAgent(XAgent):
         # self.status()
 
         # self.think()
-        self.move()
+        cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
+        
+        #cellmates = self.getWorld().space.agents_at_mp(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
+        #cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
+
+        self.move(cellmates)
 
         if self.machine.state in ["E", "I"] and self.model.DateTime.hour > 7:
-            self.contact()
+            self.contact(cellmates)
 
         super().step()
 
-    # def status(self):
-    # t = self.model.DateTime - self.days_in_current_state
-    # For exposed people
-    # if self.machine.state == "E":
-    # if have passed more days than the self.exposing time, it changes to an infectious state
-    # if t.days >= self.exposing_time:
-    #     self.adjust_init_stats("EXP", "INF", "I")
-    #
-    #     p_sympt = self.model.virus.pSympt  # prob to being Symptomatic
-    #     self.presents_virus = np.random.choice([True, False], p=[p_sympt, 1 - p_sympt])
-    #     if self.presents_virus:
-    #         # print(f"Agent {self.unique_id} presents symptoms and is going to test in the hospital")
-    #         self.quarantined = self.model.DateTime + timedelta(days=3)  # 3 day quarantine
-    #         self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
-    #         # print(f"Agent {self.unique_id} presents symptoms {self.presents_virus} and is quarantined until {self.quarantined.day}")
-    #
-    #     inf_time = dc.get_infection_time(self.model)
-    #     self.infecting_time = inf_time
-    #     # if self.unique_id < 5: print(f"Agent {self.unique_id} is now infected for {inf_time} days ")
-    #     self.days_in_current_state = self.model.DateTime
-
-    # For infected people
-    # elif self.machine.state == "I":
-    # if self.presents_virus:  # if agent is symptomatic can be hospitalized or die
-    # Calculate the prob of going severe
-    # severe_rate = self.model.virus.severe_rate
-    # not_severe = np.random.choice([0, 1], p=[severe_rate, 1 - severe_rate])
-
-    # Agent is hospitalized
-    # if not_severe == 0:
-    #     self.adjust_init_stats("INF", "HOSP", "H")
-    #     self.model.hosp_collector_counts['INF'] -= 1  # doesnt need to be, maybe it was not in the record
-    #     self.model.hosp_collector_counts['H-HOSP'] += 1
-    #     self.HospDetected = False  # we assume hospitalized people do not transmit the virus
-    #
-    #     self.hospitalized_time = dc.get_severe_time(self.model)
-    #     # if self.unique_id < 5: print(f"Agent {self.unique_id} is now severe for {sev_time} days ")
-    #
-    #     self.days_in_current_state = self.model.DateTime
-    #
-    #     # look for the nearest hospital
-    #     self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
-    #
-    #     # adds patient to nearest hospital patients list
-    #     h = self.model.getHospitalPosition(self.obj_place)
-    #     h.add_patient(self)
-    #
-    #     self.quarantined = None
-    #     self.friend_to_meet = set()
-
-    # Only hospitalized agents die
-    # death_rate = self.model.virus.pDeathRate(self.model)
-    # alive = np.random.choice([0, 1], p=[death_rate, 1 - death_rate])
-    # if alive == 0: self.adjust_init_stats("INF", "DEAD", State.DEAD)
-
-    # agent is INF (not HOSP nor DEAD), has been INF for the infection time
-    # if self.machine.state == "I" and t.days >= self.infecting_time:
-    #     self.adjust_init_stats("INF", "REC", "R")
-    #     self.presents_virus = False
-    #     self.immune_time = dc.get_immune_time(self.model)
-    #     # if self.unique_id < 5: print(f"Agent {self.unique_id} is now immune for {im_time} days ")
-    #     self.days_in_current_state = self.model.DateTime
-    #     if self.HospDetected == True:
-    #         self.model.hosp_collector_counts['H-INF'] -= 1
-    #         self.model.hosp_collector_counts['H-REC'] += 1
-
-    # For recovered people
-    # elif self.machine.state == "R":
-    #    # if have passed more days than self.immune_time, agent is susceptible again
-    #    if t.days >= self.immune_time:
-    #        self.adjust_init_stats("REC", "SUSC", "S")
-    #        if self.HospDetected == True:
-    #            self.model.hosp_collector_counts['H-REC'] -= 1
-    #            self.model.hosp_collector_counts['H-SUSC'] += 1
-    #            self.HospDetected = False
-    #        # if self.unique_id < 5: print(f"Agent {self.unique_id} is SUSC again")
-
-    # For hospitalized people
-    # elif self.machine.state == "H":
-    # Calculate the prob of dying
-    # death_rate = self.model.virus.pDeathRate(self.model)
-    # alive = np.random.choice([0, 1], p=[death_rate, 1 - death_rate])
-    # Agent dies
-    # if alive == 0:
-    #     # discharge patient
-    #     h = self.model.getHospitalPosition(self.obj_place)
-    #     h.discharge_patient(self)
-    #
-    #     self.adjust_init_stats("HOSP", "DEAD", "S")
-    #     self.model.hosp_collector_counts['H-HOSP'] -= 1
-    #     self.model.hosp_collector_counts['H-DEAD'] += 1
-    # self.model.schedule.remove(self)
-    # Agent still alive, if have passed more days than hospitalized_time, change state to Recovered
-    # if alive != 0 and t.days >= self.hospitalized_time:
-    #     # discharge patient
-    #     h = self.model.getHospitalPosition(self.obj_place)
-    #     h.discharge_patient(self)
-    #
-    #     self.adjust_init_stats("HOSP", "REC", "R")
-    #     self.model.hosp_collector_counts['H-HOSP'] -= 1
-    #     self.model.hosp_collector_counts['H-REC'] += 1
-    #
-    #     self.immune_time = dc.get_immune_time(self.model)
-    #
-    #     self.days_in_current_state = self.model.DateTime
-
-    # change quarantine status if necessary
-    # if self.quarantined is not None:
-    #     if self.model.DateTime.day == self.quarantined.day:
-    #         self.quarantined = None
-
-    def move(self):
+    def move(self, cellmates):
         # new_position = None
         # possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
+
         if self.machine.state in ["S", "E", "A", "I", "R"]:
             if self.quarantined is None:  # if agent not hospitalized or dead
                 if self.model.DateTime.hour == 0:
@@ -188,8 +83,6 @@ class HumanAgent(XAgent):
 
                 # sleeping time
                 elif self.model.DateTime.hour == 6:
-                    cellmates = self.getWorld().space.agents_at(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
-                    cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
 
                     if len(cellmates) > 1:
                         for str_id in [x for x in cellmates['agentid'] if x != self.id]:
@@ -209,9 +102,6 @@ class HumanAgent(XAgent):
 
                         self.mask = workplace.mask
                         # self.getWorld().space._create_gdf()
-                        cellmates = self.getWorld().space.agents_at(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
-                        cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (
-                                cellmates['distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
 
                         if len(cellmates) > 1:
                             for str_id in [x for x in cellmates['agentid'] if x != self.id]:
@@ -237,11 +127,6 @@ class HumanAgent(XAgent):
                             # new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
                         else:
                             # self.getWorld().space._create_gdf()
-
-                            cellmates = self.getWorld().space.agents_at(self.pos,
-                                                                        max_num=10)  # pandas df [agentid, geometry, distance]
-                            cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates[
-                                                                                                      'distance'] < 2)]  # filter out buildings and far away people .iloc[0:2]
 
                             human_cellmates = set([x for x in cellmates['agentid'] if x != self.id])
 
@@ -292,12 +177,9 @@ class HumanAgent(XAgent):
 
         # if new_position: self.model.grid.move_agent(self, new_position)
 
-    def contact(self):
+    def contact(self, others):
         """ Find close contacts and infect """
         # self.getWorld().space._create_gdf()
-        others = self.getWorld().space.agents_at(self.pos, max_num=10)  # pandas df [agentid, geometry, distance]
-        others = others[(others['agentid'].str.contains('Human')) & (
-                others['distance'] < 2)]
         others_agents = [self.model.space.get_agent(aid) for aid in others['agentid'] if aid != self.id]
 
         for other in others_agents:
