@@ -239,7 +239,7 @@ class GeoSpacePandas(GeoSpace):
       closest_points = self._right.loc[closest[0]]
 
       # Ensure that the index corresponds the one in left_gdf
-      closest_points = closest_points.reset_index(drop=True)
+      #closest_points = closest_points.reset_index(drop=True)
       
       return closest_points
 
