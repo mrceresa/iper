@@ -1,5 +1,5 @@
 import unittest
-from iper.space.Space import GeoSpacePandas
+from iper.space.geospacepandas import GeoSpacePandas
 from shapely.geometry import Polygon, LineString, Point
 from figures import BLUE, SIZE, set_limits, plot_coords, color_isvalid
 import matplotlib.pyplot as plt
@@ -92,9 +92,9 @@ class TestGeoSpace(unittest.TestCase):
 
   def testUpdateEfficency(self):
     sp = GeoSpacePandas()
-
+    max_ag = 10000
     tic = time.perf_counter()
-    for i in range(1000):
+    for i in range(max_ag):
       a = XAgent(i)
       sp.place_agent(a, (i,i))
     toc = time.perf_counter()
@@ -102,7 +102,7 @@ class TestGeoSpace(unittest.TestCase):
     print("Place took:", _el1)
 
     tic = time.perf_counter()
-    for i in range(1000):
+    for i in range(max_ag):
       sp.move_agent(sp.get_agent(i), (i**2,i**2))
     toc = time.perf_counter()
     _el1 = toc-tic
@@ -116,7 +116,28 @@ class TestGeoSpace(unittest.TestCase):
     print("To GDF took:", _el1)
 
     tic = time.perf_counter()
-    for i in range(1000):
+    for i in range(max_ag):
+      res = sp.agents_at((i,i))
+    toc = time.perf_counter()
+    _el1 = toc-tic
+    print("Agents_at took:", _el1)
+
+    tic = time.perf_counter()
+    for i in range(max_ag):
+      res = sp.agents_at_mp((i,i))
+    toc = time.perf_counter()
+    _el1 = toc-tic
+    print("Agents_at_mp took:", _el1)
+
+    tic = time.perf_counter()
+    for i in range(max_ag):
+      res2 = sp.agents_at_mtree((i,i))
+    toc = time.perf_counter()
+    _el1 = toc-tic
+    print("Agents_at_mtree took:", _el1)
+
+    tic = time.perf_counter()
+    for i in range(max_ag):
       sp.remove_agent(sp.get_agent(i))
     toc = time.perf_counter()
     _el1 = toc-tic
