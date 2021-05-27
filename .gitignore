@@ -8,3 +8,4 @@ iper.egg-info/
 *.png
 results*/
 ctx-cache/
+examples/Economy/BCN_Resources/bcn.osm
