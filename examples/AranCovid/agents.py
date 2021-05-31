@@ -60,13 +60,13 @@ class HumanAgent(XAgent):
 
         # self.think()
         cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
-        
+
         #cellmates = self.getWorld().space.agents_at_mp(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
         #cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
 
         self.move(cellmates)
 
-        if self.machine.state in ["E", "I"] and self.model.DateTime.hour > 7:
+        if self.machine.state in ["E", "I"] and self.model.DateTime.hour > 6:
             self.contact(cellmates)
 
         super().step()
@@ -193,8 +193,8 @@ class HumanAgent(XAgent):
             if other.machine.state is "S":  # trans == 0 and
                 other.machine.contact(self.mask, other.mask)
                 if other.machine.state == "E":
-                    self.model.collector_counts['SUSC'] -= 1
-                    self.model.collector_counts['EXP'] += 1
+                    # self.model.collector_counts['SUSC'] -= 1
+                    # self.model.collector_counts['EXP'] += 1
                     other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(
                         1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
                 # other.machine.state = "E"

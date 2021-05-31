@@ -9,9 +9,9 @@ from iper import XAgent
 class Hospital(XAgent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id)
-        self.total_capacity = int(random.normalvariate(model.Hosp_capacity, int(model.Hosp_capacity * 0.4)))  # 10% of population
+        self.total_capacity = model.Hosp_capacity #int(random.normalvariate(model.Hosp_capacity, int(model.Hosp_capacity * 0.4)))  # 10% of population
         self.list_pacients = set()  # patients in the hospital
-        self.PCR_availables = 5  # self.random.randrange(3, 5)
+        self.PCR_availables = model.PCR_tests  # self.random.randrange(3, 5)
         self.PCR_testing = {}  # patients waiting for the testing
         self.PCR_results = {}  # patients tested
         self.mask = Mask.FFP2
@@ -57,6 +57,8 @@ class Hospital(XAgent):
                     for elem in agentcontacts[key]:
                         self.model.peopleToTest[today].add(elem)
 
+        if self.model.quarantine_period == 0: agent.quarantined = None
+
     def decideTesting(self, patientsTested):
         """ Called by model function at midnight to decide which agents will be tested from the contact tracing set
         the next day with a 2-3 day delay."""
@@ -66,12 +68,17 @@ class Hospital(XAgent):
 
         ThreeD_ago = (self.model.DateTime - timedelta(days=3)).strftime('%Y-%m-%d')
 
+        quarantine_period = self.model.quarantine_period
+        if quarantine_period == 0: quarantine_period = 1
+
         if ThreeD_ago in self.model.peopleToTest and PCRs:
             for elem in self.model.peopleToTest[ThreeD_ago]:
-                if elem not in patientsTested and PCRs > 0 and (self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
+                if elem not in patientsTested and PCRs > 0 and (
+                        self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=self.model.quarantine_period)
+                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(
+                        days=quarantine_period)
                     self.model.space.get_agent(elem).obj_place = self.place
 
             self.model.peopleToTest[ThreeD_ago] -= HospToTest
@@ -80,10 +87,12 @@ class Hospital(XAgent):
         TwoD_ago = (self.model.DateTime - timedelta(days=2)).strftime('%Y-%m-%d')
         if PCRs and TwoD_ago in self.model.peopleToTest:
             for elem in self.model.peopleToTest[TwoD_ago]:
-                if elem not in (patientsTested | HospToTest) and PCRs > 0 and (self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
+                if elem not in (patientsTested | HospToTest) and PCRs > 0 and (
+                        self.model.space.get_agent(elem).machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(days=self.model.quarantine_period)
+                    self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(
+                        days=quarantine_period)
                     self.model.space.get_agent(elem).obj_place = self.place
 
             self.model.peopleToTest[TwoD_ago] -= HospToTest

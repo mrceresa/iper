@@ -51,8 +51,10 @@ def main(args):
         "agents": args.agents,
         "family": args.family,
         "age": args.age,
-        "virus": args.virus,
-        "hosp_capacity": 100,
+        "hospitals": args.hospitals,
+        "tests": args.tests,
+        "quarantine": args.quarantine,
+        "lockdown": args.lockdown,
         "peopleMeeting": args.meeting
     }
     city = CityModel(config)
@@ -99,6 +101,9 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--steps', type=int, default=30, help="Timesteps to run the model for")
     parser.add_argument('-n', '--agents', type=int, default=10000, help="Numer of starting agents")
     parser.add_argument('-H', '--hospitals', type=int, default=10, help="Numer of hospitals")
+    parser.add_argument('-t', '--tests', type=int, default=10, help="Number of tests applied daily")
+    parser.add_argument('-q', '--quarantine', type=int, default=10, help="Number of self-quarantine days")
+    parser.add_argument('-l', '--lockdown', type=float, default=0.3, help="Number of detected infected people to apply health measures")
     parser.add_argument('-w', '--workplaces', type=int, default=20, help="Numer of workplaces")
     parser.add_argument('-m', '--meeting', type=int, default=5, help="Numer of People on Meetings")
     parser.add_argument('-b', '--basemap', type=str, default="Barcelona, Spain",
