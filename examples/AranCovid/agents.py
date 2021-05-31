@@ -60,6 +60,7 @@ class HumanAgent(XAgent):
 
         # self.think()
         cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
+        cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings and far away people .iloc[0:2]
 
         #cellmates = self.getWorld().space.agents_at_mp(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
         #cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
@@ -112,7 +113,7 @@ class HumanAgent(XAgent):
 
 
                 # leisure time
-                elif 16 < self.model.DateTime.hour <= 21:  # leisure time
+                elif 16 < self.model.DateTime.hour <= self.model.night_curfew-2:  # leisure time
                     if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask()  # wear mask for walk
                     if not self.friend_to_meet:
                         if np.random.choice([0, 1], p=[0.75,
@@ -138,7 +139,7 @@ class HumanAgent(XAgent):
 
 
                 # go back home
-                elif 21 < self.model.DateTime.hour <= 23:  # Time to go home
+                elif self.model.night_curfew-2 < self.model.DateTime.hour <= self.model.night_curfew-1:  # Time to go home
                     if self.pos != self.house:
                         self.getWorld().space.move_agent(self, self.house)
                         # new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house

@@ -56,7 +56,6 @@ class CityModel(MultiEnvironmentWorld):
         self.network = NetworkGrid(nx.Graph())
         self.l.info("Scheduler is " + str(self.schedule))
         self.schedule = RandomActivation(self)
-
         self.l.info("Loading geodata")
         self._initGeo()
         self._loadGeoData()
@@ -68,7 +67,10 @@ class CityModel(MultiEnvironmentWorld):
         self.R0_obs = 0
         self.R0_observed = [0, 0, 0]
         self.quarantine_period = config["quarantine"]
-        self.lockdown = config["lockdown"]
+        self.lockdown = int(config["lockdown"]["proportion"] * config["agents"])
+        self.night_curfew = config["lockdown"]["curfew"]
+        if self.night_curfew < 18: self.night_curfew = 18
+        elif self.night_curfew > 24: self.night_curfew = 24
 
         self.Hosp_capacity = math.ceil(
             (0.0046 * config["agents"]) / config["hospitals"])  # 4.6 beds per 1,000 inhabitants.
@@ -197,6 +199,8 @@ class CityModel(MultiEnvironmentWorld):
 
     def plot_results(self, outdir, title='stats', hosp_title='hosp_stats', R0_title='R0_stats'):
         """Plot cases per country"""
+        if isinstance(self.lockdown, int): lockdown = False
+        else: lockdown = True
 
         X = self.datacollector.get_table_dataframe("Model_DC_Table")
         X.to_csv(outdir + "/" + title + '.csv', index=False)  # get the csv
@@ -212,7 +216,7 @@ class CityModel(MultiEnvironmentWorld):
         colors = ["Orange", "Green", "Blue", "Gray", "Black"]
 
         X.plot(x="Day", y=columns, color=colors)  # table=True
-        plt.axvline(pd.Timestamp('2021-01-02'), color='r', linestyle="dashed", label='Lockdown')
+        if lockdown: plt.axvline(pd.Timestamp(self.lockdown), color='r', linestyle="dashed", label='Lockdown')
         plt.ylabel('Values')
         plt.title('R0 values')
         # plt.gca().get_xaxis().set_visible(False)      #ax.xaxis.tick_top()
@@ -224,7 +228,7 @@ class CityModel(MultiEnvironmentWorld):
         colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
 
         X.plot(x="Day", y=columns, color=colors)  # table=True
-        plt.axvline(pd.Timestamp('2021-01-02'), color='r', linestyle="dashed", label='Lockdown')
+        if lockdown: plt.axvline(pd.Timestamp(self.lockdown), color='r', linestyle="dashed", label='Lockdown')
         plt.ylabel('Values')
         plt.title('Model stats')
         # plt.gca().get_xaxis().set_visible(False)  # ax.xaxis.tick_top()
@@ -240,7 +244,7 @@ class CityModel(MultiEnvironmentWorld):
         colors = ["Green", "Red", "Blue", "Gray", "Black"]
 
         Y.plot(x="Day", y=columns, color=colors)  # table=True
-        plt.axvline(pd.Timestamp('2021-01-02'), color='r', linestyle="dashed", label='Lockdown')
+        if lockdown: plt.axvline(pd.Timestamp(self.lockdown), color='r', linestyle="dashed", label='Lockdown')
         plt.ylabel('Values')
         plt.title('Observed stats')
         # plt.gca().get_xaxis().set_visible(False)      #ax.xaxis.tick_top()
@@ -279,8 +283,11 @@ class CityModel(MultiEnvironmentWorld):
             self.changeAgentStates()
 
             # decide on applying stricter measures
-            if self.hosp_collector_counts["H-INF"] > self.lockdown:
-                pass
+            if isinstance(self.lockdown, int):
+                if self.hosp_collector_counts["H-INF"] >= self.lockdown:
+                    self.lockdown = self.DateTime.strftime("%Y-%m-%d")
+                    print("HOSP STATS for lockdown: ", self.hosp_collector_counts["H-INF"], self.lockdown)
+                    pass
 
             # self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
 
@@ -308,7 +315,7 @@ class CityModel(MultiEnvironmentWorld):
                         self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
-                    infected = np.random.choice(["S", "E", "I"], p=[0.98, 0.01, 0.01])
+                    infected = np.random.choice(["S", "E", "I"], p=[0.95, 0.03, 0.02])
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
                                                                                          age_())

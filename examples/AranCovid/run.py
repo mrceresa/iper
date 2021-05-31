@@ -92,6 +92,7 @@ def main(args):
     return city
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--output_dir', type=str, default="results-%s" % datetime.today().strftime('%Y%m%d-%H'),
@@ -103,7 +104,7 @@ if __name__ == '__main__':
     parser.add_argument('-H', '--hospitals', type=int, default=10, help="Numer of hospitals")
     parser.add_argument('-t', '--tests', type=int, default=10, help="Number of tests applied daily")
     parser.add_argument('-q', '--quarantine', type=int, default=10, help="Number of self-quarantine days")
-    parser.add_argument('-l', '--lockdown', type=float, default=0.3, help="Number of detected infected people to apply health measures")
+    parser.add_argument('-l', '--lockdown', type= dict, default={'proportion':0.3, 'curfew': 20}, help="Number of detected infected people to apply health measures")
     parser.add_argument('-w', '--workplaces', type=int, default=20, help="Numer of workplaces")
     parser.add_argument('-m', '--meeting', type=int, default=5, help="Numer of People on Meetings")
     parser.add_argument('-b', '--basemap', type=str, default="Barcelona, Spain",
@@ -111,8 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--family', type=list, default=[19.9, 23.8, 20.4, 24.8, 8.9, 2.2],
                         help="distribution listeach term in the distr list represents the probability of generating a familywith a number of individuals equal to the index of that element of distr")
     parser.add_argument('-j', '--job', type=dict,
-                        default={"unemployed": 6.0, "type1": 14.00, "type2": 10.00, "type3": 10.00, "type4": 10.00,
-                                 "type5": 10.00, "type6": 40.00, }, help="it is a dictionary containing workgroups")
+                        default={"unemployed": 6.0, "type1": 14.00, "type2": 10.00, "type3": 10.00, "type4": 10.00,"type5": 10.00, "type6": 40.00, }, help="it is a dictionary containing workgroups")
     parser.add_argument('-a', '--age', type=dict,
                         default={"00-10": 8.89, "11-20": 8.58, "21-30": 13.04, "31-40": 15.41, "41-50": 15.34,
                                  "51-60": 13.06, "61-70": 10.53, "71-80": 8.41, "81-90": 5.46, "91-99": 1.28},
