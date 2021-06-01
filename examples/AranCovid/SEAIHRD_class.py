@@ -9,7 +9,7 @@ class SEAIHRD_covid(object):
     # A single center Chinese study of 221 discharged COVID-19
     # patients observed an average time to recovery of 10.63±1.93 days
     # for mild to moderate patients, compared with 18.70±2.50 for severe patients.
-    prob_inf = 0.2
+    prob_inf = 0.05
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10

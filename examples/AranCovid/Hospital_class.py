@@ -125,7 +125,6 @@ class Workplace(XAgent):
     def add_worker(self, agent):
         """ Adds a worker to the workplace hospital patients """
         self.workers.add(agent)
-        self.total_capacity -= 1
 
     def get_workers(self):
         """ Returns workplace workers.  """
