@@ -460,9 +460,9 @@ class MultiEnvironmentWorld(Model):
         
   def _prepareAgentForAdd(self, agent, size):
     # Generate random position
-    if size is None: self = (size.config["size"]["width"], self.config["size"]["height"])
+    #if size is None: self = (size.config["size"]["width"], self.config["size"]["height"])
     
-    agent.pos = tuple([np.random.randint(0,_i) for _i in size])
+    agent.pos = self.space.getRandomPos()
    
     # Configure environments
     self._applyEnvRequir(agent)

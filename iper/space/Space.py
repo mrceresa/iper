@@ -25,6 +25,7 @@ import numpy as np
 import multiprocessing as mp
 from sklearn.neighbors import NearestNeighbors
 from joblib import Parallel, effective_n_jobs, delayed
+import random
 
 class MeshSpace(NetworkGrid):
 
@@ -148,7 +149,7 @@ class MeshSpace(NetworkGrid):
     return s
 
   def place_agent(self, agent, agent_pos):
-    node_id = agent_pos[0]  
+    node_id = agent_pos[0]
     self._place_agent(agent, node_id)
     agent.pos = agent_pos
 
@@ -179,7 +180,9 @@ class MeshSpace(NetworkGrid):
   def getSize(self):
     return (len(self.G.nodes), )
 
-  
+  def getRandomPos(self):
+    pos = random.choice(list(self.G.nodes))
+    return (pos, )
 
   #def find_cell(self, pos):
 
@@ -191,7 +194,7 @@ class MeshSpace(NetworkGrid):
   #    pos
   #  )
     
-    return int(_cellid)
+  #  return int(_cellid)
     
 
 
