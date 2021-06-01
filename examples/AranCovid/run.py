@@ -45,6 +45,7 @@ def main(args):
 
     # Start model
     l.info("Starting City simulator with params %s" % str(args))
+    args.lockdown['inf_threshold'] = int(args.lockdown['inf_threshold'] * args.agents)
     config = {
         "logger": l,
         "basemap": args.basemap,
@@ -77,7 +78,7 @@ def main(args):
     }
 
     city.addPopulationRequest(pr)
-    city.createAgents(args.agents)
+    city.createAgents(args.agents, args.workplaces)
 
     city.plotAll(args.output_dir, "pre.png")
     tic = time.perf_counter()
@@ -104,7 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('-H', '--hospitals', type=int, default=10, help="Numer of hospitals")
     parser.add_argument('-t', '--tests', type=int, default=10, help="Number of tests applied daily")
     parser.add_argument('-q', '--quarantine', type=int, default=10, help="Number of self-quarantine days")
-    parser.add_argument('-l', '--lockdown', type= dict, default={'proportion':0.3, 'curfew': 20}, help="Number of detected infected people to apply health measures")
+    parser.add_argument('-l', '--lockdown', type= dict, default={'inf_threshold':0.0, 'night_curfew': 23, 'masks': [0.05, 0.6, 0.35], 'quarantine': 10, 'meeting': 5, 'remote-working': 0.69}, help="Number of detected infected people to apply health measures")
     parser.add_argument('-w', '--workplaces', type=int, default=20, help="Numer of workplaces")
     parser.add_argument('-m', '--meeting', type=int, default=5, help="Numer of People on Meetings")
     parser.add_argument('-b', '--basemap', type=str, default="Barcelona, Spain",

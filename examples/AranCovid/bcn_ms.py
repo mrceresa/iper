@@ -23,6 +23,7 @@ from io import StringIO
 import json
 
 import sys
+
 sys.path.insert(0, '../../')
 from iper.space.geospacepandas import GeoSpacePandas
 from iper import MultiEnvironmentWorld, XAgent, PopulationRequest
@@ -60,24 +61,23 @@ class CityModel(MultiEnvironmentWorld):
         self._initGeo()
         self._loadGeoData()
 
-        self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
+        self.DateTime = datetime(year=2020, month=12, day=31, hour=23, minute=30, second=0)
         # self.virus = VirusCovid(config["virus"])
         self.pTest = 0.95
         self.R0 = 0
         self.R0_obs = 0
         self.R0_observed = [0, 0, 0]
-        self.quarantine_period = config["quarantine"]
-        self.lockdown = int(config["lockdown"]["proportion"] * config["agents"])
-        self.night_curfew = config["lockdown"]["curfew"]
-        if self.night_curfew < 18: self.night_curfew = 18
-        elif self.night_curfew > 24: self.night_curfew = 24
+        self.lockdown = config["lockdown"]
+        self.quarantine_period = 0
+        self.night_curfew = 24
+        self.masks_probs = [1, 0, 0]
 
         self.Hosp_capacity = math.ceil(
             (0.0046 * config["agents"]) / config["hospitals"])  # 4.6 beds per 1,000 inhabitants.
         self.PCR_tests = config["tests"] / config["hospitals"]
         # print("UCI BEDS: ", self.Hosp_capacity)
         # print("TESTS PER HOSPITAL: ", self.PCR_tests)
-
+        self.employment_rate = 0.7
         self.peopleTested = {}
         self.peopleToTest = {}
 
@@ -199,24 +199,27 @@ class CityModel(MultiEnvironmentWorld):
 
     def plot_results(self, outdir, title='stats', hosp_title='hosp_stats', R0_title='R0_stats'):
         """Plot cases per country"""
-        if isinstance(self.lockdown, int): lockdown = False
-        else: lockdown = True
+        if isinstance(self.lockdown['inf_threshold'], int):
+            lockdown = False
+        else:
+            lockdown = True
 
         X = self.datacollector.get_table_dataframe("Model_DC_Table")
         X.to_csv(outdir + "/" + title + '.csv', index=False)  # get the csv
 
         X = self.datacollector.get_table_dataframe("Model_DC_Table")
-        X.to_csv(outdir + "/" + title + '.csv', index=False)  # get the csv
-        # R_db = X[['Day', 'R0', 'R0_Obs', 'Mcontacts', 'State', 'Contacts']]
 
         X['Day'] = X['Day'].apply(pd.Timestamp)
+        X = X.loc[X['Day'] >= '2021-01-01']
+        X.to_csv(outdir + "/" + title + '.csv', index=False)  # get the csv
 
         # R0 plot
         columns = ['R0', 'R0_Obs', 'Mcontacts', 'State', 'Contacts']
         colors = ["Orange", "Green", "Blue", "Gray", "Black"]
 
         X.plot(x="Day", y=columns, color=colors)  # table=True
-        if lockdown: plt.axvline(pd.Timestamp(self.lockdown), color='r', linestyle="dashed", label='Lockdown')
+        if lockdown: plt.axvline(pd.Timestamp(self.lockdown['inf_threshold']), color='r', linestyle="dashed",
+                                 label='Lockdown')
         plt.ylabel('Values')
         plt.title('R0 values')
         # plt.gca().get_xaxis().set_visible(False)      #ax.xaxis.tick_top()
@@ -228,7 +231,8 @@ class CityModel(MultiEnvironmentWorld):
         colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
 
         X.plot(x="Day", y=columns, color=colors)  # table=True
-        if lockdown: plt.axvline(pd.Timestamp(self.lockdown), color='r', linestyle="dashed", label='Lockdown')
+        if lockdown: plt.axvline(pd.Timestamp(self.lockdown['inf_threshold']), color='r', linestyle="dashed",
+                                 label='Lockdown')
         plt.ylabel('Values')
         plt.title('Model stats')
         # plt.gca().get_xaxis().set_visible(False)  # ax.xaxis.tick_top()
@@ -236,15 +240,17 @@ class CityModel(MultiEnvironmentWorld):
         plt.savefig(os.path.join(outdir, title))
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
-        Y.to_csv(outdir + "/" + hosp_title + '.csv', index=False)  # get the csv
         Y['Day'] = Y['Day'].apply(pd.Timestamp)
+        Y = Y.loc[Y['Day'] >= '2021-01-01']
+        Y.to_csv(outdir + "/" + hosp_title + '.csv', index=False)  # get the csv
 
         # Hospital stats plot
         columns = ['Hosp-Susceptible', 'Hosp-Infected', 'Hosp-Recovered', 'Hosp-Hospitalized', 'Hosp-Dead']
         colors = ["Green", "Red", "Blue", "Gray", "Black"]
 
         Y.plot(x="Day", y=columns, color=colors)  # table=True
-        if lockdown: plt.axvline(pd.Timestamp(self.lockdown), color='r', linestyle="dashed", label='Lockdown')
+        if lockdown: plt.axvline(pd.Timestamp(self.lockdown['inf_threshold']), color='r', linestyle="dashed",
+                                 label='Lockdown')
         plt.ylabel('Values')
         plt.title('Observed stats')
         # plt.gca().get_xaxis().set_visible(False)      #ax.xaxis.tick_top()
@@ -283,19 +289,45 @@ class CityModel(MultiEnvironmentWorld):
             self.changeAgentStates()
 
             # decide on applying stricter measures
-            if isinstance(self.lockdown, int):
-                if self.hosp_collector_counts["H-INF"] >= self.lockdown:
-                    self.lockdown = self.DateTime.strftime("%Y-%m-%d")
-                    print("HOSP STATS for lockdown: ", self.hosp_collector_counts["H-INF"], self.lockdown)
-                    pass
-
+            if isinstance(self.lockdown['inf_threshold'], int):
+                if self.hosp_collector_counts["H-INF"] >= self.lockdown['inf_threshold']:
+                    #print("NIGHT CURFEW: ", self.night_curfew, '\n', "MASKS PROBS: ", self.masks_probs, '\n QUARANTINE: ', self.quarantine_period, "\n MEETIGN:", self.peopleInMeeting)
+                    self.activate_lockdown()
+                    #print("NIGHT CURFEW: ", self.night_curfew, '\n', "MASKS PROBS: ", self.masks_probs, '\n QUARANTINE: ', self.quarantine_period, "\n MEETIGN:", self.peopleInMeeting)
             # self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
 
-    def createAgents(self, Humanagents, friendsXagent=3, employment_rate=0.7):
+    def activate_lockdown(self):
+        self.lockdown['inf_threshold'] = self.DateTime.strftime("%Y-%m-%d")
+
+        if 'night_curfew' in self.lockdown.keys():
+            self.night_curfew = self.lockdown['night_curfew']
+
+        if 'masks' in self.lockdown.keys():
+            self.masks_probs = self.lockdown['masks']
+
+        if 'quarantine' in self.lockdown.keys():
+            self.quarantine_period = self.lockdown['quarantine']
+
+        if 'meeting' in self.lockdown.keys():
+            self.peopleInMeeting = self.lockdown['meeting']
+            self.peopleInMeetingSd = self.lockdown['meeting'] * 0.2
+
+        if 'remote-working' in self.lockdown.keys() and self.lockdown['remote-working'] < self.employment_rate:
+            fire_employees = round(self.lockdown['remote-working'] / self.employment_rate, 2)
+            for human in self.schedule.agents:
+                if isinstance(human, HumanAgent):
+                    if human.workplace is not None and np.random.choice([False, True], p=[fire_employees, 1 - fire_employees]):
+                        human.workplace = None
+
+
+
+    def createAgents(self, Humanagents, Workplaces, friendsXagent=3):
 
         family_dist = create_families(Humanagents)
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
+
+
 
         while agentsToBecreated >= 0:
             if isinstance(self._agentsToAdd[agentsToBecreated], HumanAgent):
@@ -321,16 +353,13 @@ class CityModel(MultiEnvironmentWorld):
                                                                                          age_())
                         self._agentsToAdd[agentsToBecreated - i].machine.time_in_state = random.choice(
                             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-                        # self._agentsToAdd[agentsToBecreated - i].state = State.INF
                         self.collector_counts["SUSC"] -= 1
                         self.collector_counts["INF"] += 1  # Adjust initial counts
                         self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = [0,
-                                                                                                                    round(
-                                                                                                                        1 /
+                                                                                                                    round(1 /
                                                                                                                         self._agentsToAdd[
                                                                                                                             agentsToBecreated - i].machine.rate[
-                                                                                                                            'rHR']) -
-                                                                                                                    self._agentsToAdd[
+                                                                                                                            'rHR']) -self._agentsToAdd[
                                                                                                                         agentsToBecreated - i].machine.time_in_state,
                                                                                                                     0]
                     elif infected == "E":
@@ -338,7 +367,6 @@ class CityModel(MultiEnvironmentWorld):
                                                                                          age_())
                         self._agentsToAdd[agentsToBecreated - i].machine.time_in_state = random.choice([1, 2, 3, 4])
 
-                        # self._agentsToAdd[agentsToBecreated - i].state = State.INF
                         self.collector_counts["SUSC"] -= 1
                         self.collector_counts["EXP"] += 1  # Adjust initial counts
                         self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.DateTime.strftime('%Y-%m-%d')] = \
@@ -347,19 +375,20 @@ class CityModel(MultiEnvironmentWorld):
                                  agentsToBecreated - i].machine.time_in_state, 0]
 
                     else:
-                        # self._agentsToAdd[agentsToBecreated - i].state = State.SUSC
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(
                             self._agentsToAdd[agentsToBecreated - i].id, "S", age_())
 
                     # EMPLOYMENT
-                    if np.random.choice([True, False], p=[employment_rate, 1 - employment_rate]):
-                        workplaces = random.sample(list(range(len(self._agentsToAdd) - 10, len(self._agentsToAdd))), 10)
+
+                    if np.random.choice([True, False], p=[self.employment_rate, 1 - self.employment_rate]):
+                        workplaces = random.sample(list(range(len(self._agentsToAdd) - Workplaces, len(self._agentsToAdd))), Workplaces)
                         for workplace in workplaces:
-                            if self._agentsToAdd[workplace].total_capacity != len(
-                                    self._agentsToAdd[workplace].get_workers()):
+                            if self._agentsToAdd[workplace].total_capacity > len(self._agentsToAdd[workplace].get_workers()):
                                 self._agentsToAdd[agentsToBecreated - i].workplace = self._agentsToAdd[workplace].id
                                 self._agentsToAdd[workplace].add_worker(self._agentsToAdd[agentsToBecreated - i].id)
-                                break
+                            break
+
+
 
                 agentsToBecreated -= family_dist[index]
                 family_dist[index] = 0
@@ -384,6 +413,7 @@ class CityModel(MultiEnvironmentWorld):
         #     if isinstance(a, HumanAgent):
         #         pass
         #         # print(f'{a.unique_id} has {a.machine.age} these friends and works at {a.workplace} with state {a.machine.state}')
+
 
     def calculate_R0(self, current_step):
         """ R0: prob of transmission x contacts x days with disease """

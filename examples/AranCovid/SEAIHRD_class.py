@@ -9,7 +9,7 @@ class SEAIHRD_covid(object):
     # A single center Chinese study of 221 discharged COVID-19
     # patients observed an average time to recovery of 10.63±1.93 days
     # for mild to moderate patients, compared with 18.70±2.50 for severe patients.
-    prob_inf = 0.4
+    prob_inf = 0.2
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10
@@ -143,6 +143,6 @@ class Mask(Enum):
             return 0.10
 
     @classmethod
-    def RandomMask(self):
-        a = random.choices([0, 1, 2], weights=[0.05, 0.6, 0.35], k=1)
+    def RandomMask(self, probs):
+        a = random.choices([0, 1, 2], weights=probs, k=1)
         return Mask(a[0])

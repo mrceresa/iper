@@ -95,7 +95,7 @@ class HumanAgent(XAgent):
                 elif 6 < self.model.DateTime.hour <= 16:  # working time
                     workplace = self.model.space.get_agent(self.workplace)
                     if self.workplace is not None and self.pos != workplace.place:  # Employed and not at workplace
-                        if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask()  # wear mask for walk
+                        if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
                         # new_position = min(possible_steps,key=lambda c: euclidean(c,self.workplace.place))  # check shortest path to work
                         self.getWorld().space.move_agent(self, workplace.place)
                     # employee at workplace. Filter by time to avoid repeated loops
@@ -114,7 +114,7 @@ class HumanAgent(XAgent):
 
                 # leisure time
                 elif 16 < self.model.DateTime.hour <= self.model.night_curfew-2:  # leisure time
-                    if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask()  # wear mask for walk
+                    if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
                     if not self.friend_to_meet:
                         if np.random.choice([0, 1], p=[0.75,
                                                        0.25]) and self.model.DateTime.minute == 0: self.look_for_friend()  # probability to meet with a friend
