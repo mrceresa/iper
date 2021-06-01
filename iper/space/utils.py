@@ -176,11 +176,7 @@ def read_vtu(filein, debug=False, fileout=None):
   rd.SetFileName(filein)
   rd.Update()
   mesh = rd.GetOutput()
-
-  ptids = vtk.vtkIdList()
-  cell_ids = vtk.vtkIdList()
-  ncell_ptids = vtk.vtkIdList()
-
+ 
   g = nx.Graph()
 
   #Get point cells
@@ -191,39 +187,115 @@ def read_vtu(filein, debug=False, fileout=None):
 
   points = []
   for pid in range(centers.GetNumberOfPoints()):
-    g.add_node(pid, centroid=centers.GetPoint(pid))  
     points.append(centers.GetPoint(pid))
 
+  #bulk = []; bulk_conn = []
+  #bcs = []; bcs_conn = []
+  #others = []; others_conn = []
   connectivity = []
   for cellid in tqdm(range(mesh.GetNumberOfCells())):
     cell = mesh.GetCell(cellid)
     if cell.GetCellType() != vtk.VTK_TETRA:
       continue
-    mesh.GetCellPoints(cellid,ptids)
 
-    central_cellpts = set( [ ptids.GetId(k) for k in range(ptids.GetNumberOfIds()) ] )
+    g.add_node(cellid)    
+    
+    cell_ptids = vtk.vtkIdList()      
+    mesh.GetCellPoints(cellid,cell_ptids)
 
-    cells.append(list(central_cellpts))
+    s_cell_ptids = set( 
+      [ cell_ptids.GetId(k) for k in range(cell_ptids.GetNumberOfIds()) ] 
+      )
+
+    cells.append(list(s_cell_ptids)) #Create cell connectivity structure
+    
+    # Now 
     aset = set()
-    for pti in range(ptids.GetNumberOfIds()):
-      mesh.GetPointCells( ptids.GetId(pti), cell_ids )
+    for pti in s_cell_ptids:
+      # for each of the points, check for confining cells
+      cell_neigh_ids = vtk.vtkIdList()
+      mesh.GetPointCells( pti, cell_neigh_ids )
 
-      for neigh_cell_i in range(cell_ids.GetNumberOfIds()):
-        ncell = mesh.GetCell(neigh_cell_i)
+      # For each confining cell
+      for neigh_cell_i in range(cell_neigh_ids.GetNumberOfIds()):
+        neigh_cell_id = cell_neigh_ids.GetId(neigh_cell_i)      
+        # Check if it a valid one
+        ncell = mesh.GetCell(neigh_cell_id)
         if ncell.GetCellType() != vtk.VTK_TETRA:
           continue
-        mesh.GetCellPoints( cell_ids.GetId(neigh_cell_i), ncell_ptids )
+        
+        # Get all its points
+        ncell_ptids = vtk.vtkIdList()
+        mesh.GetCellPoints( neigh_cell_id, ncell_ptids )
         neighb_cellpts = set( [ ncell_ptids.GetId(k) for k in range(ncell_ptids.GetNumberOfIds()) ] )
 
         #only cells connected to the face
-        if len( central_cellpts.intersection(neighb_cellpts) )==3:
-          aset.add( cell_ids.GetId(neigh_cell_i) )
+        if len( s_cell_ptids.intersection(neighb_cellpts) )==3:
+          aset.add( neigh_cell_id )
+
+    # Store neighs cells as edges
+    #g.add_edges_from([(cellid, ed) for ed in aset])
+
+    #if len(aset) == 3:
+    #  bcs.append(cellid) 
+    #  bcs_conn.append(list(aset))
+    #elif len(aset) == 4:
+    #  bulk.append(cellid)
+    #  bulk_conn.append(list(aset))
+    #else:
+    #  others.append(cellid)
+    #  others_conn.append(list(aset))      
 
     connectivity.append( list(aset) ) #subtract middle cell
     for l in list(aset):
       g.add_edge( cellid, l )  
 
+  #len(g.nodes) 2452707
+  #1351940 bulk have conn == 4
+  #bulk = np.asarray(bulk); bulk_conn = np.asarray(bulk_conn)
+  # 548084 bcs have conn == 3
+  #bcs = np.asarray(bcs); bcs_conn = np.asarray(bcs_conn)  
+  #   1533 others have conn == 2
+  #others = np.asarray(others); others_conn = np.asarray(others_conn)    
+  #1901557 tot  
+  #all_cells = np.hstack((bulk, bcs, others))     #1901557
+  #ubulk_cells = np.unique(bulk_conn.reshape(-1)) #1878758
+  #ubcs_cells = np.unique(bcs_conn.reshape(-1))   #1026020
+  #uothers_cells = np.unique(others_conn.reshape(-1)) #3066
+  #all_neighs = np.hstack((ubulk_cells, ubcs_cells, uothers_cells))  #2907844
+  #uall_neighs = np.unique(all_neighs) #1901557
+  
+  #s_all_cells = set(all_cells)
+  #s_all_neighs = set(uall_neighs)  
+  
+  #inter = s_all_cells.intersection(s_all_neighs) #len(inter) == 1901557
+  #differen = s_all_cells.difference(s_all_neighs) # 0
 
+  #print("All cells shape:", all_cells.shape)
+
+  #g.add_nodes_from(all_cells)
+  
+  #s_all_nodes = set(g.nodes)
+  #print("G NODES LEN:", len(g.nodes))
+  #print(len(s_all_nodes.difference(s_all_cells)))
+  #assert len(g.nodes)==1901557
+  #for i, cid in enumerate(bulk):
+  #  for k in bulk_conn[i]:
+  #    assert i in g.nodes
+  #    assert k in g.nodes
+
+  #for i, cid in enumerate(bcs):
+  #  for k in bcs_conn[i]:
+  #    assert i in g.nodes
+  #    assert k in g.nodes
+
+  #for i, cid in enumerate(others):
+  #  for k in bulk_conn[i]:
+  #    assert i in g.nodes
+  #    assert k in g.nodes
+  
+  #g.add_nodes_from(all_cells)
+  
   if fileout is not None:
     lines = vtk.vtkCellArray()
     for i, kkk in enumerate(connectivity):
@@ -232,7 +304,6 @@ def read_vtu(filein, debug=False, fileout=None):
         lines.InsertCellPoint(i)
         lines.InsertCellPoint(cellid)
          
-
     pd = vtk.vtkPolyData()
     pd.SetPoints( centers.GetPoints() )
     pd.SetLines(lines)
@@ -248,6 +319,9 @@ def read_vtu(filein, debug=False, fileout=None):
     compute_conn=False, g3=g)
     
   ms._adj = to_scipy_sparse_matrix(g)
+
+  #import ipdb
+  #ipdb.set_trace()
 
   return ms, mesh
 
