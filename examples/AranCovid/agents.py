@@ -60,12 +60,14 @@ class HumanAgent(XAgent):
 
         # self.think()
         cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
-        cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings and far away people .iloc[0:2]
+        cellmates = cellmates[
+            (cellmates['agentid'].str.contains('Human'))]  # filter out buildings and far away people .iloc[0:2]
 
-        #cellmates = self.getWorld().space.agents_at_mp(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
-        #cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
+        # cellmates = self.getWorld().space.agents_at_mp(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
+        # cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
 
-        self.move(cellmates)
+        if not self.model.lockdown_total:
+            self.move(cellmates)  # if not in total lockdown
 
         if self.machine.state in ["E", "I"] and self.model.DateTime.hour > 6:
             self.contact(cellmates)
@@ -95,7 +97,8 @@ class HumanAgent(XAgent):
                 elif 6 < self.model.DateTime.hour <= 16:  # working time
                     workplace = self.model.space.get_agent(self.workplace)
                     if self.workplace is not None and self.pos != workplace.place:  # Employed and not at workplace
-                        if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
+                        if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(
+                            self.model.masks_probs)  # wear mask for walk
                         # new_position = min(possible_steps,key=lambda c: euclidean(c,self.workplace.place))  # check shortest path to work
                         self.getWorld().space.move_agent(self, workplace.place)
                     # employee at workplace. Filter by time to avoid repeated loops
@@ -113,8 +116,9 @@ class HumanAgent(XAgent):
 
 
                 # leisure time
-                elif 16 < self.model.DateTime.hour <= self.model.night_curfew-2:  # leisure time
-                    if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
+                elif 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:  # leisure time
+                    if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(
+                        self.model.masks_probs)  # wear mask for walk
                     if not self.friend_to_meet:
                         if np.random.choice([0, 1], p=[0.75,
                                                        0.25]) and self.model.DateTime.minute == 0: self.look_for_friend()  # probability to meet with a friend
@@ -139,7 +143,7 @@ class HumanAgent(XAgent):
 
 
                 # go back home
-                elif self.model.night_curfew-2 < self.model.DateTime.hour <= self.model.night_curfew-1:  # Time to go home
+                elif self.model.night_curfew - 2 < self.model.DateTime.hour <= self.model.night_curfew - 1:  # Time to go home
                     if self.pos != self.house:
                         self.getWorld().space.move_agent(self, self.house)
                         # new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house
@@ -169,7 +173,7 @@ class HumanAgent(XAgent):
                         self.obj_place = None
 
         # Ill agents move to nearest hospital to be treated
-        elif self.machine.state == "H":
+        elif self.machine.state is "H":
             if self.pos != self.obj_place:
                 self.getWorld().space.move_agent(self, self.obj_place)
                 # new_position = min(possible_steps,key=lambda c: euclidean(c, self.obj_place))  # check shortest path to hospital
@@ -193,11 +197,8 @@ class HumanAgent(XAgent):
             # trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
             if other.machine.state is "S":  # trans == 0 and
                 other.machine.contact(self.mask, other.mask)
-                if other.machine.state == "E":
-                    # self.model.collector_counts['SUSC'] -= 1
-                    # self.model.collector_counts['EXP'] += 1
-                    other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(
-                        1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
+                if other.machine.state is "E":
+                    other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
                 # other.machine.state = "E"
                 # other.days_in_current_state = self.model.DateTime
                 # other.exposing_time = dc.get_incubation_time(self.model)
@@ -247,10 +248,6 @@ class HumanAgent(XAgent):
                 self.model.space.get_agent(friend).friend_to_meet.remove(friend)
                 self.model.space.get_agent(friend).obj_place = meeting_position
 
-    # def adjust_init_stats(self, fr, to, state):
-    #     self.model.collector_counts[fr] -= 1
-    #     self.model.collector_counts[to] += 1
-    #     self.machine.state = state
 
     def add_contact(self, contact):
         # check contacts for self agent
@@ -262,5 +259,6 @@ class HumanAgent(XAgent):
 
         # add contacts of infected people for R0 calculations
         if self.machine.state in ["E", "A", "I"]:
-            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_infection(self.mask,Mask.NONE) #self.model.virus.pTrans
+            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_infection(self.mask,
+                                                                                                         Mask.NONE)  # self.model.virus.pTrans
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][2] += 1
