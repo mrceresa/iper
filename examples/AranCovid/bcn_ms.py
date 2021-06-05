@@ -548,10 +548,7 @@ class CityModel(MultiEnvironmentWorld):
                     # self.hosp_collector_counts['H-SUSC'] += 1
                     human.HospDetected = False
 
-                elif human.machine.state == "I":
-                    asymptomatic += 1
-
-                elif human.machine.state == "A":  # if s == "E":
+                elif human.machine.state == "I": # infected, symptomatic, presents symptoms
                     symptomatic += 1
 
                     if self.quarantine_period == 0:
@@ -559,6 +556,9 @@ class CityModel(MultiEnvironmentWorld):
                     else:
                         human.quarantined = self.DateTime + timedelta(days=self.quarantine_period)  # quarantine
                     human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
+
+                elif human.machine.state == "A":  # if s == "E":
+                    asymptomatic += 1
 
                 elif human.machine.state == "H":  # if s == "A":
                     # self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
