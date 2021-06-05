@@ -568,8 +568,10 @@ class CityModel(MultiEnvironmentWorld):
                     if self.hosp_collector_counts["H-HOSP"] >= (self.Hosp_capacity * self.N_hospitals):  # hospital collapse
                         human.dead(H_collapse=True)
                     else:
-                        # look for the nearest hospital
+                        # look for the nearest hospital to treat the agent
                         human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
+                        human.getWorld().space.move_agent(human, human.obj_place)
+                        human.mask = Mask.FFP2
 
                         # adds patient to nearest hospital patients list
                         h = self.getHospitalPosition(human.obj_place)

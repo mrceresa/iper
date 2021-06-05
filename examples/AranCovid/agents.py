@@ -172,15 +172,8 @@ class HumanAgent(XAgent):
                         h.doTest(self)  # H-SUSC H-INF
                         self.obj_place = None
 
-        # Ill agents move to nearest hospital to be treated
-        elif self.machine.state is "H":
-            if self.pos != self.obj_place:
-                self.getWorld().space.move_agent(self, self.obj_place)
-                # new_position = min(possible_steps,key=lambda c: euclidean(c, self.obj_place))  # check shortest path to hospital
-            else:  # agent is at hospital
-                self.mask = Mask.FFP2
-
         # if new_position: self.model.grid.move_agent(self, new_position)
+
 
     def contact(self, others):
         """ Find close contacts and infect """

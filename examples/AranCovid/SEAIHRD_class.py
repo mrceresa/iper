@@ -143,7 +143,7 @@ class Mask(Enum):
         if mask == self.NONE:
             return 1
         elif mask == self.HYGIENIC:
-            return 0.50
+            return 0.30
         elif mask == self.FFP2:
             return 0.10
 
