@@ -9,7 +9,7 @@ class SEAIHRD_covid(object):
     # A single center Chinese study of 221 discharged COVID-19
     # patients observed an average time to recovery of 10.63±1.93 days
     # for mild to moderate patients, compared with 18.70±2.50 for severe patients.
-    prob_inf = 0.4
+    prob_inf = 0.0002
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10
@@ -31,10 +31,11 @@ class SEAIHRD_covid(object):
         p = list(self.pAI.values())[int(self.roundup(self.age) / 10) - 1]
         return random.random() < p
 
-    def prob_to_die(self):
+    def prob_to_die(self, H_collapse = False):
         """ probability to died"""
         p = list(self.pHD.values())[int(self.roundup(self.age) / 10) - 1]
-        return random.random() < p
+        if H_collapse: return True
+        else: return random.random() < p
 
     def prob_severity(self):
         """ probability to become hospitalized. """
@@ -51,8 +52,12 @@ class SEAIHRD_covid(object):
         transition_for_H = self.nothing
 
         if self.state == 'E':
+
             if self.time_in_state == round(1 / self.rate['rEI']):
                 transition_for_E = self.end_encubation
+            # elif self.time_in_state > 5:
+            #     print("OVER 5 DAYS IN EXPOSED BUT HASNT ENTERED, NOW HAS BEEN: ", self.time_in_state)
+
 
         elif self.state == 'A':
             if self.time_in_state == round(1 / self.rate['rIR']):
@@ -138,11 +143,11 @@ class Mask(Enum):
         if mask == self.NONE:
             return 1
         elif mask == self.HYGIENIC:
-            return 0.50
+            return 0.30
         elif mask == self.FFP2:
             return 0.10
 
     @classmethod
-    def RandomMask(self):
-        a = random.choices([0, 1, 2], weights=[0.05, 0.6, 0.35], k=1)
+    def RandomMask(self, probs):
+        a = random.choices([0, 1, 2], weights=probs, k=1)
         return Mask(a[0])

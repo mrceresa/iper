@@ -8,7 +8,7 @@ Core Objects:
 import datetime
 import os, sys
 import logging
-from .space.Space import GeoSpacePandas
+from .space.geospacepandas import GeoSpacePandas
 
 __all__ = [GeoSpacePandas]
 
@@ -32,19 +32,20 @@ _sandbox_defs = {
 from .behaviours.behaviourFactory import BehaviourFactory
 from .behaviours.actions import Action
 _behaviourFactory = BehaviourFactory()
-_behaviourFactory.load_all()
+#_behaviourFactory.load_all()
 
 from .brainModelFactory import BrainModelFactory
 _brainModelFactory = BrainModelFactory()
-_brainModelFactory.load_all()
-_brainModelFactory.list_all()
+#_brainModelFactory.load_all()
+#_brainModelFactory.list_all()
 
 from .templates.templateFactory import XAgentFactory
 _agentTemplateFactory = XAgentFactory()
-_agentTemplateFactory.load()
+#_agentTemplateFactory.load()
 
 from .environments import EnvironmentFactory
 _environmentFactory = EnvironmentFactory()
-_environmentFactory.load()        
+#_environmentFactory.load()        
 
 from .xworlds import XAgent, MultiEnvironmentWorld, PopulationRequest, Event, RewardRule
+

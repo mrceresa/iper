@@ -2,35 +2,16 @@ import os
 import agents
 
 
-"""def get_incubation_time(model):
-    Returns the incubation time (EXP state) following a normal distribution 
-    return int(model.random.normalvariate(model.virus.incubation_days, model.virus.incubation_days_sd))
-
-
-def get_infection_time(model):
-    Returns the infeciton time (INF state) following a normal distribution 
-    return int(model.random.normalvariate(model.virus.infection_days, model.virus.infection_days_sd))
-
-
-def get_immune_time(model):
-    Returns the immune time (REC state) following a normal distribution 
-    return int(model.random.normalvariate(model.virus.immune_days, model.virus.immune_days_sd))
-
-
-def get_severe_time(model):
-    Returns the severe time (HOSP state) following a normal distribution 
-    return int(model.random.normalvariate(model.virus.severe_days, model.virus.severe_days_sd))"""
-
-
 def update_DC_table(model):
     """ Collects all statistics for the DC_Table """
-    next_row = {'Day': model.DateTime.strftime('%d-%m'), 'Susceptible': get_susceptible_count(model),
+    next_row = {'Day': model.DateTime.strftime('%Y-%m-%d'), 'Susceptible': get_susceptible_count(model),
                 'Exposed': get_exposed_count(model), 'Infected': get_infected_count(model),
                 'Recovered': get_recovered_count(model), 'Hospitalized': get_hosp_count(model),
-                'Dead': get_dead_count(model), 'R0': get_R0(model), 'R0_Obs': get_R0_Obs(model)}
+                'Dead': get_dead_count(model), 'R0': get_R0(model), 'R0_Obs': get_R0_Obs(model),
+                'Mcontacts': get_R0_Obs0(model), 'Quarantined': get_R0_Obs1(model), 'Contacts': get_R0_Obs2(model) }
     model.datacollector.add_table_row("Model_DC_Table", next_row, ignore_missing=True)
 
-    next_row2 = {'Day': model.DateTime.strftime('%d-%m'), 'Hosp-Susceptible': get_h_susceptible_count(model),
+    next_row2 = {'Day': model.DateTime.strftime('%Y-%m-%d'), 'Hosp-Susceptible': get_h_susceptible_count(model),
                  'Hosp-Infected': get_h_infected_count(model), 'Hosp-Recovered': get_h_recovered_count(model),
                  'Hosp-Hospitalized': get_hosp_count(model), 'Hosp-Dead': get_h_dead_count(model)}
     model.hosp_collector.add_table_row("Hosp_DC_Table", next_row2, ignore_missing=True)
@@ -38,7 +19,9 @@ def update_DC_table(model):
 
 def reset_counts(model):
     """ Sets to 0 the counts for the model datacollector """
-    model.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, "R0": 0, "R0_Obs": 0, }
+    model.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, "R0": 0, "R0_Obs": 0,
+                              "Mcontacts": 0, "Quarantined": 0, "Contacts": 0}
+
 
 def update_stats(model):
     for human in [agent for agent in model.schedule.agents if isinstance(agent, agents.HumanAgent)]:
@@ -121,6 +104,21 @@ def get_R0(model):
 def get_R0_Obs(model):
     """ Returns the R0_obs value of the model """
     return model.R0_obs
+
+
+def get_R0_Obs0(model):
+    """ Returns the R0_obs value of the model """
+    return model.R0_observed[0]
+
+
+def get_R0_Obs1(model):
+    """ Returns the R0_obs value of the model """
+    return model.R0_observed[1]
+
+
+def get_R0_Obs2(model):
+    """ Returns the R0_obs value of the model """
+    return model.R0_observed[2]
 
 
 def get_h_susceptible_count(model):
