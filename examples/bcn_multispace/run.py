@@ -18,7 +18,9 @@ from agents import HumanAgent, RandomWalk
 import contextily as ctx
 import time
 
-from EudaldMobility.experiments import experiment_one
+from EudaldMobility.experiments import experiment_trasnport_histogram, experiment_mean_time_transport, experiment_transport_line_plot
+sys.setrecursionlimit(10000)
+
 def main(args):
 
   if not os.path.exists(args.cache_dir):
@@ -32,7 +34,7 @@ def main(args):
   sdt = datetime.today().strftime('%Y%m%d-%H%M%S')
   fname = os.path.join(args.output_dir, "abm_debug_%s.log"%sdt)
 
-  logconfig_fname = os.path.join(os.getcwd(), 'logging.conf')
+  logconfig_fname = os.path.join(os.getcwd(), 'examples/bcn_multispace/logging.conf')
   print("Trying to load config file from", logconfig_fname)
   logging.config.fileConfig(
     logconfig_fname, 
@@ -59,7 +61,7 @@ def main(args):
           }            
         }
 
-  city.addPopulationRequest(pr)
+  city.addPopulationRequest(pr) #Falla aqui
   city.createAgents()  
 
   city.plotAll(args.output_dir, "pre.png")  
@@ -70,8 +72,11 @@ def main(args):
   
   l.info("Saving results to %s"%args.output_dir)
   city.plotAll(args.output_dir, "res.png")
-  
-  experiment_one(city.getAgents()) 
+
+  #Experiments Transports: Comment if not need to check them
+  #experiment_trasnport_histogram(city.getAgents()) 
+  experiment_transport_line_plot(city.getAgents(), args.steps)
+  experiment_mean_time_transport(city.getAgents())
   return city
 
 
@@ -81,7 +86,7 @@ if __name__ == '__main__':
   parser.add_argument('-c','--cache_dir', type=str, default="ctx-cache", help="Dir to cache maps")
   parser.add_argument('-v','--verbose', action="store_true", help="Print additional information" )
   parser.add_argument('-s','--steps', type=int, default=10, help="Timesteps to run the model for" )          
-  parser.add_argument('-n','--agents', type=int, default=10000, help="Numer of starting agents" )
+  parser.add_argument('-n','--agents', type=int, default=2, help="Numer of starting agents" )
   parser.add_argument('-b','--basemap', type=str, default="Barcelona, Spain", help="Basemap for geo referencing the model" )
   parser.add_argument('-f','--family', type=list, default=[19.9 ,23.8 ,20.4, 24.8, 8.9, 2.2], help="distribution listeach term in the distr list represents the probability of generating a familywith a number of individuals equal to the index of that element of distr" ) 
   parser.add_argument('-j','--job', type=dict, default={"unemployed":6.0,"type1":14.00,"type2":10.00,"type3":10.00,"type4":10.00,"type5":10.00,"type6":40.00,} , help="it is a dictionary containing workgroups" )

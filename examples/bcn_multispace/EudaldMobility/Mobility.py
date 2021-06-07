@@ -287,7 +287,7 @@ class Bike(TransportAgent):
 class Map_to_Graph():
     def __init__(self, net_type):
         root_path = os.getcwd()
-        path_name = '/EudaldMobility/pickle_objects/'
+        path_name = '/examples/bcn_multispace/EudaldMobility/pickle_objects/'
         try:
             with open(root_path + path_name + 'BCN_' + net_type + '.p', 'rb') as f:
                 db = pickle.load(f)
@@ -341,9 +341,27 @@ class Map_to_Graph():
     def routing_by_travel_time(self, origin_coord, destination_coord):
         origin_node = ox.nearest_nodes(self.G, origin_coord[0], origin_coord[1], return_dist=False)
         destination_node = ox.nearest_nodes(self.G, destination_coord[0], destination_coord[1], return_dist=False)
-        route = ox.shortest_path(self.G ,origin_node, destination_node, weight='travel_time')
+        #route = ox.shortest_path(self.G ,origin_node, destination_node, weight='travel_time')
+        routes = ox.k_shortest_paths(self.G, origin_node, destination_node, k = 5, weight = 'travel_time')
+        route = self.find_least_transfer_route(routes)
         return route 
         #_log.info("Destination dist to node: %d"%dist)
+    
+    def find_least_transfer_route(self, routes):
+        min_transfers = np.inf
+        for route in routes:
+            # Start at node 1 because node 0 is the starting position an may refer to any map. 
+            start_node = route[1]
+            num_transfers = 0
+            for end_node in route[2:-1]:
+                if start_node.split('-')[0] != end_node.split('-')[0]:
+                    num_transfers += 1
+                start_node = end_node
+            if num_transfers < min_transfers:
+                min_transfers = num_transfers
+                least_transfer_route = route
+
+        return least_transfer_route
 
     def compare_routes(self, route1, route2):
         route1_length = int(sum(ox.utils_graph.get_route_edge_attributes(self.G, route1, 'length')))

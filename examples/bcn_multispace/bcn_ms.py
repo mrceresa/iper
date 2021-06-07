@@ -59,8 +59,8 @@ class CityModel(MultiEnvironmentWorld):
     print('Pedestrian + Car + Bike Loaded')
     self.Ped_Map = Map_to_Graph('Pedestrian')  #Load the shapefiles 
     print('Pedestrian Loaded')
-    self.PedCar_Map = Map_to_Graph('PedCar')  #Load the shapefiles 
-    print('Pedestrian + Car Loaded')
+    #self.PedCar_Map = Map_to_Graph('PedCar')  #Load the shapefiles 
+    #print('Pedestrian + Car Loaded')
     #self.PedBike_Map = Map_to_Graph('PedCar_lengths')  #Load the shapefiles 
     self.define_boundaries_from_graphs(self.PedCarBike_Map) 
     self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
@@ -121,7 +121,7 @@ class CityModel(MultiEnvironmentWorld):
   def _loadGeoData(self):
     path = os.getcwd()
     self.l.info("Loading geo data from path:"+path)
-    blocks = gpd.read_file(os.path.join(path, "shapefiles","quartieriBarca1.shp"))
+    blocks = gpd.read_file(os.path.join(path, "examples/bcn_multispace/shapefiles","quartieriBarca1.shp"))
     self._blocks= blocks    
 
   def plotAll(self,outdir, figname):
@@ -175,9 +175,9 @@ class CityModel(MultiEnvironmentWorld):
 
   def createAgents(self):
     for _agent in self._agentsToAdd:
-      random_node = random.choice(list(self.Map.G.nodes))
-      _agent.pos = (self.Map.G.nodes[random_node]['x'],
-                    self.Map.G.nodes[random_node]['y'])
+      random_node = random.choice(list(self.Ped_Map.G.nodes))
+      _agent.pos = (self.Ped_Map.G.nodes[random_node]['x'],
+                    self.Ped_Map.G.nodes[random_node]['y'])
       #_agent.pos = (uniform(self._xs["w"], self._xs["e"]), 
       #          uniform(self._xs["s"], self._xs["n"]))   
     super().createAgents()

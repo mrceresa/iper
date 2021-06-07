@@ -29,8 +29,8 @@ class Move(Action):
 
   def init_goal_traj(self,agent):
     route = agent.map.routing_by_travel_time(agent.pos, agent.goal)
-    #agent.model.Map.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + '.png')
-    #agent.model.Map.plot_route_by_transport_type(route, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + 'colors' + '.png')
+    #agent.map.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + '.png')
+    #agent.map.plot_route_by_transport_type(route, save = True, filepath = 'examples/bcn_multispace/plots/route_agent_' + str(agent.unique_id) + '_num' + str(agent.life_goals) + 'colors' + '.png')
 
     df = pd.DataFrame()
     nodes, lats, lngs, times = [], [], [], []
@@ -95,7 +95,8 @@ class HumanAgent(XAgent):
     self.exposure_pollution = 0
     self.has_car = random.random() < 0.39
     self.has_bike = random.random() < 0.05
-    self.which_map()
+    #self.which_map()
+    self.map = self.model.PedCarBike_Map
     super().__init__(unique_id)
 
   def which_map(self):
