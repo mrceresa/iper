@@ -22,20 +22,24 @@ class SEAIHRD_covid(object):
         pMask1 = Mask1.maskPtrans(Mask1)
         pMask2 = Mask2.maskPtrans(Mask2)
         prob_inf = self.prob_inf * pMask1 * pMask2
+        res = random.random() < prob_inf
 
-        #print("CONTACT", self.prob_inf, pMask1, pMask2, prob_inf)
-        return random.random() < prob_inf
+        if res: self.time_in_state = 0
+        # print("CONTACT", self.prob_inf, pMask1, pMask2, prob_inf)
+        return res
 
     def prob_sintomatic(self):
         """ probability to become symptomatic. """
         p = list(self.pAI.values())[int(self.roundup(self.age) / 10) - 1]
         return random.random() < p
 
-    def prob_to_die(self, H_collapse = False):
+    def prob_to_die(self, H_collapse=False):
         """ probability to died"""
         p = list(self.pHD.values())[int(self.roundup(self.age) / 10) - 1]
-        if H_collapse: return True
-        else: return random.random() < p
+        if H_collapse:
+            return True
+        else:
+            return random.random() < p
 
     def prob_severity(self):
         """ probability to become hospitalized. """
@@ -44,36 +48,40 @@ class SEAIHRD_covid(object):
 
     def check_state(self):
 
-        # self.time_in_state+=1
+        # time = self.time_in_state
+
         inizial_state = self.state
         transition_for_E = self.nothing
         transition_for_A = self.nothing
         transition_for_I = self.nothing
         transition_for_H = self.nothing
 
-        if self.state == 'E':
-
+        if inizial_state == 'E':
             if self.time_in_state == round(1 / self.rate['rEI']):
                 transition_for_E = self.end_encubation
-            # elif self.time_in_state > 5:
-            #     print("OVER 5 DAYS IN EXPOSED BUT HASNT ENTERED, NOW HAS BEEN: ", self.time_in_state)
 
-
-        elif self.state == 'A':
-            if self.time_in_state == round(1 / self.rate['rIR']):
+        elif inizial_state == 'A':
+            if self.time_in_state == int(round(1 / self.rate['rIR'])):
                 transition_for_A = self.recovered
 
-        elif self.state == 'I':
-            if self.time_in_state == round(1 / self.rate['rIH']):
-                transition_for_I = self.severity
-            elif self.time_in_state == round(1 / self.rate['rIR']):
+        elif inizial_state == 'I':
+            if self.time_in_state == round(1 / self.rate['rIR']):
                 transition_for_I = self.recovered
 
-        elif self.state == 'H':
-            if self.time_in_state == round(1 / self.rate['rHD']):
-                transition_for_H = self.dead
-            elif self.time_in_state == round(1 / self.rate['rHR']):
+            elif self.time_in_state % round(1 / self.rate['rIH']) == 0:
+                transition_for_I = self.severity
+
+
+
+        elif inizial_state == 'H':
+            if self.time_in_state == round(1 / self.rate['rHR']):
                 transition_for_H = self.recovered
+
+            elif self.time_in_state % round(1 / self.rate['rHD']) == 0:
+                transition_for_H = self.dead
+
+
+
 
         transition = {'S': self.nothing,
                       'E': transition_for_E,
@@ -84,6 +92,7 @@ class SEAIHRD_covid(object):
                       'D': self.nothing,
                       }
         result_state = transition[self.state]()
+
         if inizial_state == self.state:
             self.time_in_state += 1
         else:
@@ -117,13 +126,14 @@ class SEAIHRD_covid(object):
         self.pHD = {"0-9": 0.03, "10-19": 0.20, "20-29": 0.20, "30-39": 0.20, "40-49": 0.25,
                     "50-59": 0.30, "60-69": 0.30, "70-79": 0.40, "80-89": 0.80, "90+": 0.99}
         # self.prob_inf=0.9
-        self.rate = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.2, 'rHR': 0.03, 'rHD': 0.1}
+        self.rate = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.03, 'rHD': 0.1}
         self.name = name
         self.age = age
         self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
                                initial=state)
         # self.machine.add_transition(trigger='infected',source='S',dest='E')
         # self.machine.add_transition('recovered','E', 'S')
+
 
 # covid_state=SEAIHRD_covid("Agent_01","E",90)
 # covid_state.prob_inf=0.6
@@ -143,9 +153,9 @@ class Mask(Enum):
         if mask == self.NONE:
             return 1
         elif mask == self.HYGIENIC:
-            return 0.30
+            return 0.70
         elif mask == self.FFP2:
-            return 0.10
+            return 0.90
 
     @classmethod
     def RandomMask(self, probs):

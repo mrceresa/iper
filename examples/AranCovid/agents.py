@@ -72,7 +72,103 @@ class HumanAgent(XAgent):
         if self.machine.state in ["E", "I"] and self.model.DateTime.hour > 6:
             self.contact(cellmates)
 
+        # if self.model.DateTime.hour == 0 and self.model.DateTime.minute == 0:
+        #     self.changeAgentStates()
+
         super().step()
+
+    def changeAgentStates(self):
+        """ UPDATE AGENTS STATE """
+
+        s = self.machine.state
+        #self.machine.check_state()
+
+        if s == 'E':
+            if self.machine.time_in_state == round(1 / self.machine.rate['rEI']):
+                self.machine.end_encubation()
+
+        elif s == 'A':
+            if self.machine.time_in_state == int(round(1 / self.machine.rate['rIR'])):
+                self.machine.recovered()
+
+        elif s == 'I':
+            if self.machine.time_in_state == round(1 / self.machine.rate['rIH']):
+                self.machine.severity()
+            elif self.machine.time_in_state == round(1 / self.machine.rate['rIR']):
+                self.machine.recovered()
+
+        elif s == 'H':
+            if self.machine.time_in_state == round(1 / self.machine.rate['rHD']):
+                self.machine.dead()
+            elif self.machine.time_in_state == round(1 / self.machine.rate['rHR']):
+                self.machine.recovered()
+
+
+        if s == self.machine.state:
+            self.machine.time_in_state += 1
+        else:
+            self.machine.time_in_state = 0
+
+
+        if s != self.machine.state:
+
+            if self.machine.state == "S":  # if s == "R"
+                # self.hosp_collector_counts['H-REC'] -= 1
+                # self.hosp_collector_counts['H-SUSC'] += 1
+                self.HospDetected = False
+
+            elif self.machine.state == "I": # infected, symptomatic, presents symptoms
+
+                if self.model.quarantine_period == 0:
+                    self.quarantined = self.model.DateTime + timedelta(days=1)  # quarantine
+                else:
+                    self.quarantined = self.model.DateTime + timedelta(days=self.model.quarantine_period)  # quarantine
+                self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+
+            elif self.machine.state == "A":  # if s == "E":
+                pass
+            elif self.machine.state == "H":  # if s == "A":
+                # self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
+                # self.hosp_collector_counts['H-HOSP'] += 1
+                self.HospDetected = False  # we assume hospitalized people do not transmit the virus
+
+                if self.model.hosp_collector_counts["H-HOSP"] >= (self.model.Hosp_capacity * self.model.N_hospitals):  # hospital collapse
+                    self.machine.dead(H_collapse=True)
+                else:
+                    # look for the nearest hospital to treat the agent
+                    self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+                    self.getWorld().space.move_agent(self, self.obj_place)
+                    self.mask = Mask.FFP2
+
+                    # adds patient to nearest hospital patients list
+                    h = self.model.getHospitalPosition(self.obj_place)
+                    h.add_patient(self)
+
+                    self.quarantined = None
+                    self.friend_to_meet = set()
+
+            elif self.machine.state == "R":
+                """if s in ["I", "A"]:
+                    if human.HospDetected:
+                        self.hosp_collector_counts['H-INF'] -= 1
+                        self.hosp_collector_counts['H-REC'] += 1"""
+
+                if s == "H":
+                    h = self.model.getHospitalPosition(self.obj_place)
+                    h.discharge_patient(self)
+                    self.HospDetected = True
+                    # self.hosp_collector_counts['H-HOSP'] -= 1
+                    # self.hosp_collector_counts['H-REC'] += 1
+
+            elif self.machine.state == "D":  # if s == "H":
+                h = self.model.getHospitalPosition(self.obj_place)
+                h.discharge_patient(self)
+                # self.hosp_collector_counts['H-HOSP'] -= 1
+                # self.hosp_collector_counts['H-DEAD'] += 1
+
+        # change quarantine status if necessary
+        if self.quarantined is not None and self.model.DateTime.day == self.quarantined.day:
+            self.quarantined = None
 
     def move(self, cellmates):
         # new_position = None
@@ -174,7 +270,6 @@ class HumanAgent(XAgent):
 
         # if new_position: self.model.grid.move_agent(self, new_position)
 
-
     def contact(self, others):
         """ Find close contacts and infect """
         # self.getWorld().space._create_gdf()
@@ -188,9 +283,9 @@ class HumanAgent(XAgent):
 
             # pTrans = self.model.virus.pTrans(self.mask, other.mask)
             # trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
-            if other.machine.state is "S":  # trans == 0 and
+            if other.machine.state == "S":  # trans == 0 and
                 other.machine.contact(self.mask, other.mask)
-                if other.machine.state is "E":
+                if other.machine.state == "E":
                     other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
                 # other.machine.state = "E"
                 # other.days_in_current_state = self.model.DateTime
@@ -222,8 +317,7 @@ class HumanAgent(XAgent):
 
             while peopleMeeting > len(
                     self.friend_to_meet) and available_friends:  # reaches max people in meeting or friends are unavailable
-                friend_agent = self.model.space.get_agent(
-                    random.sample(available_friends, 1)[0])  # gets one random each time
+                friend_agent = self.model.space.get_agent(random.sample(available_friends, 1)[0])  # gets one random each time
                 available_friends.remove(friend_agent.id)
 
                 self.friend_to_meet.add(friend_agent.id)
@@ -252,6 +346,6 @@ class HumanAgent(XAgent):
 
         # add contacts of infected people for R0 calculations
         if self.machine.state in ["E", "A", "I"]:
-            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_infection(self.mask,
-                                                                                                         Mask.NONE)  # self.model.virus.pTrans
+            contacts_mask = self.model.space.get_agent(contact).mask
+            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_infection(self.mask, contacts_mask)  # self.model.virus.pTrans
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][2] += 1
