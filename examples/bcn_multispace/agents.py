@@ -1,3 +1,4 @@
+from numpy import unique
 from iper import XAgent
 from iper.behaviours.actions import Action
 import logging
@@ -6,6 +7,7 @@ import pandas as pd
 import geopandas as gpd
 from pyproj import CRS
 import movingpandas as mpd
+import os
 
 class RandomWalk(Action):
   def do(self, agent):
@@ -33,7 +35,7 @@ class Move(Action):
     #agent.map.plot_route_by_transport_type(route, save = True, filepath = 'examples/bcn_multispace/plots/route_agent_' + str(agent.unique_id) + '_num' + str(agent.life_goals) + 'colors' + '.png')
 
     df = pd.DataFrame()
-    nodes, lats, lngs, times = [], [], [], []
+    nodes, lats, lngs, times, types = [], [], [], [], []
     total_time = 0
     first_node = True
 
@@ -47,6 +49,7 @@ class Move(Action):
             lats.append(agent.map.G.nodes[u]['y'])
             lngs.append(agent.map.G.nodes[u]['x'])
             times.append(0)
+            types.append(agent.map.G.nodes[u]['Type'])
             first_node = False
         
         nodes.append(v)
@@ -54,15 +57,19 @@ class Move(Action):
         lngs.append(agent.map.G.nodes[v]['x'])
         times.append(total_time + travel_time)
         total_time += travel_time
+        types.append(agent.map.G.nodes[v]['Type'])
         
     df['node'] = nodes
+    df['type'] = types
     df['time'] = pd.to_timedelta(times, unit = 'S')
+    #df['id'] = str(agent.unique_id) + '-' + str(agent.life_goals)
     dfg = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(lngs, lats))
     gdf_trajectory = gpd.GeoDataFrame(dfg, crs=CRS(32631))
     traj = mpd.Trajectory(gdf_trajectory, agent.life_goals)
     traj.df.loc[:,'time'] = traj.df.loc[:,'time'] + agent.model.DateTime
     traj.df.set_index('time', inplace=True)
     agent.record_trajectories[traj.df.index[0]] = traj
+    #traj.df.to_csv(os.path.join(os.getcwd(), 'examples/bcn_multispace/EudaldMobility/trajectories.csv'), mode='a', header = False)
     return traj
 
   def accumulate_polution(self,agent):
@@ -88,6 +95,7 @@ class Move(Action):
   
 class HumanAgent(XAgent):
   def __init__(self, unique_id, model):
+    self.unique_id = unique_id
     self.model = model
     self.has_goal = False
     self.life_goals = 0 
@@ -97,7 +105,7 @@ class HumanAgent(XAgent):
     self.has_bike = random.random() < 0.05
     #self.which_map()
     self.map = self.model.PedCarBike_Map
-    super().__init__(unique_id)
+    super().__init__(self.unique_id )
 
   def which_map(self):
     map_name = ""
@@ -109,8 +117,7 @@ class HumanAgent(XAgent):
       self.map = self.model.PedCar_Map
     elif  self.has_car == False and self.has_bike == True:
       map_name = "Pedestrian + Bike"
-      #self.map = self.model.PedBike_Map
-      self.map = self.model.Ped_Map
+      self.map = self.model.PedBike_Map
     else: 
       map_name = "Pedestrian"
       self.map = self.model.Ped_Map

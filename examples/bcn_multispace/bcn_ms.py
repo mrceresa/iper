@@ -61,7 +61,8 @@ class CityModel(MultiEnvironmentWorld):
     print('Pedestrian Loaded')
     #self.PedCar_Map = Map_to_Graph('PedCar')  #Load the shapefiles 
     #print('Pedestrian + Car Loaded')
-    #self.PedBike_Map = Map_to_Graph('PedCar_lengths')  #Load the shapefiles 
+    #self.PedBike_Map = Map_to_Graph('PedBike')  #Load the shapefiles 
+    #print('Pedestrian + Bike Loaded')
     self.define_boundaries_from_graphs(self.PedCarBike_Map) 
     self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
     self.time_step = timedelta(seconds=60)

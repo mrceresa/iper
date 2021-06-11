@@ -287,15 +287,15 @@ class Bike(TransportAgent):
 class Map_to_Graph():
     def __init__(self, net_type):
         root_path = os.getcwd()
-        path_name = '/examples/bcn_multispace/EudaldMobility/pickle_objects/'
+        path_name = '/examples/bcn_multispace/EudaldMobility/pickle_objects/Small/'
         try:
-            with open(root_path + path_name + 'BCN_' + net_type + '.p', 'rb') as f:
+            with open(root_path + path_name + 'Part_BCN_' + net_type + '.p', 'rb') as f:
                 db = pickle.load(f)
-            self.nodes_proj = db[0]
-            self.edges_proj = db[1]
-            self.G = ox.graph_from_gdfs(self.nodes_proj,self.edges_proj)
+            self.G = ox.graph_from_gdfs(db[0],db[1])
+            self.G = ox.project_graph(self.G)
+            self.nodes_proj, self.edges_proj = ox.graph_to_gdfs(self.G)
         except:  
-            print("Error loading the pickle file with root: " + root_path + path_name + 'BCN_' + net_type + '.p')
+            print("Error loading the pickle file with root: " + root_path + path_name + 'Part_BCN_' + net_type + '.p')
 
     def get_boundaries(self):
         # Retrieve the maximum x value (i.e. the most eastern)

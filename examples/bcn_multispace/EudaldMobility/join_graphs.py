@@ -13,21 +13,21 @@ def load_graphs(root_path, graph_name):
     return nodes_proj, edges_proj
 
 def main():
-    root_path =  os.getcwd() +'/examples/bcn_multispace/EudaldMobility/pickle_objects/'
+    root_path =  os.getcwd() +'/examples/bcn_multispace/EudaldMobility/pickle_objects/Small/'
 
     print('loading graphs...')
-    p_nodes, p_edges = load_graphs(root_path,'BCN_Pedestrian.p')
-    #c_nodes, c_edges = load_graphs(root_path,'BCN_Car.p')
-    b_nodes, b_edges = load_graphs(root_path,'BCN_Bike.p')
-    pc_nodes, pc_edges = load_graphs(root_path,'BCN_PedCar_lengths.p')
+    p_nodes, p_edges = load_graphs(root_path,'Part_BCN_Pedestrian.p')
+    #c_nodes, c_edges = load_graphs(root_path,'Part_BCN_Car.p')
+    b_nodes, b_edges = load_graphs(root_path,'Part_BCN_Bike.p')
+    #pc_nodes, pc_edges = load_graphs(root_path,'Part_BCN_PedCar.p')
     G_p = ox.graph_from_gdfs(p_nodes, p_edges)
     #G_c = ox.graph_from_gdfs(c_nodes, c_edges)
     G_b = ox.graph_from_gdfs(b_nodes, b_edges)
-    G_pc = ox.graph_from_gdfs(pc_nodes, pc_edges)
+    #G_pc = ox.graph_from_gdfs(pc_nodes, pc_edges)
 
     print('merging graphs...')
     # Join Graphs
-    G = nx.union(G_pc,G_b,('','B-'))
+    G = nx.union(G_p,G_b,('P-','B-'))
     i = 0
     #c_nodes_dij = c_nodes.loc[c_nodes['dij'] == True]
     b_nodes_dij = b_nodes.loc[b_nodes['dij'] == True]
@@ -51,11 +51,11 @@ def main():
             print(i)
         i +=1 
     print(len(G_b.edges))
-    print(len(G_pc.edges))
+    print(len(G_p.edges))
     print(len(G_b.nodes))
     print(len(G.edges))
     nodes_proj, edges_proj = ox.graph_to_gdfs(G)
-    with open(root_path + 'BCN_PedCarBike.p', 'wb') as f:
+    with open(root_path + 'Part_BCN_PedBike.p', 'wb') as f:
         pickle.dump([nodes_proj, edges_proj], f)
 
 if __name__ == "__main__":
