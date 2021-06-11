@@ -20,6 +20,8 @@ import numpy as np
 import multiprocessing as mp
 from sklearn.neighbors import NearestNeighbors, BallTree, KDTree
 from joblib import Parallel, effective_n_jobs, delayed
+import random
+
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
     """Helper for the Parallel calls in KNeighborsMixin.kneighbors
@@ -30,10 +32,11 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
 
 
 class GeoSpacePandas(GeoSpace):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, extent, *args, **kwargs):
       super().__init__(*args, **kwargs)
       # Override Index
 
+      self._extent = extent
       self._agents = {}
       self._clear_gdf()
       self._gdf_is_dirty = False
@@ -334,3 +337,9 @@ class GeoSpacePandas(GeoSpace):
       """Return a GeoJSON FeatureCollection."""
       features = [a.__geo_interface__() for a in self.agents]
       return {"type": "FeatureCollection", "features": features}
+
+    def getRandomPos(self):
+      pos = ( random.uniform(self._extent[0], self._extent[1]),
+              random.uniform(self._extent[2], self._extent[3])
+            )
+      return pos 
