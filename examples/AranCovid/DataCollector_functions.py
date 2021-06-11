@@ -7,8 +7,8 @@ def update_DC_table(model):
     next_row = {'Day': model.DateTime.strftime('%Y-%m-%d'), 'Susceptible': get_susceptible_count(model),
                 'Exposed': get_exposed_count(model), 'Infected': get_infected_count(model),
                 'Recovered': get_recovered_count(model), 'Hospitalized': get_hosp_count(model),
-                'Dead': get_dead_count(model), 'R0': get_R0(model), 'R0_Obs': get_R0_Obs(model),
-                'Mcontacts': get_R0_Obs0(model), 'Quarantined': get_R0_Obs1(model), 'Contacts': get_R0_Obs2(model) }
+                'Dead': get_dead_count(model), 'R0': get_R0(model), 'R0_Obs': get_R0_Obs(model)}
+                #, 'Mcontacts': get_R0_Obs0(model), 'Quarantined': get_R0_Obs1(model), 'Contacts': get_R0_Obs2(model) }
     model.datacollector.add_table_row("Model_DC_Table", next_row, ignore_missing=True)
 
     next_row2 = {'Day': model.DateTime.strftime('%Y-%m-%d'), 'Hosp-Susceptible': get_h_susceptible_count(model),
@@ -19,8 +19,8 @@ def update_DC_table(model):
 
 def reset_counts(model):
     """ Sets to 0 the counts for the model datacollector """
-    model.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, "R0": 0, "R0_Obs": 0,
-                              "Mcontacts": 0, "Quarantined": 0, "Contacts": 0}
+    model.collector_counts = {"SUSC": 0, "EXP": 0, "INF": 0, "REC": 0, "HOSP": 0, "DEAD": 0, "R0": 0, "R0_Obs": 0}
+                              #,"Mcontacts": 0, "Quarantined": 0, "Contacts": 0}
 
 
 def update_stats(model):
@@ -106,19 +106,16 @@ def get_R0_Obs(model):
     return model.R0_obs
 
 
-def get_R0_Obs0(model):
-    """ Returns the R0_obs value of the model """
+"""def get_R0_Obs0(model):
     return model.R0_observed[0]
 
 
 def get_R0_Obs1(model):
-    """ Returns the R0_obs value of the model """
     return model.R0_observed[1]
 
 
 def get_R0_Obs2(model):
-    """ Returns the R0_obs value of the model """
-    return model.R0_observed[2]
+    return model.R0_observed[2]"""
 
 
 def get_h_susceptible_count(model):

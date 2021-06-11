@@ -105,7 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('-H', '--hospitals', type=int, default=10, help="Numer of hospitals")
     parser.add_argument('-t', '--tests', type=int, default=10, help="Number of tests applied daily")
     parser.add_argument('-q', '--quarantine', type=int, default=10, help="Number of self-quarantine days")
-    parser.add_argument('-l', '--lockdown', type= dict, default={'inf_threshold':0.0, 'night_curfew': 23, 'masks': [0.01, 0.64, 0.35], 'quarantine': 10, 'meeting': 5, 'remote-working': 0.7, 'total_lockdown': False}, help="Number of detected infected people to apply health measures")
+    parser.add_argument('-l', '--lockdown', type= dict, default={'inf_threshold':1, 'night_curfew': 23, 'masks': [0.01, 0.64, 0.35], 'quarantine': 10, 'meeting': 5, 'remote-working': 0.6, 'total_lockdown': False}, help="Number of detected infected people to apply health measures")
     parser.add_argument('-w', '--workplaces', type=int, default=20, help="Numer of workplaces")
     parser.add_argument('-m', '--meeting', type=int, default=8, help="Numer of People on Meetings")
     parser.add_argument('-b', '--basemap', type=str, default="Barcelona, Spain",
