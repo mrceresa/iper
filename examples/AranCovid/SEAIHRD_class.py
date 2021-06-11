@@ -9,7 +9,7 @@ class SEAIHRD_covid(object):
     # A single center Chinese study of 221 discharged COVID-19
     # patients observed an average time to recovery of 10.63±1.93 days
     # for mild to moderate patients, compared with 18.70±2.50 for severe patients.
-    prob_inf = 0.0002
+    prob_inf = 0.0005
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10
@@ -57,48 +57,54 @@ class SEAIHRD_covid(object):
         transition_for_H = self.nothing
 
         if inizial_state == 'E':
-            if self.time_in_state == round(1 / self.rate['rEI']):
-                transition_for_E = self.end_encubation
+            if self.time_in_state == round(1 / self.rate['rEI']):  # 5 days on end_encubation
+                #transition_for_E = self.end_encubation
+                self.end_encubation()
 
         elif inizial_state == 'A':
-            if self.time_in_state == int(round(1 / self.rate['rIR'])):
-                transition_for_A = self.recovered
+            if self.time_in_state == int(round(1 / self.rate['rIR'])):  # 20 days -
+                #transition_for_A = self.recovered
+                self.recovered()
 
         elif inizial_state == 'I':
-            if self.time_in_state == round(1 / self.rate['rIR']):
-                transition_for_I = self.recovered
+            if self.time_in_state == round(1 / self.rate['rIR']):  # 20 days -
+                #transition_for_I = self.recovered
+                 self.recovered()
 
-            elif self.time_in_state % round(1 / self.rate['rIH']) == 0:
-                transition_for_I = self.severity
+            elif self.time_in_state % round(1 / self.rate['rIH']) == 0:  # 10 days on prob_severity
+                #transition_for_I = self.severity
+                self.severity()
 
 
 
         elif inizial_state == 'H':
-            if self.time_in_state == round(1 / self.rate['rHR']):
-                transition_for_H = self.recovered
+            if self.time_in_state == round(1 / self.rate['rHR']):  # 25 days -
+                #transition_for_H = self.recovered
+                self.recovered()
 
-            elif self.time_in_state % round(1 / self.rate['rHD']) == 0:
-                transition_for_H = self.dead
+            elif self.time_in_state % round(1 / self.rate['rHD']) == 0:  # 10 days with p_to_die
+                #transition_for_H = self.dead
+                self.dead()
 
 
 
 
-        transition = {'S': self.nothing,
-                      'E': transition_for_E,
-                      'A': transition_for_A,
-                      'I': transition_for_I,
-                      'H': transition_for_H,
-                      'R': self.nothing,
-                      'D': self.nothing,
-                      }
-        result_state = transition[self.state]()
+        # transition = {'S': self.nothing,
+        #               'E': transition_for_E,
+        #               'A': transition_for_A,
+        #               'I': transition_for_I,
+        #               'H': transition_for_H,
+        #               'R': self.nothing,
+        #               'D': self.nothing,
+        #               }
+        # result_state = transition[self.state]()
 
         if inizial_state == self.state:
             self.time_in_state += 1
         else:
             self.time_in_state = 0
 
-        return result_state
+        return True #result_state
 
     states = ['S', 'E', 'A', 'I', 'R', 'H', 'D']
     transitions = [
@@ -109,7 +115,7 @@ class SEAIHRD_covid(object):
         {'trigger': 'end_encubation', 'source': 'E', 'dest': 'I', 'conditions': 'prob_sintomatic'},
         {'trigger': 'end_encubation', 'source': 'E', 'dest': 'A'},
         {'trigger': 'severity', 'source': 'I', 'dest': 'H', 'conditions': 'prob_severity'},
-        {'trigger': 'severity', 'source': 'I', 'dest': 'I'},
+        {'trigger': 'severity', 'source': 'I', 'dest': '='},
         {'trigger': 'recovered', 'source': ['A', 'I', 'H'], 'dest': 'R'},
         {'trigger': 'dead', 'source': 'H', 'dest': 'D', 'conditions': 'prob_to_die', }
     ]
@@ -126,7 +132,7 @@ class SEAIHRD_covid(object):
         self.pHD = {"0-9": 0.03, "10-19": 0.20, "20-29": 0.20, "30-39": 0.20, "40-49": 0.25,
                     "50-59": 0.30, "60-69": 0.30, "70-79": 0.40, "80-89": 0.80, "90+": 0.99}
         # self.prob_inf=0.9
-        self.rate = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.03, 'rHD': 0.1}
+        self.rate = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.1}
         self.name = name
         self.age = age
         self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,

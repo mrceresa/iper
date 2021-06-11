@@ -69,7 +69,7 @@ class HumanAgent(XAgent):
         if not self.model.lockdown_total:
             self.move(cellmates)  # if not in total lockdown
 
-        if self.machine.state in ["E", "I"] and self.model.DateTime.hour > 6:
+        if self.machine.state in ["E", "I", "A"] and self.model.DateTime.hour > 6:
             self.contact(cellmates)
 
         # if self.model.DateTime.hour == 0 and self.model.DateTime.minute == 0:
@@ -213,13 +213,13 @@ class HumanAgent(XAgent):
 
                 # leisure time
                 elif 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:  # leisure time
-                    if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(
-                        self.model.masks_probs)  # wear mask for walk
+                    if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0:
+                        self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
                     if not self.friend_to_meet:
-                        if np.random.choice([0, 1], p=[0.75,
-                                                       0.25]) and self.model.DateTime.minute == 0: self.look_for_friend()  # probability to meet with a friend
+                        if np.random.choice([0, 1], p=[0.75,0.25]) and self.model.DateTime.minute == 0 and self.model.DateTime.hour % 2 == 0:
+                            self.look_for_friend()  # probability to meet with a friend
                         # new_position = self.random.choice(possible_steps)  # choose random step
-                        self.think()  # randomly
+                        # self.think()  # randomly
 
                     else:  # going to a meeting
                         if self.pos != self.obj_place:
@@ -234,8 +234,8 @@ class HumanAgent(XAgent):
                             if self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
                                 for friend in self.friend_to_meet:
                                     self.add_contact(friend)
-                                self.friend_to_meet = set()
-                                self.obj_place = None
+                                #self.friend_to_meet = set()
+                                #self.obj_place = None
 
 
                 # go back home
