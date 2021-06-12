@@ -78,13 +78,73 @@ class city_model(Model):
             self.agents[_a.unique_id] = _a
 
         ## DATA COLLECTOR
-        self.datacollector = DataCollector(
-            model_reporters={"Import(#)": dcf.get_import_amm, 
-            "Import($)": dcf.get_import_val, 
-            "Export(#)": dcf.get_export_amm, 
-            "Export($)": dcf.get_export_val,
-            "Commerce($)": dcf.get_agent_commerce})
+        self.agent_eco_datacollector = DataCollector(
+            model_reporters={ 
+            "Agent_Commerce($)": dcf.get_agent_commerce_val,
+            "Agent_Catering($)": dcf.get_agent_catering_val,
+            "Agent_Health($)": dcf.get_agent_health_val,
+            "Agent_RecreationActiv($)": dcf.get_agent_recreation_val,
+            "Agent_Transport($)": dcf.get_agent_transport_val,
+            "Agent_Hotel($)": dcf.get_agent_hotel_val,
+            "Agent_RealState($)": dcf.get_agent_state_val
+            })
 
+        self.btob_eco_datacollector =  DataCollector(
+            model_reporters={
+            "BtoB_RealState($)": dcf.get_bus_state,
+            "BtoB_SocialServ($)": dcf.get_bus_social,
+            "BtoB_ProfessActiv($)": dcf.get_bus_professional,
+            "BtoB_ScientifActiv($)": dcf.get_bus_scientific,
+            "BtoB_Education($)": dcf.get_bus_education,
+            "BtoB_ArtistActiv($)": dcf.get_bus_artistic,
+            "BtoB_Other($)": dcf.get_bus_other,
+            "BtoB_FinanActiv($)": dcf.get_bus_financial,
+            "BtoB_Information($)": dcf.get_bus_information,
+            "BtoB_PublicAdmin($)": dcf.get_bus_public
+            })
+
+        self.export_eco_datacollector = DataCollector(
+            model_reporters={
+            "RealState": dcf.ex_state,
+            "Catering": dcf.ex_catering,
+            "Commerce": dcf.ex_commerce,
+            "Transport": dcf.ex_transport,
+            "Hotel": dcf.ex_hotel,
+            "PublicAdmin": dcf.ex_public,
+            "Education": dcf.ex_education,
+            "Health": dcf.ex_health,
+            "SocialServ": dcf.ex_social,
+            "ProfessActiv": dcf.ex_professional,
+            "ScientifActiv": dcf.ex_scientific,
+            "RecreatActiv": dcf.ex_recreational,
+            "ArtistActiv": dcf.ex_artistic,
+            "FinanActiv": dcf.ex_financial,
+            "Other": dcf.ex_other,
+            "Information": dcf.ex_information
+            })
+
+        self.import_eco_datacollector = DataCollector(
+            model_reporters={
+            "Construct": dcf.im_construction,
+            "Industrial": dcf.im_industrial,
+            "Food": dcf.im_food,
+            "RealState": dcf.im_state,
+            "Catering": dcf.im_catering,
+            "Commerce": dcf.im_commerce,
+            "Transport": dcf.im_transport,
+            "Hotel": dcf.im_hotel,
+            "PublicAdmin": dcf.im_public,
+            "Education": dcf.im_education,
+            "Health": dcf.im_health,
+            "SocialServ": dcf.im_social,
+            "ProfessActiv": dcf.im_professional,
+            "ScientifActiv": dcf.im_scientific,
+            "RecreatActiv": dcf.im_recreational,
+            "ArtistActiv": dcf.im_artistic,
+            "FinanActiv": dcf.im_financial,
+            "Other": dcf.im_other,
+            "Information": dcf.im_information
+            })
     
     ## All Business GET Functions
     def get_name(self, b_id):
@@ -152,7 +212,10 @@ class city_model(Model):
                 return False
 
     def step(self):  
-        self.datacollector.collect(self)
+        self.agent_eco_datacollector.collect(self)
+        self.btob_eco_datacollector.collect(self)
+        self.export_eco_datacollector.collect(self)
+        self.import_eco_datacollector.collect(self)
         self.schedule.step()
         self.job_manager.resolve()
         if (self.time.hour == 0): 

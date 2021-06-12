@@ -17,6 +17,7 @@ from shapely.geometry import *
 import geopandas as gpd
 import ipdb
 import ast
+import random
 
 class Business (GeoAgent):
     ## Initializing the agent.
@@ -28,13 +29,12 @@ class Business (GeoAgent):
         self.searching = False
         self.work_start = random.randrange(7, 11)
         self.work_end = self.work_start + 8
-        self.payday = '28-00-00'
 
         ## Production info
         self.pending_res = False
-        self.resources = 100
-        self.production_price = 20
-        self.sell_price = 100
+        self.resources = 20
+        self.sell_price = random.randint(15, 100)
+        self.production_price = self.sell_price - 10
         self.sell_balance = {"total": 0, "accepted": 0, "rejected": 0}
         
         self.speciallity = self.model.get_speciallityAdapt(unique_id)
@@ -97,5 +97,5 @@ class Business (GeoAgent):
             if self.sell_balance["total"] > 50:
                 self.check_balance()
               
-        if self.model.time.strftime('%d-%H-%M') == self.payday:
+        if self.model.time.day % 5 == 0:
                 self.pay_employees()

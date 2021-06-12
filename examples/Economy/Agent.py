@@ -49,8 +49,8 @@ class Citizen (GeoAgent):
         elif self.inventory['basic_goods'] < 10: # speciality -> commerce
             self.shop('commerce')
         
-        if self.inventory['funds'] > 10000 and self.home == None: 
-            self.model.shop('real state')
+        if self.inventory['funds'] > 1300 and self.home == None: 
+            self.shop('real state')
             self.home = self.init_pos
 
     def shop(self, good_type):
@@ -117,8 +117,8 @@ class Citizen (GeoAgent):
             self.inventory["happiness"] = self.inventory["happiness"] - 1
 
     def update_status(self):
-        if (random.random() < 0.01):
-            self.inventory["health"] -= 1
+        if (random.random() < 0.1):
+            self.inventory["health"] -= 10
         self.inventory["food"] -= random.randint(0, 3)
         self.inventory["happiness"] -= random.randint(0, 1)
         if not (self.work_end > self.model.time.hour >= self.work_start):

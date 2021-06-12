@@ -44,7 +44,7 @@ class EmploymentManager (object):
                   self.jobs = self.jobs[1:]
     
     def pay_employee (self, _b, agent_id):
-        _a = self.agents[agent_id]
+        _a = self.model.agents[agent_id]
         _b.funds -= 1000
-        _a.inventory["funds"] = _a.inventory["funds"] + 1000 
+        _a.inventory["funds"] = _a.inventory["funds"] + 250 
         return

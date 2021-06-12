@@ -44,6 +44,7 @@ import time
 ##########################################
 
 root_captioning = os.getcwd() + '/BCN_Resources/'
+res_path = os.getcwd() + '/ModelResults/'
 
 #### LOAD OSM FILE TO GDF ####
 file = open(root_captioning + "bcn_spec_map.txt", "r")
@@ -138,29 +139,49 @@ for j in range(1): # num of test
 '''
 import multiprocessing
 
-def mod_run(m_list, id):
-    for i in range(96): # iters per test
+def mod_run(_m,id,return_dict):
+    model = _m
+    for i in range(1056): # iters per test
         if (i % 10 == 0):
             print('Model %s at step %s\n' % (str(id),str(i)))
-        m_list[id].step()
+        model.step()
+    agent_df = model.agent_eco_datacollector.get_model_vars_dataframe()
+    btob_df = model.btob_eco_datacollector.get_model_vars_dataframe()
+    import_df = model.import_eco_datacollector.get_model_vars_dataframe()
+    export_df = model.export_eco_datacollector.get_model_vars_dataframe()
+    return_dict[id] = {'agents':agent_df, 'businesses':btob_df, 'import':import_df, 'export':export_df}
 
+#PREPARE MODELS
 procs = 10   # Number of processes to create
 models = []
-for k in range(10):
+for k in range(procs):
     _m = city_model(5000, gdf.head(1000), max_x, max_y, min_x, min_y, resource_map)
     models.append(_m)
 
+#LAUNCH ALL MODELS
+
+manager = multiprocessing.Manager()
+return_dict = manager.dict()
 jobs = []
 for i in range(0, procs):
-    process = multiprocessing.Process(target=mod_run, 
-                                      args=(models, i))
+    process = multiprocessing.Process(target=mod_run, args=(models[i],i,return_dict))
     jobs.append(process)
 
-# Start the processes (i.e. calculate the random number lists)      
 for j in jobs:
     j.start()
 
-# Ensure all of the processes have finished
 for j in jobs:
     j.join()
 
+print('Retrieving results...\n')
+for i in range(0, procs):
+    df = return_dict[i]['agents']
+    df.to_csv(res_path + 'Agents_Model%s.csv' % str(i), encoding='utf-8')
+    df = return_dict[i]['businesses']
+    df.to_csv(res_path + 'Business_Model%s.csv' % str(i), encoding='utf-8')
+    df = return_dict[i]['import']
+    df.to_csv(res_path + 'Import_Model%s.csv' % str(i), encoding='utf-8')
+    df = return_dict[i]['export']
+    df.to_csv(res_path + 'Export_Model%s.csv' % str(i), encoding='utf-8')
+#ipdb.set_trace()
+print('Task finished!')
