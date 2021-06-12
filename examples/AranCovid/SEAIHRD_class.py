@@ -104,7 +104,7 @@ class SEAIHRD_covid(object):
         else:
             self.time_in_state = 0
 
-        return True #result_state
+        #return True #result_state
 
     states = ['S', 'E', 'A', 'I', 'R', 'H', 'D']
     transitions = [

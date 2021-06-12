@@ -53,13 +53,20 @@ class CityModel(MultiEnvironmentWorld):
         super().__init__(config)
         self.l.info("Initalizing model")
         self._basemap = config["basemap"]
-        self.space = GeoSpacePandas()
         self.network = NetworkGrid(nx.Graph())
         self.l.info("Scheduler is " + str(self.schedule))
         self.schedule = RandomActivation(self)
+
         self.l.info("Loading geodata")
         self._initGeo()
         self._loadGeoData()
+        self.space = GeoSpacePandas(
+            extent=(self._xs["w"], self._xs["s"],
+                    self._xs["e"], self._xs["n"]
+                    )
+        )
+
+
 
         self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
         # self.virus = VirusCovid(config["virus"])
