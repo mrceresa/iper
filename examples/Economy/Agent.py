@@ -22,7 +22,7 @@ class Citizen (GeoAgent):
     ## Initializing the agent.
     def __init__(self, unique_id, model, shape):
         super().__init__(unique_id, model, shape)
-        self.inventory = {"food": 100, "health": 100, "happiness": 100, "basic_goods" : 100, "funds": 1000}
+        self.inventory = {"food": 100, "health": 100, "happiness": 100, "basic_goods" : 100, "housing": -1,  "funds": 1000}
         self.epsilon = 1.0
         self.knowledge = {} # key = business_id , value = known_price
         self.init_pos = shape
@@ -36,12 +36,16 @@ class Citizen (GeoAgent):
    
     def think (self):
 
+
+        if self.inventory['housing'] <= 0:
+            self.shop('hotel')
+        
         if self.inventory['food'] < 20: # speciality -> catering
             self.shop('catering')
         elif self.inventory['health'] < 45: # speciality -> health
             self.shop('health')
         elif self.inventory['happiness'] < 20: # speciality -> recreational_activities
-            self.shop('recreational_activities')
+            self.shop('recreational activities')
         elif self.inventory['basic_goods'] < 10: # speciality -> commerce
             self.shop('commerce')
         
@@ -50,7 +54,7 @@ class Citizen (GeoAgent):
             self.home = self.init_pos
 
     def shop(self, good_type):
-        
+
         if not self.model.check_buy_policies(good_type):
             return
 
@@ -62,7 +66,16 @@ class Citizen (GeoAgent):
         aux = {k: aux[k] for k in auxKeys} # Final filter
 
         business = None # id of chosen business
+
+        explore = False
+
         if (len(self.knowledge) < len(aux)) and (random.random() < self.epsilon): 
+            explore = True
+        
+        if len(set(aux.keys()).intersection(set(self.knowledge.keys()))) == 0:
+            explore = True
+
+        if explore: 
             # agent will explore
             entry_list = list(aux.keys())
             b = random.choice(entry_list) 
@@ -74,16 +87,22 @@ class Citizen (GeoAgent):
                 business = b
         else :
             # agent won't explore
-            business = min(self.knowledge, key=self.knowledge.get)
+            known_poss = set(aux.keys()).intersection(set(self.knowledge.keys()))
+            known_poss = {k: self.knowledge[k] for k in known_poss} # Final filter
+            business = min(known_poss, key=known_poss.get)
+
+            #if len( set(aux.keys()).intersection(set(self.knowledge.keys()))) == 0:
+            #    print('I dont know')
             # business = min(self.knowledge.items(), key=lambda x: x[1]) 
+
         if good_type != 'transport':
           self.move(aux[business])
         
-        has_stock, sell_price = self.model.make_offer(business)
+        has_stock, sell_price = self.model.eco_manager.make_offer(business)
         if has_stock and (sell_price <= self.inventory["funds"]): 
-            self.model.buy_stock(self.unique_id, business)
+            self.model.eco_manager.buy_stock(self.unique_id, business)
         elif sell_price > self.inventory["funds"]:
-            self.model.reject_offer(business)
+            self.model.eco_manager.reject_offer(business)
         self.knowledge[business] = sell_price # update knowledge
 
         # update epsilon (when around 70% explored)
@@ -96,7 +115,16 @@ class Citizen (GeoAgent):
             self.move(self.work_place[1])
         else:
             self.inventory["happiness"] = self.inventory["happiness"] - 1
-            self.inventory["food"] = self.inventory["food"] - 1
+
+    def update_status(self):
+        if (random.random() < 0.01):
+            self.inventory["health"] -= 1
+        self.inventory["food"] -= random.randint(0, 3)
+        self.inventory["happiness"] -= random.randint(0, 1)
+        if not (self.work_end > self.model.time.hour >= self.work_start):
+            self.inventory["basic_goods"] -= random.randint(0, 5)
+        if self.home == None and self.model.time.hour == 0:
+            self.inventory['housing'] -= 1
 
     def move(self, newPos):
         # print("\tMoving to",newPos)
@@ -104,7 +132,7 @@ class Citizen (GeoAgent):
         self.model.move_citizen(self, newPos)
 
     def step(self):
-        # print("Hi, I am citizen " + str(self.unique_id) + "! POS : ")
+        # print("Hi, I am citizen " + str(self.unique_id) + "! Pos : ")
         # print(self.shape)
         if (not self.employed and not self.searching):
             self.model.job_manager.job_request(self)
@@ -114,3 +142,5 @@ class Citizen (GeoAgent):
             self.work()
         else: 
             self.think()
+
+        self.update_status()

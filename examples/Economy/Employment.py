@@ -31,7 +31,7 @@ class EmploymentManager (object):
 
         _b.employees.append(_a.unique_id)
         _b.searching = False
-        print('Matching ' + str(_a.unique_id) + ' and ' + str(_b.unique_id))
+        # print('Matching ' + str(_a.unique_id) + ' and ' + str(_b.unique_id))
 
     def resolve(self):
         if (len(self.applicants) != 0) and (len(self.jobs) != 0):

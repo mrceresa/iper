@@ -28,14 +28,16 @@ class Business (GeoAgent):
         self.searching = False
         self.work_start = random.randrange(7, 11)
         self.work_end = self.work_start + 8
-        
+        self.payday = '28-00-00'
+
         ## Production info
+        self.pending_res = False
+        self.resources = 100
         self.production_price = 20
         self.sell_price = 100
         self.sell_balance = {"total": 0, "accepted": 0, "rejected": 0}
         
         self.speciallity = self.model.get_speciallityAdapt(unique_id)
-        self.search_employee() #we start searching for someone to produce
 
     def check_balance(self):
        
@@ -50,9 +52,9 @@ class Business (GeoAgent):
                 self.search_employee()
         
         self.sell_balance = {"total": 0, "accepted": 0, "rejected": 0} #Reset balance
-    
-    def produce(self):
 
+    def produce(self):
+        
         num_emp = len(self.employees)
         if (num_emp == 0) and (self.searching == False):
             self.search_employee()
@@ -61,18 +63,39 @@ class Business (GeoAgent):
             self.stock += num_emp  #produces more goods
     
     def search_employee (self):
+        self.model.eco_manager.buy_resources(self.unique_id, 'Information and communications', len(self.employees),one_time=True)
         self.searching = True
         self.model.job_manager.job_offer(self)
 
     def pay_employees (self):
+        self.model.eco_manager.buy_resources(self.unique_id, 'financial activities', len(self.employees),one_time=True)
         for _id in self.employees:
             self.model.job_manager.pay_employee(self,_id)
       
     def step(self):
         # print("Hi, I am business " + str(self.unique_id) +"! POS : ")
         # print(self.shape)
-        if self.sell_balance["total"] > 50:
-            self.check_balance()
-        if self.model.time.day == 28:
-            self.pay_employees()
-        self.produce()
+        if (self.work_end > self.model.time.hour >= self.work_start):
+            
+            #check if excess stock
+            if self.stock > 15:
+                self.model.eco_manager.buy_resources(self.unique_id, 'public administration', len(self.employees) ,one_time=True)
+                self.model.eco_manager.export_stock(self.unique_id, 5)
+            
+            # check if can produce
+            if self.resources < len(self.employees):
+                if not self.pending_res:
+                    if self.funds < (100 * self.production_price):
+                        self.model.eco_manager.buy_resources(self.unique_id, self.speciallity, int(self.funds / self.production_price) - 1)
+                    else:
+                        self.model.eco_manager.buy_resources(self.unique_id, self.speciallity, 100)
+                    self.pending_res = True
+            else:
+                self.produce()
+            
+            # check if balance prices
+            if self.sell_balance["total"] > 50:
+                self.check_balance()
+              
+        if self.model.time.strftime('%d-%H-%M') == self.payday:
+                self.pay_employees()

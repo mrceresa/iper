@@ -20,6 +20,8 @@ import ast
 from Agent import Citizen
 from Business import Business
 from Employment import EmploymentManager
+from Economy import EconomyManager
+import DataCollerctorFunc as dcf
 
 '''Simple Class to use when necessary'''
 class Container (object):
@@ -27,7 +29,7 @@ class Container (object):
 
 class city_model(Model):
     ## Initializing the model.
-    def __init__(self, N, city_DF, width, height, init_w, init_h, curf_restrict = False, s_restrict = False):
+    def __init__(self, N, city_DF, width, height, init_w, init_h, res_map, curf_restrict = False, s_restrict = False):
         self.schedule = RandomActivation(self)
         self.grid = GeoSpace()
         self.df = city_DF
@@ -39,7 +41,12 @@ class city_model(Model):
         self.time_delta = datetime.timedelta(minutes=15) # each step will add 15 mins
         self.max_P = Point(width, height)
         self.min_P = Point(init_w, init_h)
+        self.resource_map = res_map
+        
+        #Modules
         self.job_manager = EmploymentManager(self)
+        self.eco_manager = EconomyManager(self)
+
 
         self.curfew = curf_restrict
         self.shop_restriction = s_restrict
@@ -69,9 +76,15 @@ class city_model(Model):
         for _a in self.init_agents:
             self.schedule.add(_a)
             self.agents[_a.unique_id] = _a
-        
+
         ## DATA COLLECTOR
-        self.datacollector = DataCollector()
+        self.datacollector = DataCollector(
+            model_reporters={"Import(#)": dcf.get_import_amm, 
+            "Import($)": dcf.get_import_val, 
+            "Export(#)": dcf.get_export_amm, 
+            "Export($)": dcf.get_export_val,
+            "Commerce($)": dcf.get_agent_commerce})
+
     
     ## All Business GET Functions
     def get_name(self, b_id):
@@ -98,39 +111,26 @@ class city_model(Model):
             ret_type[id] = b.speciallity
         return ret_buss, ret_type
     
-    def make_offer(self, b_id): # tuple -> (bool = has_stock , int = sell_price)
-        b = self.businesses[b_id]
-        if b.stock > 1:
-            return True, b.sell_price
-        else:
-            return False, math.inf
+    def check_resource_type(self, b_spec):
+        return self.resource_map[b_spec]
     
-    def reject_offer(self,b_id):
-        b = self.businesses[b_id]
-        b.sell_balance["total"] += 1
-        b.sell_balance["rejected"] += 1
-        return
-
-    def buy_stock(self, a_id, b_id):
-        a = self.agents[a_id]
-        b = self.businesses[b_id]
-
-        a.inventory["funds"] -= b.sell_price
-        b.stock -= 1
-        if b.speciallity in a.inventory.keys():
-            a.inventory[b.speciallity] += 1
+    def check_agent_inv(self, spec):
+        if spec == 'catering':
+            return 'food'
+        elif spec == 'hotel':
+            return 'housing'
+        elif spec == 'recreational activities':
+            return 'happiness'
+        elif spec == 'commerce':
+            return 'basic_goods'
         else:
-            a.inventory[b.speciallity] = 1
-        b.funds += b.sell_price 
-
-        b.sell_balance["total"] += 1
-        b.sell_balance["accepted"] += 1
+            return 'health'
 
     def move_citizen(self, agent, newPos):
         if self.check_move_policies():
           self.agents[agent.unique_id].shape = newPos
         #self.grid.move_agent(agent, newPos)
-    
+
     def check_move_policies(self):
         if not self.curfew: 
             return True
@@ -155,4 +155,6 @@ class city_model(Model):
         self.datacollector.collect(self)
         self.schedule.step()
         self.job_manager.resolve()
+        if (self.time.hour == 0): 
+            self.eco_manager.export_all()
         self.time = self.time + self.time_delta

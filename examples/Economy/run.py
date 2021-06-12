@@ -23,18 +23,23 @@ import osmnx as ox
 # MESA CLASSES
 from mesa import Agent, Model
 from mesa.datacollection import DataCollector
+from mesa.visualization.modules import CanvasGrid
+from mesa.visualization.ModularVisualization import ModularServer
+from mesa.visualization.modules import ChartModule
 from mesa.space import NetworkGrid, MultiGrid
 from mesa.time import RandomActivation
 from mesa_geo import GeoSpace, GeoAgent, AgentCreator
 
+
 # OTHER UTILITIES
-import ogr
 import shapely
 from shapely.geometry import *
 import geopandas as gpd
 import ipdb
 import ast
 from Model import city_model
+import os
+import time
 
 ##########################################
 
@@ -46,6 +51,13 @@ contents = file.read()
 spec_map = ast.literal_eval(contents)
 file.close()
 
+file = open(root_captioning + "resouce_map.txt", "r")
+contents = file.read()
+resource_map = ast.literal_eval(contents)
+file.close()
+
+
+# LOAD OSM FILE TO GDF
 driver = ogr.GetDriverByName('OSM')
 data = driver.Open(root_captioning + 'bcn.osm')
 layer = data.GetLayer('points')
@@ -96,7 +108,6 @@ for feature in features:
 
 gdf = gpd.GeoDataFrame(data_list,columns=['Name','Street','AddNum','Tag','Speciallity','SpeciallityAdapt','geometry'],crs={'init': 'epsg:3857'})
 
-
 #### GET MAP LIMITS FOR AGENTS ####
 max_x = -np.inf
 max_y = -np.inf
@@ -113,12 +124,43 @@ for p in gdf['geometry']:
     if p.y < min_y:
         min_y = p.y
 
+# NOW WE CAN START OUR MODEL BASED ON NEW COORDINATES
+'''
+model = city_model(25000, gdf, max_x, max_y, min_x, min_y, resource_map) #bcn_pop = 5541000
 
-#### NOW WE CAN START OUR MODEL BASED ON NEW COORDINATES ####
-model = city_model(10000, gdf, max_x, max_y, min_x, min_y)
-# model = city_model(5541000, gdf, max_x, max_y, min_x, min_y) 
+for j in range(1): # num of test
+    for i in range(2880): # iters per test
+        print('///// STEP %s ///// \t' % str(i+1))  
+        t = time.time()
+        model.step()
+        print(time.time() - t)
+        print('\n')
+'''
+import multiprocessing
 
-for i in range(200):
-    print('///// STEP %s /////' % str(i+1))   
-    model.step()
-    print('\n')
+def mod_run(m_list, id):
+    for i in range(96): # iters per test
+        if (i % 10 == 0):
+            print('Model %s at step %s\n' % (str(id),str(i)))
+        m_list[id].step()
+
+procs = 10   # Number of processes to create
+models = []
+for k in range(10):
+    _m = city_model(5000, gdf.head(1000), max_x, max_y, min_x, min_y, resource_map)
+    models.append(_m)
+
+jobs = []
+for i in range(0, procs):
+    process = multiprocessing.Process(target=mod_run, 
+                                      args=(models, i))
+    jobs.append(process)
+
+# Start the processes (i.e. calculate the random number lists)      
+for j in jobs:
+    j.start()
+
+# Ensure all of the processes have finished
+for j in jobs:
+    j.join()
+
