@@ -108,6 +108,14 @@ for feature in features:
             data_list.append([name,street,num,tag,speciality,spec_map[speciality],shapely_geo])
 
 gdf = gpd.GeoDataFrame(data_list,columns=['Name','Street','AddNum','Tag','Speciallity','SpeciallityAdapt','geometry'],crs={'init': 'epsg:3857'})
+scient = gdf[gdf.SpeciallityAdapt.isin(['scientific activities'])].head(9)
+rstate = gdf[gdf.SpeciallityAdapt.isin(['real state'])].iloc[[1]]
+gdf = gdf.head(1000)
+gdf = gdf.append([scient,rstate],ignore_index=True)
+
+# ipdb.set_trace()
+# gdf = gdf.reindex(index=gdf.index[::-1])
+# gdf = gdf.reset_index(drop=True)
 
 #### GET MAP LIMITS FOR AGENTS ####
 max_x = -np.inf
@@ -155,7 +163,7 @@ def mod_run(_m,id,return_dict):
 procs = 10   # Number of processes to create
 models = []
 for k in range(procs):
-    _m = city_model(5000, gdf.head(1000), max_x, max_y, min_x, min_y, resource_map)
+    _m = city_model(5000, gdf, max_x, max_y, min_x, min_y, resource_map)
     models.append(_m)
 
 #LAUNCH ALL MODELS

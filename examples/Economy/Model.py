@@ -218,6 +218,6 @@ class city_model(Model):
         self.import_eco_datacollector.collect(self)
         self.schedule.step()
         self.job_manager.resolve()
-        if (self.time.hour == 0): 
+        if (self.time.day % 3 == 0) and (self.time.hour == 0): 
             self.eco_manager.export_all()
         self.time = self.time + self.time_delta
