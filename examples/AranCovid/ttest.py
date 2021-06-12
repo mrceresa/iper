@@ -75,14 +75,13 @@ def get_stats_from_files(start_with, title, colors, my_pal, output_dir, input_co
 
     columns = control_df.columns
     for col in columns:
-        print(col)
         g1 = control_df[col].values
         g2 = test_df[col].values
         t, p = stats.ttest_ind(g1, g2)
         all_t.append(round(t,3))
         all_p.append(round(p, 3))
 
-    print(all_t, all_p)
+    #print(all_t, all_p)
     # print(np.count_nonzero(np.array(columns)[np.array(all_p) < 0.05])) # see that there is a statistically significant difference in all features
 
     # renaming so that class 0 will appear as setosa and class 1 as versicolor
@@ -104,8 +103,8 @@ def get_stats_from_files(start_with, title, colors, my_pal, output_dir, input_co
                          ax=axes[idx])
 
         # * tick params
-        axes[idx].set_title(feature)
-        axes[idx].set_xticklabels(["t: " + str(all_t[idx]) + " p: " + str(all_p[idx])], rotation=0)
+        #axes[idx].set_title(feature)
+        axes[idx].set_xticklabels([str(feature) ], rotation=0)
         axes[idx].set(xlabel=None)
         axes[idx].set(ylabel=None)
         axes[idx].grid(alpha=0.5)
@@ -120,12 +119,13 @@ def get_stats_from_files(start_with, title, colors, my_pal, output_dir, input_co
         x1, x2 = -0.20, 0.20
         y, h, col = df_long[df_long.Feature == feature]["Value"].max() + 1, 2, 'k'
         axes[idx].plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
-        #axes[idx].text((x1 + x2) * .5, y + h, "statistically significant", ha ='center', va ='bottom', color = col)
+        axes[idx].text((x1 + x2) * .5, y + h, "t: " + str(all_t[idx]) + " p: " + str(all_p[idx]), ha ='center', va ='bottom', color = col)
         fig.suptitle("Significant feature differences between control and test groups", size=14, y=0.93)
 
     plt.tight_layout()
     plt.subplots_adjust(top=.88)
     plt.savefig(os.path.join(output_dir, 'Boxplot ' + file_name))
+    plt.close()
     #plt.show()
 
 
@@ -138,7 +138,6 @@ def read_files(dir, start_with):
     li = []
 
     for filename in stats_files:
-        print(dir + "/" + filename)
         df = pd.read_csv(dir + "/" + filename, index_col=None, header=0)
         li.append(df)
 
