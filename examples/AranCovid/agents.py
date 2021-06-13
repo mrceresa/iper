@@ -5,6 +5,7 @@ import random, numpy as np
 from datetime import datetime, timedelta
 from scipy.spatial.distance import euclidean
 from SEAIHRD_class import SEAIHRD_covid, Mask
+import haversine as hs
 import DataCollector_functions as dc
 
 
@@ -56,123 +57,22 @@ class HumanAgent(XAgent):
 
     def step(self):
         self.l.debug("*** Agent %s stepping" % str(self.id))
-        # self.status()
 
         # self.think()
         cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
-        cellmates = cellmates[
-            (cellmates['agentid'].str.contains('Human'))]  # filter out buildings and far away people .iloc[0:2]
+        cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
 
-        # cellmates = self.getWorld().space.agents_at_mp(self.pos,max_num=10)  # pandas df [agentid, geometry, distance]
-        # cellmates = cellmates[(cellmates['agentid'].str.contains('Human')) & (cellmates['distance'] < 1)]  # filter out buildings and far away people .iloc[0:2]
+        print(f"POSITION OF {self.id}: {self.pos}\n", cellmates)
 
         if not self.model.lockdown_total:
             self.move(cellmates)  # if not in total lockdown
 
-        if self.machine.state in ["E", "I", "A"] and self.model.DateTime.hour > 6:
+        if self.machine.state in ["E", "I", "A"] and self.model.DateTime.hour > 8:
             self.contact(cellmates)
-
-        # if self.model.DateTime.hour == 0 and self.model.DateTime.minute == 0:
-        #     self.changeAgentStates()
 
         super().step()
 
-    def changeAgentStates(self):
-        """ UPDATE AGENTS STATE """
-
-        s = self.machine.state
-        #self.machine.check_state()
-
-        if s == 'E':
-            if self.machine.time_in_state == round(1 / self.machine.rate['rEI']):
-                self.machine.end_encubation()
-
-        elif s == 'A':
-            if self.machine.time_in_state == int(round(1 / self.machine.rate['rIR'])):
-                self.machine.recovered()
-
-        elif s == 'I':
-            if self.machine.time_in_state == round(1 / self.machine.rate['rIH']):
-                self.machine.severity()
-            elif self.machine.time_in_state == round(1 / self.machine.rate['rIR']):
-                self.machine.recovered()
-
-        elif s == 'H':
-            if self.machine.time_in_state == round(1 / self.machine.rate['rHD']):
-                self.machine.dead()
-            elif self.machine.time_in_state == round(1 / self.machine.rate['rHR']):
-                self.machine.recovered()
-
-
-        if s == self.machine.state:
-            self.machine.time_in_state += 1
-        else:
-            self.machine.time_in_state = 0
-
-
-        if s != self.machine.state:
-
-            if self.machine.state == "S":  # if s == "R"
-                # self.hosp_collector_counts['H-REC'] -= 1
-                # self.hosp_collector_counts['H-SUSC'] += 1
-                self.HospDetected = False
-
-            elif self.machine.state == "I": # infected, symptomatic, presents symptoms
-
-                if self.model.quarantine_period == 0:
-                    self.quarantined = self.model.DateTime + timedelta(days=1)  # quarantine
-                else:
-                    self.quarantined = self.model.DateTime + timedelta(days=self.model.quarantine_period)  # quarantine
-                self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
-
-            elif self.machine.state == "A":  # if s == "E":
-                pass
-            elif self.machine.state == "H":  # if s == "A":
-                # self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
-                # self.hosp_collector_counts['H-HOSP'] += 1
-                self.HospDetected = False  # we assume hospitalized people do not transmit the virus
-
-                if self.model.hosp_collector_counts["H-HOSP"] >= (self.model.Hosp_capacity * self.model.N_hospitals):  # hospital collapse
-                    self.machine.dead(H_collapse=True)
-                else:
-                    # look for the nearest hospital to treat the agent
-                    self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
-                    self.getWorld().space.move_agent(self, self.obj_place)
-                    self.mask = Mask.FFP2
-
-                    # adds patient to nearest hospital patients list
-                    h = self.model.getHospitalPosition(self.obj_place)
-                    h.add_patient(self)
-
-                    self.quarantined = None
-                    self.friend_to_meet = set()
-
-            elif self.machine.state == "R":
-                """if s in ["I", "A"]:
-                    if human.HospDetected:
-                        self.hosp_collector_counts['H-INF'] -= 1
-                        self.hosp_collector_counts['H-REC'] += 1"""
-
-                if s == "H":
-                    h = self.model.getHospitalPosition(self.obj_place)
-                    h.discharge_patient(self)
-                    self.HospDetected = True
-                    # self.hosp_collector_counts['H-HOSP'] -= 1
-                    # self.hosp_collector_counts['H-REC'] += 1
-
-            elif self.machine.state == "D":  # if s == "H":
-                h = self.model.getHospitalPosition(self.obj_place)
-                h.discharge_patient(self)
-                # self.hosp_collector_counts['H-HOSP'] -= 1
-                # self.hosp_collector_counts['H-DEAD'] += 1
-
-        # change quarantine status if necessary
-        if self.quarantined is not None and self.model.DateTime.day == self.quarantined.day:
-            self.quarantined = None
-
     def move(self, cellmates):
-        # new_position = None
-        # possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
 
         if self.machine.state in ["S", "E", "A", "I", "R"]:
             if self.quarantined is None:  # if agent not hospitalized or dead
@@ -181,75 +81,65 @@ class HumanAgent(XAgent):
                     self.obj_place = None
 
                 # sleeping time
-                elif self.model.DateTime.hour == 6:
+                elif self.model.DateTime.hour == 8:
 
                     if len(cellmates) > 1:
                         for str_id in [x for x in cellmates['agentid'] if x != self.id]:
-                            # index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
                             if self.model.space.get_agent(str_id).house == self.house:
                                 self.add_contact(str_id)
 
                 # working time
-                elif 6 < self.model.DateTime.hour <= 16:  # working time
+                elif 8 < self.model.DateTime.hour <= 16:  # working time
                     workplace = self.model.space.get_agent(self.workplace)
                     if self.workplace is not None and self.pos != workplace.place:  # Employed and not at workplace
                         if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(
                             self.model.masks_probs)  # wear mask for walk
-                        # new_position = min(possible_steps,key=lambda c: euclidean(c,self.workplace.place))  # check shortest path to work
                         self.getWorld().space.move_agent(self, workplace.place)
                     # employee at workplace. Filter by time to avoid repeated loops
                     elif self.workplace is not None and self.pos == workplace.place and self.model.DateTime.hour == 15 and self.model.DateTime.minute == 0:
 
                         self.mask = workplace.mask
-                        # self.getWorld().space._create_gdf()
 
                         if len(cellmates) > 1:
                             for str_id in [x for x in cellmates['agentid'] if x != self.id]:
-                                # index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
                                 if self.model.space.get_agent(str_id).workplace == workplace:
                                     self.add_contact(str_id)
-
 
 
                 # leisure time
                 elif 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:  # leisure time
                     if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0:
                         self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
+
+
                     if not self.friend_to_meet:
                         if np.random.choice([0, 1], p=[0.75,0.25]) and self.model.DateTime.minute == 0 and self.model.DateTime.hour % 2 == 0:
                             self.look_for_friend()  # probability to meet with a friend
-                        # new_position = self.random.choice(possible_steps)  # choose random step
                         # self.think()  # randomly
 
                     else:  # going to a meeting
-                        if self.pos != self.obj_place:
-                            # check shortest step towards friend new position
-                            self.getWorld().space.move_agent(self, self.obj_place)
-                            # new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
-                        else:
-                            # self.getWorld().space._create_gdf()
+                        if self.pos != self.obj_place: self.getWorld().space.move_agent(self, self.obj_place)
 
+                        else:
                             human_cellmates = set([x for x in cellmates['agentid'] if x != self.id])
 
                             if self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
                                 for friend in self.friend_to_meet:
                                     self.add_contact(friend)
-                                #self.friend_to_meet = set()
-                                #self.obj_place = None
+                                self.friend_to_meet = set()
+                                self.obj_place = None
 
 
                 # go back home
                 elif self.model.night_curfew - 2 < self.model.DateTime.hour <= self.model.night_curfew - 1:  # Time to go home
                     if self.pos != self.house:
                         self.getWorld().space.move_agent(self, self.house)
-                        # new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house
-                        # else:  # agent at home
                         self.mask = Mask.NONE
+
             # Agent is self.quarantined
             elif self.quarantined is not None:
                 if self.pos != self.house and self.obj_place is None:  # if has been tested, go home
                     self.getWorld().space.move_agent(self, self.house)
-                    # new_position = min(possible_steps,key=lambda c: euclidean(c, self.house))  # check shortest path to house
 
                 elif self.pos == self.house and self.obj_place is None:
                     self.mask = Mask.NONE
@@ -257,51 +147,34 @@ class HumanAgent(XAgent):
                 elif self.obj_place is not None:
 
                     if self.obj_place != self.pos and 7 < self.model.DateTime.hour <= 23:  # if has to go testing, just go
-                        # print(f"Agent {self.unique_id} on their way to testing")
                         self.getWorld().space.move_agent(self, self.obj_place)
-                        # new_position = min(possible_steps, key=lambda c: euclidean(c, self.obj_place))
 
                     elif self.obj_place == self.pos:
                         # once at hospital, is tested and next step will go home to quarantine
                         self.mask = Mask.FFP2
                         h = self.model.getHospitalPosition(self.obj_place)
-                        h.doTest(self)  # H-SUSC H-INF
+                        h.doTest(self)
                         self.obj_place = None
 
-        # if new_position: self.model.grid.move_agent(self, new_position)
+
 
     def contact(self, others):
         """ Find close contacts and infect """
-        # self.getWorld().space._create_gdf()
         others_agents = [self.model.space.get_agent(aid) for aid in others['agentid'] if aid != self.id]
 
         for other in others_agents:
-            # if len(others):  # contact during daytime
-            # for str_id in [x for x in others['agentid'] if x != self.id]:
-            # index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == str_id), -1)
-            # other = self.model.schedule.agents[index]
 
-            # pTrans = self.model.virus.pTrans(self.mask, other.mask)
-            # trans = np.random.choice([0, 1], p=[pTrans, 1 - pTrans])
-            if other.machine.state == "S":  # trans == 0 and
+            if other.machine.state == "S":
                 other.machine.contact(self.mask, other.mask)
+                self.model.contact_count[0] += 1
                 if other.machine.state == "E":
+                    self.model.contact_count[1] += 1
                     other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
-                # other.machine.state = "E"
-                # other.days_in_current_state = self.model.DateTime
-                # other.exposing_time = dc.get_incubation_time(self.model)
+
 
     def look_for_friend(self):
         """ Check the availability of friends to meet and arrange a meeting """
 
-        """for id_friend in self.friends:
-            print(type(id_friend))
-            index = next((i for i, item in enumerate(self.model.schedule.agents) if item.id == id_friend.id), -1)
-            print(index)
-            friend = self.model.schedule.agents[index]
-            print(friend)
-            if not friend.friend_to_meet and friend.quarantined is None and friend.state != State.HOSP and friend.state != State.DEAD:
-                available_friends.append(index)"""
 
         available_friends = [friend for friend in self.friends if
                              not self.model.space.get_agent(friend).friend_to_meet and self.model.space.get_agent(
@@ -338,6 +211,10 @@ class HumanAgent(XAgent):
 
     def add_contact(self, contact):
         # check contacts for self agent
+
+        t = self.machine.time_in_state
+        s = self.machine.state
+
         if not self.model.DateTime.strftime('%Y-%m-%d') in self.contacts:
             self.contacts[self.model.DateTime.strftime('%Y-%m-%d')] = {contact}  # initialize with contact
 
@@ -347,5 +224,11 @@ class HumanAgent(XAgent):
         # add contacts of infected people for R0 calculations
         if self.machine.state in ["E", "A", "I"]:
             contacts_mask = self.model.space.get_agent(contact).mask
-            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_infection(self.mask, contacts_mask)  # self.model.virus.pTrans
+            pTransMask1 = self.mask.maskPtrans(self.mask)
+            pTransMask2 = contacts_mask.maskPtrans(contacts_mask)
+            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_inf * pTransMask1 * pTransMask2  #prob_infection(self.mask, contacts_mask)  # self.model.virus.pTrans
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][2] += 1
+
+            if self.machine.state == s and self.machine.time_in_state != t:
+                print("THIRD LOOP", s, self.machine.state, t, self.machine.time_in_state)
+                a

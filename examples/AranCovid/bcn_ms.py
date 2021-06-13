@@ -68,12 +68,13 @@ class CityModel(MultiEnvironmentWorld):
 
 
 
-        self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
+        self.DateTime = datetime(year=2021, month=1, day=1, hour=9, minute=0, second=0)
         # self.virus = VirusCovid(config["virus"])
         self.pTest = 0.95
         self.R0 = 0
         self.R0_obs = 0
-        self.R0_observed = [0,0,0]
+        self.R0_observed = {}
+        self.contact_count = [0,0]
 
         # alarm state characteristics
         self.alarm_state = config["alarm_state"]
@@ -272,7 +273,8 @@ class CityModel(MultiEnvironmentWorld):
         # plt.gca().get_xaxis().set_visible(False)      #ax.xaxis.tick_top()
         plt.tight_layout()
         plt.savefig(os.path.join(outdir, hosp_title))
-
+        #print(self.R0_observed)
+        print(self.contact_count, self.DateTime)
 
     def getHospitalPosition(self, place=None):
         """ Returns the position of the Hospitals or the Hospital agent if position is given """
@@ -617,4 +619,14 @@ class CityModel(MultiEnvironmentWorld):
                     # test them again
                     self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(human.id)
 
-        # print("ANOTHER DAY:", "ASYMPT:", asymptomatic, " SYMPTOM:", symptomatic)
+            if human.machine.state in ["A", "I"]:
+                tup = (human.machine.time_in_state, human.machine.state)
+                if not human.id in self.R0_observed.keys():
+                    self.R0_observed[human.id] = [tup]
+                else:
+                    self.R0_observed[human.id].append(tup)
+            # print("ANOTHER DAY:", "ASYMPT:", asymptomatic, " SYMPTOM:", symptomatic)
+
+            """            if t > human.machine.time_in_state and s == human.machine.state:
+                print("ERROR", s)
+                a"""
