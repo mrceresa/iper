@@ -23,6 +23,8 @@ import time
 
 
 def main(args):
+    print("ARGS:\n",args)
+    print("*"*15)
     if not os.path.exists(args.cache_dir):
         os.makedirs(args.cache_dir)
 

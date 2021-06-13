@@ -62,7 +62,8 @@ class HumanAgent(XAgent):
         cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
         cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
 
-        print(f"POSITION OF {self.id}: {self.pos}\n", cellmates)
+        #print(f"POSITION OF {self.id}: {self.pos}\n", cellmates)
+
 
         if not self.model.lockdown_total:
             self.move(cellmates)  # if not in total lockdown
