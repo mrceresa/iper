@@ -73,7 +73,7 @@ class GeoSpacePandas(GeoSpace):
       else:
         raise AttributeError("No agent %s"%agent.id)
 
-    def _create_gdf(self):
+    def _create_gdf(self, use_nrtees=False):
       self._clear_gdf()
       columns = list(self._agdf)
       data = []
@@ -93,14 +93,16 @@ class GeoSpacePandas(GeoSpace):
       # Create tree from the candidate points
       #self._tree = BallTree(_right_r, leaf_size=15, metric='haversine')
       self._tree = BallTree(_right_r, leaf_size=2)    
-      n_jobs = effective_n_jobs(mp.cpu_count())
-      from sklearn.utils import gen_even_slices
 
-      self._trees = [BallTree(_right_r[s], leaf_size=2) 
+      if use_nrtees:
+        n_jobs = effective_n_jobs(mp.cpu_count())
+        from sklearn.utils import gen_even_slices
+
+        self._trees = [BallTree(_right_r[s], leaf_size=2) 
           for s in gen_even_slices(_right_r.shape[0], n_jobs)
         ]
-      self._nn =  NearestNeighbors(n_neighbors=5, radius=2.0, n_jobs=n_jobs, algorithm="ball_tree", metric="haversine", leaf_size=2)
-      self._nn.fit(_right_r)
+        self._nn =  NearestNeighbors(n_neighbors=5, radius=2.0, n_jobs=n_jobs, algorithm="ball_tree", metric="haversine", leaf_size=2)
+        self._nn.fit(_right_r)
       self._gdf_is_dirty = False
 
     def add_geo(self, agents):
