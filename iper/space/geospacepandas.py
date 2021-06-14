@@ -73,7 +73,7 @@ class GeoSpacePandas(GeoSpace):
       else:
         raise AttributeError("No agent %s"%agent.id)
 
-    def _create_gdf(self, use_nrtees=False):
+    def _create_gdf(self, use_ntrees=False):
       self._clear_gdf()
       columns = list(self._agdf)
       data = []
@@ -94,7 +94,7 @@ class GeoSpacePandas(GeoSpace):
       #self._tree = BallTree(_right_r, leaf_size=15, metric='haversine')
       self._tree = BallTree(_right_r, leaf_size=2)    
 
-      if use_nrtees:
+      if use_ntrees:
         n_jobs = effective_n_jobs(mp.cpu_count())
         from sklearn.utils import gen_even_slices
 

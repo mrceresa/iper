@@ -43,11 +43,12 @@ def plotTest(sheet, agents, fname):
 
 class TestGeoSpace(unittest.TestCase):
 
-  def setUp(self):
-    self.spacePandas = GeoSpacePandas()
-    
+  def setUp(self):    
     x_min, y_min, x_Max, y_Max = (2.052, 4.317, 2.228, 4.467)
     sheet = Polygon.from_bounds( x_min, y_min, x_Max, y_Max )
+
+    self.spacePandas = GeoSpacePandas(extent=[x_min, x_Max, y_min, y_Max])
+
 
     _ids = []; _lats = []; _longs = []
     for _aid in range(10):
@@ -91,25 +92,29 @@ class TestGeoSpace(unittest.TestCase):
     self.assertTrue(newShape == _t.shape)
 
   def testUpdateEfficency(self):
-    sp = GeoSpacePandas()
+    x_min, y_min, x_Max, y_Max = (2.052, 4.317, 2.228, 4.467)
+
+    sp = GeoSpacePandas(extent=[x_min, x_Max, y_min, y_Max])
     max_ag = 10000
     tic = time.perf_counter()
     for i in range(max_ag):
       a = XAgent(i)
-      sp.place_agent(a, (i,i))
+      sp.place_agent(a, sp.getRandomPos())
     toc = time.perf_counter()
     _el1 = toc-tic
     print("Place took:", _el1)
 
     tic = time.perf_counter()
+    positions=[]
     for i in range(max_ag):
-      sp.move_agent(sp.get_agent(i), (i**2,i**2))
+      positions.append(sp.getRandomPos())
+      sp.move_agent(sp.get_agent(i), positions[-1])
     toc = time.perf_counter()
     _el1 = toc-tic
     print("Move took:", _el1)
 
     tic = time.perf_counter()
-    sp._create_gdf()
+    sp._create_gdf(use_ntrees=True)
     print(sp._agdf)
     toc = time.perf_counter()
     _el1 = toc-tic
@@ -117,21 +122,22 @@ class TestGeoSpace(unittest.TestCase):
 
     tic = time.perf_counter()
     for i in range(max_ag):
-      res = sp.agents_at((i,i))
+      res = sp.agents_at(positions[i], radius=2.0/111100)
+      self.assertTrue(len(res) < max_ag, "All agents are returned, please check radius is in radiants not meters" )
     toc = time.perf_counter()
     _el1 = toc-tic
     print("Agents_at took:", _el1)
 
     tic = time.perf_counter()
     for i in range(max_ag):
-      res = sp.agents_at_mp((i,i))
+      res = sp.agents_at_mp(positions[i])
     toc = time.perf_counter()
     _el1 = toc-tic
     print("Agents_at_mp took:", _el1)
 
     tic = time.perf_counter()
     for i in range(max_ag):
-      res2 = sp.agents_at_mtree((i,i))
+      res2 = sp.agents_at_mtree(positions[i])
     toc = time.perf_counter()
     _el1 = toc-tic
     print("Agents_at_mtree took:", _el1)
