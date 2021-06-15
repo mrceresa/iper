@@ -68,7 +68,7 @@ class HumanAgent(XAgent):
         if not self.model.lockdown_total:
             self.move(cellmates)  # if not in total lockdown
 
-        if self.machine.state in ["E", "I", "A"] and self.model.DateTime.hour > 8:
+        if self.machine.state in ["I", "A"] and self.model.DateTime.hour > 8:
             self.contact(cellmates)
 
         super().step()
