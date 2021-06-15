@@ -286,8 +286,8 @@ class CityModel(MultiEnvironmentWorld):
     def step(self):
 
         current_step = self.DateTime
-        self.DateTime += timedelta(minutes=15)  # next step
-
+        self.DateTime += timedelta(minutes=60)  # next step
+        self.l.info("Current simulation time is %s"%str(self.DateTime))
         self.schedule.step()
 
         if self.space._gdf_is_dirty:

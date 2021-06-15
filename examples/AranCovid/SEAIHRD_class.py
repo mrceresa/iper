@@ -9,7 +9,39 @@ class SEAIHRD_covid(object):
     # A single center Chinese study of 221 discharged COVID-19
     # patients observed an average time to recovery of 10.63±1.93 days
     # for mild to moderate patients, compared with 18.70±2.50 for severe patients.
-    prob_inf = 0.0005
+    states = ['S', 'E', 'A', 'I', 'R', 'H', 'D']
+    transitions = [
+        {'trigger': 'nothing', 'source': '*', 'dest': '='},
+        {'trigger': 'vaccination', 'source': 'S', 'dest': 'R'},
+        {'trigger': 'contact', 'source': 'S', 'dest': 'E', 'conditions': 'prob_infection'},
+        {'trigger': 'contact', 'source': 'S', 'dest': '='},
+        {'trigger': 'end_encubation', 'source': 'E', 'dest': 'I', 'conditions': 'prob_sintomatic'},
+        {'trigger': 'end_encubation', 'source': 'E', 'dest': 'A'},
+        {'trigger': 'severity', 'source': 'I', 'dest': 'H', 'conditions': 'prob_severity'},
+        {'trigger': 'severity', 'source': 'I', 'dest': '='},
+        {'trigger': 'recovered', 'source': ['A', 'I', 'H'], 'dest': 'R'},
+        {'trigger': 'dead', 'source': 'H', 'dest': 'D', 'conditions': 'prob_to_die', }
+    ]
+
+    def __init__(self, name, state, age):
+        # self.actual_state=actual_state
+        self.time_in_state = 0
+        # self.pAI={"0-9": 0.45, "10-19": 0.55, "20-29": 0.73,"30-39": 0.73, "40-49": 0.75,
+        #           "50-59": 0.85,"60-69": 0.85,"70-79": 0.90,"80-89": 0.95,"90+": 0.95}
+        self.pAI = {"0-9": 0.2, "10-19": 0.2, "20-29": 0.2, "30-39": 0.2, "40-49": 0.2,
+                    "50-59": 0.2, "60-69": 0.2, "70-79": 0.2, "80-89": 0.2, "90+": 0.2}
+        self.pIH = {"0-9": 0.06, "10-19": 0.06, "20-29": 0.08, "30-39": 0.09, "40-49": 0.10,
+                    "50-59": 0.15, "60-69": 0.18, "70-79": 0.20, "80-89": 0.50, "90+": 0.60}
+        self.pHD = {"0-9": 0.03, "10-19": 0.20, "20-29": 0.20, "30-39": 0.20, "40-49": 0.25,
+                    "50-59": 0.30, "60-69": 0.30, "70-79": 0.40, "80-89": 0.80, "90+": 0.99}
+        # self.prob_inf=0.9
+        self.rate = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.1}
+        self.name = name
+        self.age = age
+        self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
+                               initial=state)
+        self.prob_inf = 0.0005
+        
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10
@@ -21,8 +53,8 @@ class SEAIHRD_covid(object):
         """ probability of infection after a risk contact. """
         pMask1 = Mask1.maskPtrans(Mask1)
         pMask2 = Mask2.maskPtrans(Mask2)
-        prob_inf = self.prob_inf * pMask1 * pMask2
-        res = random.random() < prob_inf
+        pbi = self.prob_inf * pMask1 * pMask2
+        res = random.random() < pbi
 
         if res: self.time_in_state = 0
         # print("CONTACT", self.prob_inf, pMask1, pMask2, prob_inf)
@@ -106,37 +138,8 @@ class SEAIHRD_covid(object):
 
         #return True #result_state
 
-    states = ['S', 'E', 'A', 'I', 'R', 'H', 'D']
-    transitions = [
-        {'trigger': 'nothing', 'source': '*', 'dest': '='},
-        {'trigger': 'vaccination', 'source': 'S', 'dest': 'R'},
-        {'trigger': 'contact', 'source': 'S', 'dest': 'E', 'conditions': 'prob_infection'},
-        {'trigger': 'contact', 'source': 'S', 'dest': '='},
-        {'trigger': 'end_encubation', 'source': 'E', 'dest': 'I', 'conditions': 'prob_sintomatic'},
-        {'trigger': 'end_encubation', 'source': 'E', 'dest': 'A'},
-        {'trigger': 'severity', 'source': 'I', 'dest': 'H', 'conditions': 'prob_severity'},
-        {'trigger': 'severity', 'source': 'I', 'dest': '='},
-        {'trigger': 'recovered', 'source': ['A', 'I', 'H'], 'dest': 'R'},
-        {'trigger': 'dead', 'source': 'H', 'dest': 'D', 'conditions': 'prob_to_die', }
-    ]
 
-    def __init__(self, name, state, age):
-        # self.actual_state=actual_state
-        self.time_in_state = 0
-        # self.pAI={"0-9": 0.45, "10-19": 0.55, "20-29": 0.73,"30-39": 0.73, "40-49": 0.75,
-        #           "50-59": 0.85,"60-69": 0.85,"70-79": 0.90,"80-89": 0.95,"90+": 0.95}
-        self.pAI = {"0-9": 0.2, "10-19": 0.2, "20-29": 0.2, "30-39": 0.2, "40-49": 0.2,
-                    "50-59": 0.2, "60-69": 0.2, "70-79": 0.2, "80-89": 0.2, "90+": 0.2}
-        self.pIH = {"0-9": 0.06, "10-19": 0.06, "20-29": 0.08, "30-39": 0.09, "40-49": 0.10,
-                    "50-59": 0.15, "60-69": 0.18, "70-79": 0.20, "80-89": 0.50, "90+": 0.60}
-        self.pHD = {"0-9": 0.03, "10-19": 0.20, "20-29": 0.20, "30-39": 0.20, "40-49": 0.25,
-                    "50-59": 0.30, "60-69": 0.30, "70-79": 0.40, "80-89": 0.80, "90+": 0.99}
-        # self.prob_inf=0.9
-        self.rate = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.1}
-        self.name = name
-        self.age = age
-        self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
-                               initial=state)
+
         # self.machine.add_transition(trigger='infected',source='S',dest='E')
         # self.machine.add_transition('recovered','E', 'S')
 
