@@ -297,6 +297,10 @@ class CityModel(MultiEnvironmentWorld):
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
+            self.l.info("Today is a new day!")
+            _t = self.datacollector.tables['Model_DC_Table']
+            S,E,I,R,H,D = _t["Susceptible"][-1], _t["Exposed"][-1], _t["Infected"][-1], _t["Recovered"][-1], _t["Hospitalized"][-1], _t["Dead"][-1] 
+            self.l.info("************ S %d,E %d,I %d,R %d,H %d,D %d"%(S,E,I,R,H,D))
             dc.reset_counts(self)
             dc.reset_hosp_counts(self)
             dc.update_stats(self)
