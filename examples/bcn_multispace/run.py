@@ -40,7 +40,9 @@ def main(args):
   sdt = datetime.today().strftime('%Y%m%d-%H%M%S')
   fname = os.path.join(args.output_dir, "abm_debug_%s.log"%sdt)
 
-  logconfig_fname = os.path.join(os.getcwd(), 'examples/bcn_multispace/logging.conf')
+  logconfig_fname = os.path.join(os.getcwd(), "logging.conf")
+  if not os.path.exists(logconfig_fname):
+    logconfig_fname = os.path.join(os.getcwd(), 'examples/bcn_multispace/logging.conf')
   print("Trying to load config file from", logconfig_fname)
   logging.config.fileConfig(
     logconfig_fname, 

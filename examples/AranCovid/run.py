@@ -23,6 +23,8 @@ import time
 
 
 def main(args):
+    print("ARGS:\n",args)
+    print("*"*15)
     if not os.path.exists(args.cache_dir):
         os.makedirs(args.cache_dir)
 
@@ -100,14 +102,14 @@ if __name__ == '__main__':
                         help="Output dir")  # %Y%m%d-%H%M%S
     parser.add_argument('-c', '--cache_dir', type=str, default="ctx-cache", help="Dir to cache maps")
     parser.add_argument('-v', '--verbose', action="store_true", help="Print additional information")
-    parser.add_argument('-s', '--steps', type=int, default=30, help="Timesteps to run the model for")
-    parser.add_argument('-n', '--agents', type=int, default=10000, help="Numer of starting agents")
-    parser.add_argument('-H', '--hospitals', type=int, default=10, help="Numer of hospitals")
-    parser.add_argument('-t', '--tests', type=int, default=10, help="Number of tests applied daily")
+    parser.add_argument('-s', '--steps', type=int, default=3360, help="Timesteps to run the model for")
+    parser.add_argument('-n', '--agents', type=int, default=400, help="Numer of starting agents")
+    parser.add_argument('-H', '--hospitals', type=int, default=6, help="Numer of hospitals")
+    parser.add_argument('-t', '--tests', type=int, default=20, help="Number of tests applied daily")
     parser.add_argument('-q', '--quarantine', type=int, default=10, help="Number of self-quarantine days")
-    parser.add_argument('-l', '--lockdown', type= dict, default={'inf_threshold':1, 'night_curfew': 23, 'masks': [0.01, 0.64, 0.35], 'quarantine': 10, 'meeting': 5, 'remote-working': 0.6, 'total_lockdown': False}, help="Number of detected infected people to apply health measures")
-    parser.add_argument('-w', '--workplaces', type=int, default=20, help="Numer of workplaces")
-    parser.add_argument('-m', '--meeting', type=int, default=8, help="Numer of People on Meetings")
+    parser.add_argument('-l', '--lockdown', type=dict, default={'inf_threshold': 1, 'night_curfew': 23, 'masks': [0.01, 0.64, 0.35], 'quarantine': 10, 'meeting': 5, 'remote-working': 0.6, 'total_lockdown': False}, help="Number of detected infected people to apply health measures")
+    parser.add_argument('-w', '--workplaces', type=int, default=50, help="Numer of workplaces")
+    parser.add_argument('-m', '--meeting', type=int, default=6, help="Numer of People on Meetings")
     parser.add_argument('-b', '--basemap', type=str, default="Barcelona, Spain",
                         help="Basemap for geo referencing the model")
     parser.add_argument('-f', '--family', type=list, default=[19.9, 23.8, 20.4, 24.8, 8.9, 2.2],

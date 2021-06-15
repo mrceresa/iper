@@ -45,7 +45,6 @@ class CityModel(MultiEnvironmentWorld):
     super().__init__(config)
     self.l.info("Initalizing model")
     self._basemap = config["basemap"]
-    self.space = GeoSpacePandas()
     self.network = NetworkGrid(nx.Graph())
     self.l.info("Scheduler is " + str(self.schedule))
     self.schedule = RandomActivation(self)
@@ -53,6 +52,11 @@ class CityModel(MultiEnvironmentWorld):
     self.l.info("Loading geodata")
     self._initGeo()
     self._loadGeoData()
+    self.space = GeoSpacePandas(
+      extent=(self._xs["w"], self._xs["s"],
+              self._xs["e"], self._xs["n"]
+            )
+          )
     
     # Eudald Mobility
     self.PedCarBike_Map = Map_to_Graph('PedCarBike')  #Load the shapefiles 
@@ -121,8 +125,11 @@ class CityModel(MultiEnvironmentWorld):
      
   def _loadGeoData(self):
     path = os.getcwd()
-    self.l.info("Loading geo data from path:"+path)
-    blocks = gpd.read_file(os.path.join(path, "examples/bcn_multispace/shapefiles","quartieriBarca1.shp"))
+    shpfilename = os.path.join(path,"shapefiles","quartieriBarca1.shp")
+    if not os.path.exists(shpfilename):
+      shpfilename = os.path.join(path, "examples/bcn_multispace/shapefiles","quartieriBarca1.shp")
+    print("Loading shapefile from", shpfilename)
+    blocks = gpd.read_file(shpfilename)
     self._blocks= blocks    
 
   def plotAll(self,outdir, figname):

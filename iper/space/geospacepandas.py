@@ -20,6 +20,8 @@ import numpy as np
 import multiprocessing as mp
 from sklearn.neighbors import NearestNeighbors, BallTree, KDTree
 from joblib import Parallel, effective_n_jobs, delayed
+import random
+
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
     """Helper for the Parallel calls in KNeighborsMixin.kneighbors
@@ -30,10 +32,11 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
 
 
 class GeoSpacePandas(GeoSpace):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, extent, *args, **kwargs):
       super().__init__(*args, **kwargs)
       # Override Index
 
+      self._extent = extent
       self._agents = {}
       self._clear_gdf()
       self._gdf_is_dirty = False
@@ -70,7 +73,7 @@ class GeoSpacePandas(GeoSpace):
       else:
         raise AttributeError("No agent %s"%agent.id)
 
-    def _create_gdf(self):
+    def _create_gdf(self, use_ntrees=False):
       self._clear_gdf()
       columns = list(self._agdf)
       data = []
@@ -90,14 +93,16 @@ class GeoSpacePandas(GeoSpace):
       # Create tree from the candidate points
       #self._tree = BallTree(_right_r, leaf_size=15, metric='haversine')
       self._tree = BallTree(_right_r, leaf_size=2)    
-      n_jobs = effective_n_jobs(mp.cpu_count())
-      from sklearn.utils import gen_even_slices
 
-      self._trees = [BallTree(_right_r[s], leaf_size=2) 
+      if use_ntrees:
+        n_jobs = effective_n_jobs(mp.cpu_count())
+        from sklearn.utils import gen_even_slices
+
+        self._trees = [BallTree(_right_r[s], leaf_size=2) 
           for s in gen_even_slices(_right_r.shape[0], n_jobs)
         ]
-      self._nn =  NearestNeighbors(n_neighbors=5, radius=2.0, n_jobs=n_jobs, algorithm="ball_tree", metric="haversine", leaf_size=2)
-      self._nn.fit(_right_r)
+        self._nn =  NearestNeighbors(n_neighbors=5, radius=2.0, n_jobs=n_jobs, algorithm="ball_tree", metric="haversine", leaf_size=2)
+        self._nn.fit(_right_r)
       self._gdf_is_dirty = False
 
     def add_geo(self, agents):
@@ -334,3 +339,9 @@ class GeoSpacePandas(GeoSpace):
       """Return a GeoJSON FeatureCollection."""
       features = [a.__geo_interface__() for a in self.agents]
       return {"type": "FeatureCollection", "features": features}
+
+    def getRandomPos(self):
+      pos = ( random.uniform(self._extent[0], self._extent[1]),
+              random.uniform(self._extent[2], self._extent[3])
+            )
+      return pos 
