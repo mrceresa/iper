@@ -371,7 +371,7 @@ class CityModel(MultiEnvironmentWorld):
                         self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
-                    infected = np.random.choice(["S", "E", "I"], p=[0.985, 0.005, 0.01])
+                    infected = np.random.choice(["S", "E", "I"], p=[0.995, 0, 0.005])
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
                                                                                          age_())
