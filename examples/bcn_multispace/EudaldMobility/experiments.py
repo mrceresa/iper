@@ -1,3 +1,4 @@
+from holoviews.core.util import get_param_values
 from networkx.classes.function import edges
 import osmnx as ox
 import pickle
@@ -12,6 +13,8 @@ import numpy as np
 import pandas as pd
 import movingpandas as mpd
 from statistics import mean
+
+from param import DataFrame
 
 #Fix length edges joined graph (Suport function not needed anymore)
 def fix_length():
@@ -149,15 +152,17 @@ def experiment_mean_time_transport(agents, min = 10):
 def plot_all_routes_agent(agents):
     for agent in agents:
         route_list = []
+        df_list = []
         for index, traj in agent.record_trajectories.items(): #For each route 
-            route_list.append(traj)
+            df_list.append(traj.df)
+            route_list.append(traj)  
         traj_collect = mpd.TrajectoryCollection(route_list)
-        plot = traj_collect.hvplot(geo = True, tiles='OSM', line_width=5, width=700, height=400) + traj_collect.hvplot(c='type', line_width=7.0, width=700, height=400, colorbar=True)
+        unique_traj = mpd.Trajectory(pd.concat(df_list), traj_id='complete_traj')
+        plot = traj_collect.hvplot(line_width=5, width=700, height=400) + unique_traj.hvplot(c='type', line_width=7.0, width=700, height=400)
         hvplot.show(plot)
         break
 
 # Experiment 2.iii
-
 def plot_box_route_agent(agents):
     for agent in agents:
         data = []
@@ -165,7 +170,7 @@ def plot_box_route_agent(agents):
             duration = traj.get_duration().seconds
             length = traj.get_length()
             traj.add_speed(overwrite=True)
-            print(traj.df)
+            #print(traj.df)
             speed = mean(traj.df['speed'].values)
             data.append([duration, length, speed])
         columns=['Times', 'Length', 'Speed']
@@ -173,6 +178,7 @@ def plot_box_route_agent(agents):
         plot = df.hvplot.box(y='Times', ylabel='seconds', xlabel = 'Duration') + df.hvplot.box(y='Length', xlabel='Length', ylabel='meters') + df.hvplot.box(y='Speed', xlabel='Speed', ylabel='meters/seconds') 
         hvplot.show(plot)
         break
+
 def main():
     #list = ['C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'P', 'C', 'P']
     #plot_bars(list)

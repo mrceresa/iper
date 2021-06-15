@@ -94,7 +94,7 @@ if __name__ == '__main__':
   parser.add_argument('-o','--output_dir', type=str, default="results-%s"%datetime.today().strftime('%Y%m%d-%H'), help="Output dir" ) #%Y%m%d-%H%M%S
   parser.add_argument('-c','--cache_dir', type=str, default="ctx-cache", help="Dir to cache maps")
   parser.add_argument('-v','--verbose', action="store_true", help="Print additional information" )
-  parser.add_argument('-s','--steps', type=int, default=10, help="Timesteps to run the model for" )          
+  parser.add_argument('-s','--steps', type=int, default=20, help="Timesteps to run the model for" )          
   parser.add_argument('-n','--agents', type=int, default=1, help="Numer of starting agents" )
   parser.add_argument('-b','--basemap', type=str, default="Barcelona, Spain", help="Basemap for geo referencing the model" )
   parser.add_argument('-f','--family', type=list, default=[19.9 ,23.8 ,20.4, 24.8, 8.9, 2.2], help="distribution listeach term in the distr list represents the probability of generating a familywith a number of individuals equal to the index of that element of distr" ) 

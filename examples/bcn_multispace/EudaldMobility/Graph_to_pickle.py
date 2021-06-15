@@ -66,7 +66,7 @@ if args.car == "True":
             'living_street': 20,
             'primary': 120,
             'secondary': 80,
-            'tertiary': 60,
+            'tertiary': 50,
             'service': 20}
     G = ox.add_edge_speeds(G, hwy_speeds_car)
     G = ox.add_edge_travel_times(G)
@@ -90,16 +90,19 @@ if args.bike == "True":
     #Add Labels
     for edge_id in G.edges:
         G.edges[edge_id]['Type'] = 'Bike'
+        G.edges[edge_id]['speed_kph'] = ''
+        G.edges[edge_id]['maxspeed'] = ''
+        G.edges[edge_id]['travel_time'] = ''
     for node_id in G.nodes:
         G.nodes[node_id]['Type'] = 'Bike' 
         G.nodes[node_id]['dij'] = True
 
     #Add speeds
-    hwy_speeds_bike = {'residential': 20,
-            'living_street': 15,
-            'secondary': 25,
-            'tertiary': 25,
-            'service': 15}
+    hwy_speeds_bike = {'residential': 12,
+            'living_street': 12,
+            'secondary': 12,
+            'tertiary': 12,
+            'service': 12}
     G = ox.add_edge_speeds(G, hwy_speeds_bike)
     G = ox.add_edge_travel_times(G)
 
