@@ -4,7 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-p','--pedestrian', type=str, default="False", help="Pedestrian Graph")
-parser.add_argument('-c','--car', type=str, default="True", help="Car Graph")
+parser.add_argument('-c','--car', type=str, default="False", help="Car Graph")
 parser.add_argument('-b','--bike', type=str, default="False", help="Bike Graph")
 parser.add_argument('-r','--root_path', type=str, default="./pickle_objects/Small/", help="Save dir" )
 args = parser.parse_args()  
@@ -17,9 +17,13 @@ if args.pedestrian == "True":
     G = ox.graph_from_address('Plaça Catalunya', dist = 1000, network_type = 'walk')
 
     print("Labeling Pedestrian Data...")
-    # Add Labels and dij flag
+    
+    # Add Labels and dij flag, erase the speed predefined values
     for edge_id in G.edges:
         G.edges[edge_id]['Type'] = 'Pedestrian'
+        G.edges[edge_id]['speed_kph'] = ''
+        G.edges[edge_id]['maxspeed'] = ''
+        G.edges[edge_id]['travel_time'] = ''
     for node_id in G.nodes:
         G.nodes[node_id]['Type'] = 'Pedestrian' 
         G.nodes[node_id]['dij'] = True

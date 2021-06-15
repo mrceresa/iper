@@ -82,7 +82,7 @@ def main(args):
   #Experiments Transports: Comment if not need to check them
   #experiment_transport_line_plot(city.getAgents(), args.steps)
   #experiment_mean_time_transport(city.getAgents())
-  #plot_all_routes_agent(city.getAgents())
+  plot_all_routes_agent(city.getAgents())
   plot_box_route_agent(city.getAgents())
   return city
 

@@ -341,9 +341,9 @@ class Map_to_Graph():
     def routing_by_travel_time(self, origin_coord, destination_coord):
         origin_node = ox.nearest_nodes(self.G, origin_coord[0], origin_coord[1], return_dist=False)
         destination_node = ox.nearest_nodes(self.G, destination_coord[0], destination_coord[1], return_dist=False)
-        #route = ox.shortest_path(self.G ,origin_node, destination_node, weight='travel_time')
-        routes = ox.k_shortest_paths(self.G, origin_node, destination_node, k = 5, weight = 'travel_time')
-        route = self.find_least_transfer_route(routes)
+        route = ox.shortest_path(self.G ,origin_node, destination_node, weight='travel_time')
+        #routes = ox.k_shortest_paths(self.G, origin_node, destination_node, k = 5, weight = 'travel_time')
+        #route = self.find_least_transfer_route(routes)
         return route 
         #_log.info("Destination dist to node: %d"%dist)
     
