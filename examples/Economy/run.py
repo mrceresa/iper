@@ -153,12 +153,18 @@ def mod_run(_m,id,return_dict):
         if (i % 10 == 0):
             print('Model %s at step %s\n' % (str(id),str(i)))
         model.step()
+    '''
     agent_df = model.agent_eco_datacollector.get_model_vars_dataframe()
     btob_df = model.btob_eco_datacollector.get_model_vars_dataframe()
     import_df = model.import_eco_datacollector.get_model_vars_dataframe()
     export_df = model.export_eco_datacollector.get_model_vars_dataframe()
     return_dict[id] = {'agents':agent_df, 'businesses':btob_df, 'import':import_df, 'export':export_df}
-
+    '''
+    stats_df = model.stats_datacollector.get_model_vars_dataframe()
+    ammount_df = model.amm_datacollector.get_model_vars_dataframe()
+    price_df = model.price_datacollector.get_model_vars_dataframe()
+    return_dict[id] = {'stats':stats_df, 'ammount':ammount_df, 'price':price_df}
+    
 #PREPARE MODELS
 procs = 10   # Number of processes to create
 models = []
@@ -183,6 +189,7 @@ for j in jobs:
 
 print('Retrieving results...\n')
 for i in range(0, procs):
+    '''
     df = return_dict[i]['agents']
     df.to_csv(res_path + 'Agents_Model%s.csv' % str(i), encoding='utf-8')
     df = return_dict[i]['businesses']
@@ -191,5 +198,13 @@ for i in range(0, procs):
     df.to_csv(res_path + 'Import_Model%s.csv' % str(i), encoding='utf-8')
     df = return_dict[i]['export']
     df.to_csv(res_path + 'Export_Model%s.csv' % str(i), encoding='utf-8')
+    '''
+    df = return_dict[i]['stats']
+    df.to_csv(res_path + 'Stats_Model%s.csv' % str(i), encoding='utf-8')
+    df = return_dict[i]['ammount']
+    df.to_csv(res_path + 'Ammount_Model%s.csv' % str(i), encoding='utf-8')
+    df = return_dict[i]['price']
+    df.to_csv(res_path + 'Price_Model%s.csv' % str(i), encoding='utf-8')
+    
 #ipdb.set_trace()
 print('Task finished!')

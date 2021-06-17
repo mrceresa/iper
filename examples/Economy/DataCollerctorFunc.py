@@ -8,6 +8,39 @@ from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
 from mesa_geo import GeoSpace, GeoAgent, AgentCreator
+import statistics
+
+def avg_agent_food (model):
+
+    catering = []
+    for _a in model.agents.values():
+        catering.append(_a.inventory["food"])  
+    return statistics.mean(catering)
+def avg_agent_health (model):
+
+    health = []
+    for _a in model.agents.values():
+        health.append(_a.inventory["health"])
+    return statistics.mean(health)
+def avg_agent_amusement (model):
+
+    recreation = []
+    for _a in model.agents.values():
+        recreation.append(_a.inventory["happiness"])       
+    return statistics.mean(recreation)
+def avg_agent_basic_goods (model):
+    
+    commerce = []
+    for _a in model.agents.values():
+        commerce.append(_a.inventory["basic_goods"])
+    return statistics.mean(commerce)
+def avg_agent_funds (model):
+
+    funds = []
+    for _a in model.agents.values():
+        funds.append(_a.inventory["funds"])
+    return statistics.mean(funds)
+#####################################################################
 
 def get_agent_commerce_val (model):
     if model.eco_manager.agent_purchases.get('commerce') is None:
@@ -92,6 +125,127 @@ def get_agent_state_amm (model):
         return 0
     else:
         return model.eco_manager.agent_purchases['real state']['ammount']
+
+#################################################################################
+def avg_commerce_price(model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'commerce':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_catering_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'catering':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_health_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'health':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_recreation_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'recreational activities':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_transport_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'transport':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_hotel_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'hotel':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_state_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'real state':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_pubadmin_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'public administration':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_education_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'education':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_socialserv_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'social services':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_profactiv_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'professional activities':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)
+
+def avg_scientactiv_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'scientific activities':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)   
+
+def avg_recreactiv_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'recreational activities':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)   
+
+def avg_artistactiv_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'artistic activities':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)   
+
+def avg_finanactiv_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'financial activities':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)   
+
+def avg_other_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'other':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)   
+
+def avg_info_price (model):
+    arr = []
+    for _b in model.businesses.values():
+        if _b. speciallity == 'Information and communications':
+            arr.append(_b.sell_price)
+    return statistics.mean(arr)   
+
 
 #################################################################################
 ###### BUSINESS TO BUSINESS #####################################################

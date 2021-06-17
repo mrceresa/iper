@@ -57,7 +57,8 @@ class Citizen (GeoAgent):
 
         if not self.model.check_buy_policies(good_type):
             return
-
+        if not self.model.check_move_policies():
+            return
         # choose a business to visit
         aux , auxType = self.model.get_all_business()
         auxType = [k for k in auxType if auxType[k] == good_type] # Only needed type

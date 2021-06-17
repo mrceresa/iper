@@ -29,7 +29,7 @@ class Container (object):
 
 class city_model(Model):
     ## Initializing the model.
-    def __init__(self, N, city_DF, width, height, init_w, init_h, res_map, curf_restrict = False, shop_restrict = False, c_start = None, c_end = None):
+    def __init__(self, N, city_DF, width, height, init_w, init_h, res_map, curf_restrict = False, shop_restrict = False, c_start = 0, c_end = 0):
         self.schedule = RandomActivation(self)
         self.grid = GeoSpace()
         self.df = city_DF
@@ -49,7 +49,7 @@ class city_model(Model):
 
 
         self.curfew = curf_restrict
-        self.shop_restriction = s_restrict
+        self.shop_restriction = shop_restrict
         self.closure_start = c_start
         self.closure_end = c_end
 
@@ -138,7 +138,48 @@ class city_model(Model):
             "ArtistActiv": dcf.im_artistic,
             "Other": dcf.im_other,
             })
+        ######################################
+        self.stats_datacollector = DataCollector(
+            model_reporters={
+            "Food": dcf.avg_agent_food,
+            "Health": dcf.avg_agent_health,
+            "Amusement" : dcf.avg_agent_amusement,
+            "Basic Goods" : dcf.avg_agent_basic_goods,
+            "Funds" : dcf.avg_agent_funds
+            })
     
+        self.amm_datacollector = DataCollector(
+            model_reporters={ 
+            "Commerce": dcf.get_agent_commerce_amm,
+            "Catering": dcf.get_agent_catering_amm,
+            "Health": dcf.get_agent_health_amm,
+            "Recreational Activities": dcf.get_agent_recreation_amm,
+            "Transport": dcf.get_agent_transport_amm,
+            "Hotel": dcf.get_agent_hotel_amm,
+            "Real State": dcf.get_agent_state_amm
+            })
+
+        self.price_datacollector = DataCollector(
+            model_reporters={ 
+            "Commerce": dcf.avg_commerce_price,
+            "Catering": dcf.avg_catering_price,
+            "Health": dcf.avg_health_price,
+            "Recreational Activities": dcf.avg_recreation_price,
+            "Transport": dcf.avg_transport_price,
+            "Hotel": dcf.avg_hotel_price,
+            "Real State": dcf.avg_state_price,
+            "Public Adminstration": dcf.avg_pubadmin_price,
+            "Education": dcf.avg_education_price,
+            "Social Services": dcf.avg_socialserv_price,
+            "Professional Activities": dcf.avg_profactiv_price,
+            "Scientific Activities": dcf.avg_scientactiv_price,
+            "Recreational Activities": dcf.avg_recreactiv_price,
+            "Artistic Activities": dcf.avg_artistactiv_price,
+            "Financial Activities": dcf.avg_finanactiv_price,
+            "Other": dcf.avg_other_price,
+            "Information and Communication": dcf.avg_info_price,
+            })
+
     ## All Business GET Functions
     def get_name(self, b_id):
         return self.df.iloc[b_id].Name
@@ -188,9 +229,7 @@ class city_model(Model):
         if not self.curfew: 
             return True
         else: 
-            start_curfew = 23
-            end_curfew = 6
-            if my_event.start_time < self.time.hour < my_event.end_time:
+            if (self.closure_start <= self.time.hour) or (self.time.hour < self.closure_end):
                 return False
             else:
                 return True
@@ -199,16 +238,20 @@ class city_model(Model):
         if not self.shop_restriction:
             return True
         else:
-            if (speciality == 'recreational activities') and  ( self.closure_start < self.time.hour < self.closure_end):
+            cant_buy = (self.closure_start <= self.time.hour) or (self.time.hour < self.closure_end)
+            if (speciality == 'catering') and cant_buy:
                 return False
             else:
                 return True
 
     def step(self):  
-        self.agent_eco_datacollector.collect(self)
-        self.btob_eco_datacollector.collect(self)
-        self.export_eco_datacollector.collect(self)
-        self.import_eco_datacollector.collect(self)
+        #self.agent_eco_datacollector.collect(self)
+        #self.btob_eco_datacollector.collect(self)
+        #self.export_eco_datacollector.collect(self)
+        #self.import_eco_datacollector.collect(self)
+        self.stats_datacollector.collect(self)
+        self.amm_datacollector.collect(self)
+        self.price_datacollector.collect(self)
         self.schedule.step()
         self.job_manager.resolve()
         if (self.time.day % 4 == 0) and (self.time.hour == 0): 
