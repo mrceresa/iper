@@ -163,7 +163,7 @@ def mod_run(_m,id,return_dict):
 procs = 10   # Number of processes to create
 models = []
 for k in range(procs):
-    _m = city_model(5000, gdf, max_x, max_y, min_x, min_y, resource_map)
+    _m = city_model(5000, gdf, max_x, max_y, min_x, min_y, resource_map, curf_restrict=True, c_start=22, c_end=6)
     models.append(_m)
 
 #LAUNCH ALL MODELS

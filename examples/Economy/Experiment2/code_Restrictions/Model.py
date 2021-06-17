@@ -29,7 +29,7 @@ class Container (object):
 
 class city_model(Model):
     ## Initializing the model.
-    def __init__(self, N, city_DF, width, height, init_w, init_h, res_map, curf_restrict = False, shop_restrict = False, c_start = None, c_end = None):
+    def __init__(self, N, city_DF, width, height, init_w, init_h, res_map, curf_restrict = False, shop_restrict = False, c_start = 0, c_end = 0):
         self.schedule = RandomActivation(self)
         self.grid = GeoSpace()
         self.df = city_DF
@@ -49,7 +49,7 @@ class city_model(Model):
 
 
         self.curfew = curf_restrict
-        self.shop_restriction = s_restrict
+        self.shop_restriction = shop_restrict
         self.closure_start = c_start
         self.closure_end = c_end
 
@@ -188,9 +188,7 @@ class city_model(Model):
         if not self.curfew: 
             return True
         else: 
-            start_curfew = 23
-            end_curfew = 6
-            if my_event.start_time < self.time.hour < my_event.end_time:
+            if (self.closure_start <= self.time.hour) or (self.time.hour < self.closure_end):
                 return False
             else:
                 return True
@@ -199,7 +197,8 @@ class city_model(Model):
         if not self.shop_restriction:
             return True
         else:
-            if (speciality == 'recreational activities') and  ( self.closure_start < self.time.hour < self.closure_end):
+            cant_buy = (self.closure_start <= self.time.hour) or (self.time.hour < self.closure_end)
+            if (speciality == 'catering') and cant_buy:
                 return False
             else:
                 return True
