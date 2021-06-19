@@ -40,8 +40,8 @@ class SEAIHRD_covid(object):
         self.age = age
         self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
                                initial=state)
-        self.prob_inf = 0.0005
-        
+        self.prob_inf = 0.005
+
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10
@@ -162,9 +162,9 @@ class Mask(Enum):
         if mask == self.NONE:
             return 1
         elif mask == self.HYGIENIC:
-            return 0.70
+            return float(1-0.70)
         elif mask == self.FFP2:
-            return 0.90
+            return float(1-0.90)
 
     @classmethod
     def RandomMask(self, probs):

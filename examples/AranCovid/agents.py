@@ -72,11 +72,9 @@ class HumanAgent(XAgent):
         self.l.debug("*** Agent %s stepping" % str(self.id))
 
         # self.think()
-        #cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
-        #cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
-        cellmates = self.get_cellmates()
-        #print(f"POSITION OF {self.id}: {self.pos}\n", cellmates)
-
+        cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0/111100)  # pandas df [agentid, geometry, distance]
+        cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
+        #cellmates = self.get_cellmates()
 
         if not self.model.lockdown_total:
             self.move(cellmates)  # if not in total lockdown

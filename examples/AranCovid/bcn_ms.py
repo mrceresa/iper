@@ -76,9 +76,9 @@ class CityModel(MultiEnvironmentWorld):
         # alarm state characteristics
         self.alarm_state = config["alarm_state"]
         self.lockdown_total = False
-        self.quarantine_period = 0
+        self.quarantine_period = 7
         self.night_curfew = 24
-        self.masks_probs = [0.01, 0.64, 0.35]
+        self.masks_probs = [1, 0, 0]
 
         self.N_hospitals = config["hospitals"]
         self.Hosp_capacity = math.ceil((0.0046 * config["agents"]) / self.N_hospitals)  # 4.6 beds per 1,000 inhabitants
@@ -284,7 +284,7 @@ class CityModel(MultiEnvironmentWorld):
     def step(self):
 
         current_step = self.DateTime
-        self.DateTime += timedelta(minutes=60)  # next step
+        self.DateTime += timedelta(minutes=30)  # next step
         self.l.info("Current simulation time is %s"%str(self.DateTime))
         self.schedule.step()
 
@@ -347,6 +347,7 @@ class CityModel(MultiEnvironmentWorld):
 
     def createAgents(self, Humanagents, Workplaces, friendsXagent=3):
 
+        friendsXagent = self.peopleInMeeting
         family_dist = create_families(Humanagents)
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
@@ -374,7 +375,7 @@ class CityModel(MultiEnvironmentWorld):
                         self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
-                    infected = np.random.choice(["S", "E", "I"], p=[0.995, 0, 0.005])
+                    infected = np.random.choice(["S", "E", "I"], p=[0.985, 0, 0.015])
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
                                                                                          age_())
@@ -623,16 +624,16 @@ class CityModel(MultiEnvironmentWorld):
             # change quarantine status if necessary
             if human.quarantined is not None and self.DateTime.day == human.quarantined.day:
                 human.quarantined = None
-                if human.machine.state in ["E", "I", "A"] and human.HospDetected:
-                    # test them again
-                    self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(human.id)
+                # if human.machine.state in ["E", "I", "A"] and human.HospDetected:
+                #     # test them again
+                #     self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(human.id)
 
-            if human.machine.state in ["A", "I"]:
-                tup = (human.machine.time_in_state, human.machine.state)
-                if not human.id in self.R0_observed.keys():
-                    self.R0_observed[human.id] = [tup]
-                else:
-                    self.R0_observed[human.id].append(tup)
+            # if human.machine.state in ["A", "I"]:
+            #     tup = (human.machine.time_in_state, human.machine.state)
+            #     if not human.id in self.R0_observed.keys():
+            #         self.R0_observed[human.id] = [tup]
+            #     else:
+            #         self.R0_observed[human.id].append(tup)
             # print("ANOTHER DAY:", "ASYMPT:", asymptomatic, " SYMPTOM:", symptomatic)
 
             """            if t > human.machine.time_in_state and s == human.machine.state:
