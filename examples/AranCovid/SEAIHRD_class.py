@@ -114,7 +114,7 @@ class SEAIHRD_covid(object):
                 #transition_for_H = self.recovered
                 self.recovered()
 
-            elif self.time_in_state % round(1 / self.rate['rHD']) == 0:  # 10 days with p_to_die
+            elif self.time_in_state == round(1 / self.rate['rHD']) :  # 10 days with p_to_die
                 #transition_for_H = self.dead
                 self.dead()
 

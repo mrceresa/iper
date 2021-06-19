@@ -99,7 +99,7 @@ class HumanAgent(XAgent):
 
                     if len(cellmates) > 1:
                         #for str_id in [x for x in cellmates if x != self.id]:
-                        for str_id in [x for x in cellmates['agentid'] if x != self.id]:
+                        for str_id in [x for x in cellmates if x != self.id]:
                             if self.model.space.get_agent(str_id).house == self.house:
                                 self.add_contact(str_id)
 
@@ -117,7 +117,7 @@ class HumanAgent(XAgent):
 
                         if len(cellmates) > 1:
                             #for str_id in [x for x in cellmates if x != self.id]:
-                            for str_id in [x for x in cellmates['agentid'] if x != self.id]:
+                            for str_id in [x for x in cellmates if x != self.id]:
                                 if self.model.space.get_agent(str_id).workplace == workplace:
                                     self.add_contact(str_id)
 
@@ -138,7 +138,7 @@ class HumanAgent(XAgent):
 
                         else:
                             #human_cellmates = set([x for x in cellmates if x != self.id])
-                            human_cellmates = set([x for x in cellmates['agentid'] if x != self.id])
+                            human_cellmates = set([x for x in cellmates if x != self.id])
 
                             if self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
                                 for friend in self.friend_to_meet:
@@ -177,7 +177,8 @@ class HumanAgent(XAgent):
 
     def contact(self, others):
         """ Find close contacts and infect """
-        others_agents = [self.model.space.get_agent(aid) for aid in others['agentid'] if aid != self.id]
+        if not others: return
+        others_agents = [self.model.space.get_agent(aid) for aid in others if aid != self.id]
         #others_agents = [self.model.space.get_agent(aid) for aid in others if aid != self.id]
 
         for other in others_agents:
