@@ -33,6 +33,7 @@ class HumanAgent(XAgent):
         # self.presents_virus = False  # for symptomatic and detected asymptomatic people
         self.quarantined = None
 
+        self.family = set()
         self.friends = set()
         self.contacts = {}  # dict where keys are days and each day has a list of people
 
@@ -55,13 +56,25 @@ class HumanAgent(XAgent):
         chosen_action.do(self)
         # return chosen_action
 
+    def get_cellmates(self):
+        if 8 < self.model.DateTime.hour <= 16:
+            if self.workplace:
+                return list(self.model.space.get_agent(self.workplace).workers)
+            else: return []
+
+        elif 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:
+            return list(self.friend_to_meet)
+
+        else:
+            return list(self.family)
+
     def step(self):
         self.l.debug("*** Agent %s stepping" % str(self.id))
 
         # self.think()
-        cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
-        cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
-
+        #cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0)  # pandas df [agentid, geometry, distance]
+        #cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
+        cellmates = self.get_cellmates()
         #print(f"POSITION OF {self.id}: {self.pos}\n", cellmates)
 
 
@@ -85,6 +98,7 @@ class HumanAgent(XAgent):
                 elif self.model.DateTime.hour == 8:
 
                     if len(cellmates) > 1:
+                        #for str_id in [x for x in cellmates if x != self.id]:
                         for str_id in [x for x in cellmates['agentid'] if x != self.id]:
                             if self.model.space.get_agent(str_id).house == self.house:
                                 self.add_contact(str_id)
@@ -102,6 +116,7 @@ class HumanAgent(XAgent):
                         self.mask = workplace.mask
 
                         if len(cellmates) > 1:
+                            #for str_id in [x for x in cellmates if x != self.id]:
                             for str_id in [x for x in cellmates['agentid'] if x != self.id]:
                                 if self.model.space.get_agent(str_id).workplace == workplace:
                                     self.add_contact(str_id)
@@ -122,6 +137,7 @@ class HumanAgent(XAgent):
                         if self.pos != self.obj_place: self.getWorld().space.move_agent(self, self.obj_place)
 
                         else:
+                            #human_cellmates = set([x for x in cellmates if x != self.id])
                             human_cellmates = set([x for x in cellmates['agentid'] if x != self.id])
 
                             if self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
@@ -162,9 +178,9 @@ class HumanAgent(XAgent):
     def contact(self, others):
         """ Find close contacts and infect """
         others_agents = [self.model.space.get_agent(aid) for aid in others['agentid'] if aid != self.id]
+        #others_agents = [self.model.space.get_agent(aid) for aid in others if aid != self.id]
 
         for other in others_agents:
-
             if other.machine.state == "S":
                 other.machine.contact(self.mask, other.mask)
                 self.model.contact_count[0] += 1
@@ -229,7 +245,3 @@ class HumanAgent(XAgent):
             pTransMask2 = contacts_mask.maskPtrans(contacts_mask)
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_inf * pTransMask1 * pTransMask2  #prob_infection(self.mask, contacts_mask)  # self.model.virus.pTrans
             self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][2] += 1
-
-            if self.machine.state == s and self.machine.time_in_state != t:
-                print("THIRD LOOP", s, self.machine.state, t, self.machine.time_in_state)
-                a
