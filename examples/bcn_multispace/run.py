@@ -56,7 +56,8 @@ def main(args):
   l.info("Starting City simulator with params %s"%str(args))
   config = {
     "logger":l,
-    "basemap":args.basemap
+    "basemap":args.basemap,
+    "num_agents": args.agents
   }
   city = CityModel(config)
   pr = PopulationRequest()
@@ -69,7 +70,7 @@ def main(args):
           }            
         }
 
-  city.addPopulationRequest(pr) #Falla aqui
+  city.addPopulationRequest(pr)
   city.createAgents()  
 
   city.plotAll(args.output_dir, "pre.png")  
@@ -82,10 +83,10 @@ def main(args):
   city.plotAll(args.output_dir, "res.png")
 
   #Experiments Transports: Comment if not need to check them
-  #experiment_transport_line_plot(city.getAgents(), args.steps)
-  #experiment_mean_time_transport(city.getAgents())
+  experiment_transport_line_plot(city.getAgents(), args.steps)
+  experiment_mean_time_transport(city.getAgents())
   plot_all_routes_agent(city.getAgents())
-  plot_box_route_agent(city.getAgents())
+  #plot_box_route_agent(city.getAgents())
   return city
 
 
@@ -94,7 +95,7 @@ if __name__ == '__main__':
   parser.add_argument('-o','--output_dir', type=str, default="results-%s"%datetime.today().strftime('%Y%m%d-%H'), help="Output dir" ) #%Y%m%d-%H%M%S
   parser.add_argument('-c','--cache_dir', type=str, default="ctx-cache", help="Dir to cache maps")
   parser.add_argument('-v','--verbose', action="store_true", help="Print additional information" )
-  parser.add_argument('-s','--steps', type=int, default=20, help="Timesteps to run the model for" )          
+  parser.add_argument('-s','--steps', type=int, default=60, help="Timesteps to run the model for" )          
   parser.add_argument('-n','--agents', type=int, default=1, help="Numer of starting agents" )
   parser.add_argument('-b','--basemap', type=str, default="Barcelona, Spain", help="Basemap for geo referencing the model" )
   parser.add_argument('-f','--family', type=list, default=[19.9 ,23.8 ,20.4, 24.8, 8.9, 2.2], help="distribution listeach term in the distr list represents the probability of generating a familywith a number of individuals equal to the index of that element of distr" ) 
