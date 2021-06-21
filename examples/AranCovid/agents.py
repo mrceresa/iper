@@ -7,7 +7,7 @@ from scipy.spatial.distance import euclidean
 from SEAIHRD_class import SEAIHRD_covid, Mask
 import haversine as hs
 import DataCollector_functions as dc
-
+from geopandas.geodataframe import GeoDataFrame
 
 class RandomWalk(Action):
     def do(self, agent):
@@ -21,6 +21,14 @@ class RandomWalk(Action):
         if not agent.getWorld().out_of_bounds(new_position):
             agent.getWorld().space.move_agent(agent, new_position)
 
+class MoveTo(Action):
+    def do(self, agent, pos):
+        if agent.pos != pos:
+            agent.getWorld().space.move_agent(agent, pos)
+ 
+class StandStill(Action):
+    def do(self, agent):
+        pass
 
 class HumanAgent(XAgent):
     def __init__(self, unique_id, model):
@@ -39,6 +47,7 @@ class HumanAgent(XAgent):
 
         self.workplace = None  # to fill with a workplace if employed
         self.obj_place = None  # agent places to go
+        self.goal=""
         self.friend_to_meet = set()  # to fill with Agent to meet
 
         self.HospDetected = False
@@ -48,137 +57,120 @@ class HumanAgent(XAgent):
         return "Agent id " + str(self.id)
 
     def _postInit(self):
-        pass
+        self.obj_place = self.house
 
-    def think(self):
-        possible_actions = [RandomWalk()]
-        chosen_action = random.choice(possible_actions)
-        chosen_action.do(self)
-        # return chosen_action
 
-    def get_cellmates(self):
-        if 8 < self.model.DateTime.hour <= 16:
-            if self.workplace:
-                return list(self.model.space.get_agent(self.workplace).workers)
-            else: return []
+    def working_time(self):
+        if not self.workplace: 
+            return self.obj_place
+        
+        workplace = self.model.space.get_agent(self.workplace)
+        
+        # TODO: Ask Aran why we use a different mask
+        if self.pos == workplace.place:
+            self.mask = workplace.mask
+        
+        return workplace.place
 
-        elif 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:
-            return list(self.friend_to_meet)
+    def leisure_time(self):
+        if not self.friend_to_meet:
+            if np.random.choice([0, 1], p=[0.75,0.25]):
+                self.look_for_friend()  # probability to meet with a friend
+        
+        return self.obj_place
+               
 
-        else:
-            return list(self.family)
+    def _thinkGoal(self):
+        if self.model._check_movement_is_restricted():
+            return self.house       
+        
+        # working time
+        if 8 < self.model.DateTime.hour <= 16:  # working time
+            self.goal = "WORK"
+            return self.working_time()
+        
+        # leisure time
+        if 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:  # leisure time
+            self.goal = "FUN"
+            return self.leisure_time()
+
+        if self.model.night_curfew - 2 < self.model.DateTime.hour <= self.model.night_curfew - 1:  # Time to go home
+            if self.pos != self.house:
+                self.obj_place = self.house
+
+
+
+    def think(self, step, curr_time, cellmates):
+
+        chosen_action, chosen_action_pars = StandStill, [self]
+
+        if not self.mask and self.pos != self.house:
+            self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
+
+        # If we have a previous goal, go to it
+        if self.obj_place != self.pos:
+            return MoveTo(), [self, self.obj_place]
+
+        if self.quarantined: 
+            if self.obj_place == self.pos and self.goal == "GO_TO_HOSPITAL":
+                # once at hospital, is tested and next step will go home to quarantine
+                self.mask = Mask.FFP2
+                h = self.model.getHospitalPosition(self.obj_place)
+                h.doTest(self)
+
+        self.obj_place = self._thinkGoal()
+
+        # If we have a new goal execute it
+        if self.obj_place != self.pos:
+            return MoveTo(), [self, self.obj_place]
+
+        if self.pos == self.house and self.obj_place == self.pos:
+            self.mask = Mask.NONE
+
+        if self.machine.state in ["H", "D"]:
+            pass
+
+        return chosen_action, chosen_action_pars
+
 
     def step(self):
         self.l.debug("*** Agent %s stepping" % str(self.id))
 
-        # self.think()
         cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0/111100)  # pandas df [agentid, geometry, distance]
+        #import ipdb
+        #ipdb.set_trace()
         cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
-        #cellmates = self.get_cellmates()
-
-        if not self.model.lockdown_total:
-            self.move(cellmates)  # if not in total lockdown
-
-        if self.machine.state in ["I", "A"] and self.model.DateTime.hour > 8:
+        if self.machine.state in ["I", "A"]:
             self.contact(cellmates)
+            for str_id in [x for x in cellmates["agentid"] if x != self.id]:
+                self.add_contact(str_id)
+
+        #cellmates = self.get_cellmates()
+        _n = set([_aid for _aid in cellmates["agentid"]])
+        _d = _n.difference(self.family)
+        if len(_d) > 1: print(len(_d))
+
+        action, a_pars = self.think(self.model.currentStep, self.model.DateTime, cellmates)
+
+        print(action, a_pars)
+        self.l.info("Agent %s is doing %s(%s)"%(self.id, action.__class__.__name__,str(a_pars)))
+        action.do( *a_pars)
+        
+    
+        #if not self.model.lockdown_total:
+        #    self.move(cellmates)  # if not in total lockdown
 
         super().step()
 
-    def move(self, cellmates):
-
-        if self.machine.state in ["S", "E", "A", "I", "R"]:
-            if self.quarantined is None:  # if agent not hospitalized or dead
-                if self.model.DateTime.hour == 0:
-                    self.friend_to_meet = set()  # meetings are cancelled
-                    self.obj_place = None
-
-                # sleeping time
-                elif self.model.DateTime.hour == 8:
-
-                    if len(cellmates) > 1:
-                        #for str_id in [x for x in cellmates if x != self.id]:
-                        for str_id in [x for x in cellmates if x != self.id]:
-                            if self.model.space.get_agent(str_id).house == self.house:
-                                self.add_contact(str_id)
-
-                # working time
-                elif 8 < self.model.DateTime.hour <= 16:  # working time
-                    workplace = self.model.space.get_agent(self.workplace)
-                    if self.workplace is not None and self.pos != workplace.place:  # Employed and not at workplace
-                        if self.model.DateTime.hour == 7 and self.model.DateTime.minute == 0: self.mask = Mask.RandomMask(
-                            self.model.masks_probs)  # wear mask for walk
-                        self.getWorld().space.move_agent(self, workplace.place)
-                    # employee at workplace. Filter by time to avoid repeated loops
-                    elif self.workplace is not None and self.pos == workplace.place and self.model.DateTime.hour == 15 and self.model.DateTime.minute == 0:
-
-                        self.mask = workplace.mask
-
-                        if len(cellmates) > 1:
-                            #for str_id in [x for x in cellmates if x != self.id]:
-                            for str_id in [x for x in cellmates if x != self.id]:
-                                if self.model.space.get_agent(str_id).workplace == workplace:
-                                    self.add_contact(str_id)
-
-
-                # leisure time
-                elif 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:  # leisure time
-                    if self.model.DateTime.hour == 17 and self.model.DateTime.minute == 0:
-                        self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
-
-
-                    if not self.friend_to_meet:
-                        if np.random.choice([0, 1], p=[0.75,0.25]) and self.model.DateTime.minute == 0 and self.model.DateTime.hour % 2 == 0:
-                            self.look_for_friend()  # probability to meet with a friend
-                        # self.think()  # randomly
-
-                    else:  # going to a meeting
-                        if self.pos != self.obj_place: self.getWorld().space.move_agent(self, self.obj_place)
-
-                        else:
-                            #human_cellmates = set([x for x in cellmates if x != self.id])
-                            human_cellmates = set([x for x in cellmates if x != self.id])
-
-                            if self.friend_to_meet.issubset(human_cellmates):  # wait for everyone at the meeting
-                                for friend in self.friend_to_meet:
-                                    self.add_contact(friend)
-                                self.friend_to_meet = set()
-                                self.obj_place = None
-
-
-                # go back home
-                elif self.model.night_curfew - 2 < self.model.DateTime.hour <= self.model.night_curfew - 1:  # Time to go home
-                    if self.pos != self.house:
-                        self.getWorld().space.move_agent(self, self.house)
-                        self.mask = Mask.NONE
-
-            # Agent is self.quarantined
-            elif self.quarantined is not None:
-                if self.pos != self.house and self.obj_place is None:  # if has been tested, go home
-                    self.getWorld().space.move_agent(self, self.house)
-
-                elif self.pos == self.house and self.obj_place is None:
-                    self.mask = Mask.NONE
-
-                elif self.obj_place is not None:
-
-                    if self.obj_place != self.pos and 7 < self.model.DateTime.hour <= 23:  # if has to go testing, just go
-                        self.getWorld().space.move_agent(self, self.obj_place)
-
-                    elif self.obj_place == self.pos:
-                        # once at hospital, is tested and next step will go home to quarantine
-                        self.mask = Mask.FFP2
-                        h = self.model.getHospitalPosition(self.obj_place)
-                        h.doTest(self)
-                        self.obj_place = None
+       
 
 
 
     def contact(self, others):
         """ Find close contacts and infect """
-        if not others: return
-        others_agents = [self.model.space.get_agent(aid) for aid in others if aid != self.id]
+        if others is None or len(others)==0: return
+        others_agents = [self.model.space.get_agent(aid) for aid in others["agentid"] if aid != self.id]
         #others_agents = [self.model.space.get_agent(aid) for aid in others if aid != self.id]
-
         for other in others_agents:
             if other.machine.state == "S":
                 other.machine.contact(self.mask, other.mask)
@@ -186,7 +178,7 @@ class HumanAgent(XAgent):
                 if other.machine.state == "E":
                     self.model.contact_count[1] += 1
                     other.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0, round(1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
-
+        print(self.model.contact_count )
 
     def look_for_friend(self):
         """ Check the availability of friends to meet and arrange a meeting """
