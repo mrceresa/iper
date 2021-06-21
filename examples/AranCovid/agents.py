@@ -102,7 +102,7 @@ class HumanAgent(XAgent):
 
     def think(self, step, curr_time, cellmates):
 
-        chosen_action, chosen_action_pars = StandStill, [self]
+        chosen_action, chosen_action_pars = StandStill(), [self]
 
         if not self.mask and self.pos != self.house:
             self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
@@ -152,9 +152,9 @@ class HumanAgent(XAgent):
 
         action, a_pars = self.think(self.model.currentStep, self.model.DateTime, cellmates)
 
-        print(action, a_pars)
-        self.l.info("Agent %s is doing %s(%s)"%(self.id, action.__class__.__name__,str(a_pars)))
+        #self.l.info("Agent %s is doing %s(%s)"%(self.id, action.__class__.__name__,str(a_pars)))
         action.do( *a_pars)
+
         
     
         #if not self.model.lockdown_total:
