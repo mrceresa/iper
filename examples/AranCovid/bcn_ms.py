@@ -76,9 +76,9 @@ class CityModel(MultiEnvironmentWorld):
         # alarm state characteristics
         self.alarm_state = config["alarm_state"]
         self.lockdown_total = False
-        self.quarantine_period = 0
+        self.quarantine_period = 7
         self.night_curfew = 24
-        self.masks_probs = [0.01, 0.64, 0.35]
+        self.masks_probs = [1, 0, 0]
 
         self.N_hospitals = config["hospitals"]
         self.Hosp_capacity = math.ceil((0.0046 * config["agents"]) / self.N_hospitals)  # 4.6 beds per 1,000 inhabitants
@@ -93,6 +93,8 @@ class CityModel(MultiEnvironmentWorld):
 
         self.peopleInMeeting = config["peopleMeeting"]  # max people to meet with
         self.peopleInMeetingSd = config["peopleMeeting"] * 0.2
+
+        self.general_run = config["general_run"]
 
         # variables for model data collector
         self.collector_counts = None
@@ -166,7 +168,7 @@ class CityModel(MultiEnvironmentWorld):
           shpfilename = os.path.join(path, "examples/bcn_multispace/shapefiles","quartieriBarca1.shp")
         print("Loading shapefile from", shpfilename)
         blocks = gpd.read_file(shpfilename)
-        self._blocks= blocks    
+        self._blocks= blocks
 
     def plotAll(self, outdir, figname):
         fig = plt.figure(figsize=(15, 15))
@@ -224,7 +226,7 @@ class CityModel(MultiEnvironmentWorld):
         X['Day'] = X['Day'].apply(pd.Timestamp)
 
         R0_df = X[['Day','R0', 'R0_Obs']]
-        R0_df.to_csv(outdir + "/" + R0_title + '.csv', index=False)  # get the csv
+        R0_df.to_csv(outdir + "/" + R0_title + str(self.general_run) + '.csv', index=False)  # get the csv
 
 
 
@@ -235,15 +237,14 @@ class CityModel(MultiEnvironmentWorld):
         X.plot(x="Day", y=columns, color=colors)  # table=True
         if alarm_state: plt.axvline(pd.Timestamp(self.alarm_state['inf_threshold']), color='r', linestyle="dashed",
                                     label='Lockdown')
-        plt.ylabel('Values')
-        plt.title('R0 values')
-        # plt.gca().get_xaxis().set_visible(False)      #ax.xaxis.tick_top()
-        plt.tight_layout()
-        plt.savefig(os.path.join(outdir, R0_title))
+        # plt.ylabel('Values')
+        # plt.title('R0 values')
+        # plt.tight_layout()
+        # plt.savefig(os.path.join(outdir, R0_title))
 
         # Model stats plot
         X.drop(['R0', 'R0_Obs'], axis=1, inplace=True)
-        X.to_csv(outdir + "/" + title + '.csv', index=False)  # get the csv
+        X.to_csv(outdir + "/" + title + str(self.general_run) +'.csv', index=False)  # get the csv
 
         columns = ['Susceptible', 'Exposed', 'Infected', 'Recovered', 'Hospitalized', 'Dead']
         colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
@@ -251,15 +252,14 @@ class CityModel(MultiEnvironmentWorld):
         X.plot(x="Day", y=columns, color=colors)  # table=True
         if alarm_state: plt.axvline(pd.Timestamp(self.alarm_state['inf_threshold']), color='r', linestyle="dashed",
                                     label='Lockdown')
-        plt.ylabel('Values')
-        plt.title('Model stats')
-        # plt.gca().get_xaxis().set_visible(False)  # ax.xaxis.tick_top()
-        plt.tight_layout()
-        plt.savefig(os.path.join(outdir, title))
+        # plt.ylabel('Values')
+        # plt.title('Model stats')
+        # plt.tight_layout()
+        # plt.savefig(os.path.join(outdir, title))
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
         Y['Day'] = Y['Day'].apply(pd.Timestamp)
-        Y.to_csv(outdir + "/" + hosp_title + '.csv', index=False)  # get the csv
+        Y.to_csv(outdir + "/" + hosp_title + str(self.general_run) +'.csv', index=False)  # get the csv
 
         # Hospital stats plot
         columns = ['Hosp-Susceptible', 'Hosp-Infected', 'Hosp-Recovered', 'Hosp-Hospitalized', 'Hosp-Dead']
@@ -268,13 +268,11 @@ class CityModel(MultiEnvironmentWorld):
         Y.plot(x="Day", y=columns, color=colors)  # table=True
         if alarm_state: plt.axvline(pd.Timestamp(self.alarm_state['inf_threshold']), color='r', linestyle="dashed",
                                     label='Lockdown')
-        plt.ylabel('Values')
-        plt.title('Observed stats')
-        # plt.gca().get_xaxis().set_visible(False)      #ax.xaxis.tick_top()
-        plt.tight_layout()
-        plt.savefig(os.path.join(outdir, hosp_title))
-        #print(self.R0_observed)
-        print(self.contact_count, self.DateTime)
+        # plt.ylabel('Values')
+        # plt.title('Observed stats')
+        # plt.tight_layout()
+        # plt.savefig(os.path.join(outdir, hosp_title))
+
 
     def getHospitalPosition(self, place=None):
         """ Returns the position of the Hospitals or the Hospital agent if position is given """
@@ -286,8 +284,8 @@ class CityModel(MultiEnvironmentWorld):
     def step(self):
 
         current_step = self.DateTime
-        self.DateTime += timedelta(minutes=15)  # next step
-
+        self.DateTime += timedelta(minutes=30)  # next step
+        self.l.info("Current simulation time is %s"%str(self.DateTime))
         self.schedule.step()
 
         if self.space._gdf_is_dirty:
@@ -297,6 +295,10 @@ class CityModel(MultiEnvironmentWorld):
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
+            self.l.info("Today is a new day!")
+            _t = self.datacollector.tables['Model_DC_Table']
+            S,E,I,R,H,D = _t["Susceptible"][-1], _t["Exposed"][-1], _t["Infected"][-1], _t["Recovered"][-1], _t["Hospitalized"][-1], _t["Dead"][-1]
+            self.l.info("************ S %d,E %d,I %d,R %d,H %d,D %d"%(S,E,I,R,H,D))
             dc.reset_counts(self)
             dc.reset_hosp_counts(self)
             dc.update_stats(self)
@@ -345,6 +347,7 @@ class CityModel(MultiEnvironmentWorld):
 
     def createAgents(self, Humanagents, Workplaces, friendsXagent=3):
 
+        friendsXagent = self.peopleInMeeting
         family_dist = create_families(Humanagents)
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
@@ -358,6 +361,11 @@ class CityModel(MultiEnvironmentWorld):
                 for i in range(0, family_dist[index]):
                     self._agentsToAdd[agentsToBecreated - i].pos = position
                     self._agentsToAdd[agentsToBecreated - i].house = position
+                    for y in range(0, family_dist[index]):
+                        if i != y:
+                            self._agentsToAdd[agentsToBecreated - i].family.add(self._agentsToAdd[agentsToBecreated - y].id)
+
+
 
                     # FRIENDS
                     friends = random.sample([fr for fr in range(0, Humanagents) if fr != agentsToBecreated - i],
@@ -367,7 +375,7 @@ class CityModel(MultiEnvironmentWorld):
                         self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
-                    infected = np.random.choice(["S", "E", "I"], p=[0.985, 0.005, 0.01])
+                    infected = np.random.choice(["S", "E", "I"], p=[0.985, 0, 0.015])
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
                                                                                          age_())
@@ -433,7 +441,8 @@ class CityModel(MultiEnvironmentWorld):
         super().createAgents()
         dc.update_DC_table(self)
 
-        #         # print(f'{a.unique_id} has {a.machine.age} these friends and works at {a.workplace} with state {a.machine.state}')
+        # for a in [agent for agent in self.schedule.agents if isinstance(agent, Workplace)]:
+        #     print(f'{a.unique_id} has {a.workers} ')
 
     def calculate_R0(self, current_step):
         """ R0: prob of transmission x contacts x days with disease """
@@ -615,16 +624,16 @@ class CityModel(MultiEnvironmentWorld):
             # change quarantine status if necessary
             if human.quarantined is not None and self.DateTime.day == human.quarantined.day:
                 human.quarantined = None
-                if human.machine.state in ["E", "I", "A"] and human.HospDetected:
-                    # test them again
-                    self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(human.id)
+                # if human.machine.state in ["E", "I", "A"] and human.HospDetected:
+                #     # test them again
+                #     self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(human.id)
 
-            if human.machine.state in ["A", "I"]:
-                tup = (human.machine.time_in_state, human.machine.state)
-                if not human.id in self.R0_observed.keys():
-                    self.R0_observed[human.id] = [tup]
-                else:
-                    self.R0_observed[human.id].append(tup)
+            # if human.machine.state in ["A", "I"]:
+            #     tup = (human.machine.time_in_state, human.machine.state)
+            #     if not human.id in self.R0_observed.keys():
+            #         self.R0_observed[human.id] = [tup]
+            #     else:
+            #         self.R0_observed[human.id].append(tup)
             # print("ANOTHER DAY:", "ASYMPT:", asymptomatic, " SYMPTOM:", symptomatic)
 
             """            if t > human.machine.time_in_state and s == human.machine.state:

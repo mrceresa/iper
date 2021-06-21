@@ -88,6 +88,20 @@ def get_stats_from_files(start_with, title, colors, my_pal, output_dir, input_co
     control_df['Group'] = 'Control'
     test_df['Group'] = 'Test'
 
+    stats_df = pd.DataFrame()
+    stats_df["mean"] = round(test_df.mean(), 2)
+    stats_df["Std.Dev"] = round(test_df.std(),2)
+    stats_df["t-test"] = all_t
+    stats_df["p-value"] = all_p
+    stats_df.to_csv(input_test_dir + file_name+'.csv', index=True)
+
+    stats_df1 = pd.DataFrame()
+    stats_df1["mean"] = round(control_df.mean(), 2)
+    stats_df1["Std.Dev"] = round(control_df.std(),2)
+    stats_df1["t-test"] = all_t
+    stats_df1["p-value"] = all_p
+    stats_df1.to_csv(input_control_dir + file_name+'.csv', index=True)
+
     df = pd.concat([control_df, test_df])
     df_long = pd.melt(df, 'Group', var_name='Feature', value_name='Value')  # this is needed for the boxplots later on
 
@@ -120,7 +134,7 @@ def get_stats_from_files(start_with, title, colors, my_pal, output_dir, input_co
         y, h, col = df_long[df_long.Feature == feature]["Value"].max() + 1, 2, 'k'
         axes[idx].plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
         axes[idx].text((x1 + x2) * .5, y + h, "t: " + str(all_t[idx]) + " p: " + str(all_p[idx]), ha ='center', va ='bottom', color = col)
-        fig.suptitle("Significant feature differences between control and test groups", size=14, y=0.93)
+        fig.suptitle("Statistical analysis between " + input_control_dir.replace("_", " ").capitalize() + " and " + input_test_dir.replace("_", " ").capitalize(), size=14, y=0.93)
 
     plt.tight_layout()
     plt.subplots_adjust(top=.88)
@@ -153,7 +167,7 @@ def lineplot(frame, colors, title, input_dir, output_dir, file_name):
         sns.lineplot(data=frame, x="Day", y=columns[col], color=colors[col], legend='brief')
 
     plt.ylabel('Values')
-    plt.title(title)
+    plt.title(input_dir.replace("_", " ").capitalize() + " " + title)
     plt.gcf().autofmt_xdate()
     plt.gcf().legend(labels=columns)
     plt.savefig(os.path.join(output_dir, 'Lineplot ' + input_dir + " " + file_name))
@@ -163,9 +177,9 @@ def lineplot(frame, colors, title, input_dir, output_dir, file_name):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--output_dir', type=str, default="OUTPUT GRAPHS", help="Output dir")
-    parser.add_argument('-c', '--input_control_dir', type=str, default="control", help="Input control dir")
-    parser.add_argument('-t', '--input_test_dir', type=str, default="test", help="Input test dir")
+    parser.add_argument('-o', '--output_dir', type=str, default="OUTPUT GRAPHS/test", help="Output dir")
+    parser.add_argument('-c', '--input_control_dir', type=str, default="results-20210619-12", help="Input control dir")
+    parser.add_argument('-t', '--input_test_dir', type=str, default="results-20210619-12", help="Input test dir")
 
     parser.set_defaults(func=main)
 
