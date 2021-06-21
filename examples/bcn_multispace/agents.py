@@ -9,6 +9,9 @@ from pyproj import CRS
 import movingpandas as mpd
 import os
 
+import osmnx as ox
+from shapely.geometry import Point
+
 class RandomWalk(Action):
   def do(self, agent):
     _xs = agent.getWorld()._xs
@@ -25,12 +28,13 @@ class Move(Action):
         random_node = random.choice(list(agent.map.G.nodes))
         node = agent.map.G.nodes[random_node]
         if node['x'] == agent.pos[0] and node['y'] == agent.pos[1]: 
-            self.define_goal()
+            self.define_goal(agent)
         else:
             return (node['x'], node['y'])
 
   def init_goal_traj(self,agent):
     route = agent.map.routing_by_travel_time(agent.pos, agent.goal)
+    #Plots (Better do it at the end)
     #agent.map.plot_graph_route(route, 'y', show = False, save = True, filepath = 'plots/route_agent' + str(agent.unique_id) + '_num' + str(agent.life_goals) + '.png')
     #agent.map.plot_route_by_transport_type(route, save = True, filepath = 'examples/bcn_multispace/plots/route_agent_' + str(agent.unique_id) + '_num' + str(agent.life_goals) + 'colors' + '.png')
 
@@ -79,6 +83,9 @@ class Move(Action):
 
   def do(self,agent):
     if agent.has_goal == False:
+      # If we want the predeterminated goals run:
+      #agent.goal = agent.goals_list[agent.life_goals]
+      #else
       agent.goal = self.define_goal(agent)
       agent.goal_traj = self.init_goal_traj(agent)
       agent.life_goals += 1
@@ -103,9 +110,21 @@ class HumanAgent(XAgent):
     self.exposure_pollution = 0
     self.has_car = random.random() < 0.39
     self.has_bike = random.random() < 0.05
-    #self.which_map()
-    self.map = self.model.PedCarBike_Map
+    self.which_map()
+    #self.map = self.model.Ped_Map
+    # If we want the predeterminated goals run:
+    #self.goals_list = self.predeterminated_goals()
     super().__init__(self.unique_id )
+
+  def predeterminated_goals(self):
+    # Set some predeterminated goals. 
+    nodes = []
+    list_goals = [Point(2.159571, 41.386484), Point(2.163809, 41.386484), Point(2.170424, 41.385952), Point(2.168339, 41.382023), Point(2.175323, 41.384104), Point(2.177870, 41.387679), Point(2.169679, 41.394266), Point(2.182570, 41.390102)]
+    for goal in list_goals:
+      goal_proj, crs = ox.projection.project_geometry(goal)
+      node = self.map.G.nodes[ox.nearest_nodes(self.map.G, goal_proj.x, goal_proj.y, return_dist=False)]
+      nodes.append((node['x'], node['y']))
+    return nodes
 
   def which_map(self):
     map_name = ""

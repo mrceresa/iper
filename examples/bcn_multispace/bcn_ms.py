@@ -1,4 +1,5 @@
-from mesa import Agent, Model
+import hvplot
+from mesa import Agent, Model, agent
 from mesa.time import RandomActivation
 
 from mesa_geo.geoagent import GeoAgent
@@ -8,7 +9,10 @@ import networkx as nx
 from mesa.datacollection import DataCollector
 from mesa.space import NetworkGrid
 import random
+from networkx.classes.function import density
 import numpy as np
+import osmnx as ox
+import cartopy.crs as ccrs
 
 import geopandas as gpd
 import geoplot
@@ -45,6 +49,7 @@ class CityModel(MultiEnvironmentWorld):
     super().__init__(config)
     self.l.info("Initalizing model")
     self._basemap = config["basemap"]
+    self.num_agents = config["num_agents"]
     self.network = NetworkGrid(nx.Graph())
     self.l.info("Scheduler is " + str(self.schedule))
     self.schedule = RandomActivation(self)
@@ -63,11 +68,11 @@ class CityModel(MultiEnvironmentWorld):
     print('Pedestrian + Car + Bike Loaded')
     self.Ped_Map = Map_to_Graph('Pedestrian')  #Load the shapefiles 
     print('Pedestrian Loaded')
-    #self.PedCar_Map = Map_to_Graph('PedCar')  #Load the shapefiles 
-    #print('Pedestrian + Car Loaded')
-    #self.PedBike_Map = Map_to_Graph('PedBike')  #Load the shapefiles 
-    #print('Pedestrian + Bike Loaded')
-    self.define_boundaries_from_graphs(self.PedCarBike_Map) 
+    self.PedCar_Map = Map_to_Graph('PedCar')  #Load the shapefiles 
+    print('Pedestrian + Car Loaded')
+    self.PedBike_Map = Map_to_Graph('PedBike')  #Load the shapefiles 
+    print('Pedestrian + Bike Loaded')
+    self.define_boundaries_from_graphs(self.Ped_Map) 
     self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
     self.time_step = timedelta(seconds=60)
   
@@ -121,7 +126,6 @@ class CityModel(MultiEnvironmentWorld):
     if pos[0] < xmin or pos[0] > xmax: return True
     if pos[1] < ymin or pos[1] > ymax: return True    
     return False
-
      
   def _loadGeoData(self):
     path = os.getcwd()
@@ -130,13 +134,13 @@ class CityModel(MultiEnvironmentWorld):
       shpfilename = os.path.join(path, "examples/bcn_multispace/shapefiles","quartieriBarca1.shp")
     print("Loading shapefile from", shpfilename)
     blocks = gpd.read_file(shpfilename)
-    self._blocks= blocks    
+    self._blocks= blocks   
 
   def plotAll(self,outdir, figname):
     fig = plt.figure(figsize=(15, 15))
     ax1 = plt.gca()
     
-    tot_people =self._blocks["density"]
+    tot_people = self._blocks["density"]
     scheme = mapclassify.Quantiles(tot_people, k=5) 
  
     geoplot.choropleth(
@@ -155,8 +159,11 @@ class CityModel(MultiEnvironmentWorld):
     plt.tight_layout()
 
     # Plot agents
-    if self.space._gdf_is_dirty: self.space._create_gdf()
-    self.space._agdf.plot(ax=ax1)
+    if self.space._gdf_is_dirty: 
+      self.space._create_gdf()
+    #self.space._agdf.plot(ax=ax1)
+    #plot = self.space._agdf.hvplot(crs=ccrs.UTM(31), tiles = 'OSM', width=700, height=400, title = "Agents's Initialization")
+    #hvplot.show(plot)
 
     #xmin, ymin, xmax, ymax = self._xs["w"], self._xs["s"], self._xs["e"], self._xs["n"]
 
@@ -174,7 +181,7 @@ class CityModel(MultiEnvironmentWorld):
     #grid = gpd.GeoDataFrame({'geometry':polygons})
     #grid.plot(ax=ax1, facecolor='none', edgecolor="red")
 
-    plt.savefig(os.path.join(outdir, 'agents-'+figname))
+    #plt.savefig(os.path.join(outdir, 'agents-'+figname))
 
   def step(self):
     self.schedule.step()
@@ -182,12 +189,48 @@ class CityModel(MultiEnvironmentWorld):
     if self.space._gdf_is_dirty: self.space._create_gdf
 
   def createAgents(self):
+    locations =  self.population_density()
+    i = 0
     for _agent in self._agentsToAdd:
-      random_node = random.choice(list(self.Ped_Map.G.nodes))
-      _agent.pos = (self.Ped_Map.G.nodes[random_node]['x'],
-                    self.Ped_Map.G.nodes[random_node]['y'])
-      #_agent.pos = (uniform(self._xs["w"], self._xs["e"]), 
-      #          uniform(self._xs["s"], self._xs["n"]))   
+      # Random position for agents:
+      #node = random.choice(list(self.Ped_Map.G.nodes))
+      
+      # Fix position for agents:
+      #agent_loc, crs = ox.projection.project_geometry(Point(2.162902, 41.395852))
+      
+      # Density Distribution for agents:
+      agent_loc, crs = ox.projection.project_geometry(locations[i])
+      node = ox.nearest_nodes(self.Ped_Map.G, agent_loc.x, agent_loc.y, return_dist=False)
+      #node = ox.nearest_nodes(self.Ped_Map.G, locations[i].x, locations[i].y, return_dist=False)
+
+      _agent.pos = (self.Ped_Map.G.nodes[node]['x'],
+                    self.Ped_Map.G.nodes[node]['y'])
+      i +=1
     super().createAgents()
     
+  def population_density(self):
+    
+    self._blocks['Population'] = self._blocks['density'] * self._blocks['area']
+    self._blocks['Population_%'] = self._blocks['Population'] * 100 / self._blocks['Population'].sum()
 
+    #create a list containg the polygon where each agent should be initialize
+    init_polygon = []
+    init_agents = 0
+    for index, row in self._blocks.iterrows():
+      agents_in_zone = round(self.num_agents * (row['Population_%']/100))
+      init_agents += agents_in_zone
+      for i in np.arange(agents_in_zone):
+        init_polygon.append(row['geometry'])
+    while init_agents < self.num_agents:
+      init_polygon.append(self._blocks['geometry'].sample().item())
+      init_agents += 1
+    
+    # Get the point where each agent will be initialized
+    points = []
+    for polygon in init_polygon[:self.num_agents]:
+      minx, miny, maxx, maxy = polygon.bounds
+      pnt = Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
+      while polygon.contains(pnt) == False:
+        pnt = Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
+      points.append(pnt)
+    return points

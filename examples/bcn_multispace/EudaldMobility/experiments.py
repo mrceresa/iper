@@ -158,7 +158,7 @@ def plot_all_routes_agent(agents):
             route_list.append(traj)  
         traj_collect = mpd.TrajectoryCollection(route_list)
         unique_traj = mpd.Trajectory(pd.concat(df_list), traj_id='complete_traj')
-        plot = traj_collect.hvplot(line_width=5, width=700, height=400) + unique_traj.hvplot(c='type', line_width=7.0, width=700, height=400)
+        plot = traj_collect.hvplot(title = "Agent's Routes", line_width=5, width=700, height=400) + unique_traj.hvplot(title = "Transport Type in Agent's Routes", c='type', line_width=7.0, width=700, height=400)
         hvplot.show(plot)
         break
 
@@ -175,7 +175,7 @@ def plot_box_route_agent(agents):
             data.append([duration, length, speed])
         columns=['Times', 'Length', 'Speed']
         df = pd.DataFrame(data, columns = columns)
-        plot = df.hvplot.box(y='Times', ylabel='seconds', xlabel = 'Duration') + df.hvplot.box(y='Length', xlabel='Length', ylabel='meters') + df.hvplot.box(y='Speed', xlabel='Speed', ylabel='meters/seconds') 
+        plot = df.hvplot.box(title = "Routes Time Distribution", y='Times', ylabel='seconds', xlabel = 'Duration') + df.hvplot.box(title = "Routes Length Distribution", y='Length', xlabel='Length', ylabel='meters') + df.hvplot.box(title = "Routes Speed Distribution", y='Speed', xlabel='Speed', ylabel='meters/seconds') 
         hvplot.show(plot)
         break
 

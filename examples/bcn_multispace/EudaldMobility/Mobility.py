@@ -288,8 +288,10 @@ class Map_to_Graph():
     def __init__(self, net_type):
         root_path = os.getcwd()
         path_name = '/examples/bcn_multispace/EudaldMobility/pickle_objects/Small/'
+        #path_name = '/examples/bcn_multispace/EudaldMobility/pickle_objects/'
         try:
             with open(root_path + path_name + 'Part_BCN_' + net_type + '.p', 'rb') as f:
+            #with open(root_path + path_name + 'BCN_' + net_type + '.p', 'rb') as f:
                 db = pickle.load(f)
             self.G = ox.graph_from_gdfs(db[0],db[1])
             self.G = ox.project_graph(self.G)
