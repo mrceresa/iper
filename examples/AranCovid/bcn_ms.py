@@ -37,7 +37,7 @@ from shapely.geometry import Polygon
 import numpy as np
 
 import logging
-from random import uniform
+from random import uniform, randint
 import time
 from datetime import datetime, timedelta
 from attributes_Agent import job, create_families, age_
@@ -216,6 +216,7 @@ class CityModel(MultiEnvironmentWorld):
 
     def plot_results(self, outdir, title='stats', hosp_title='hosp_stats', R0_title='R0_stats'):
         """Plot cases per country"""
+        self.l.info("PLOTTING RESULTS")
         if isinstance(self.alarm_state['inf_threshold'], int) or self.alarm_state['inf_threshold'] == "2021-01-02":
             alarm_state = False
         else:
@@ -281,10 +282,16 @@ class CityModel(MultiEnvironmentWorld):
         else:
             return [i for i in self.schedule.agents if isinstance(i, Hospital) and i.place == place][0]
 
+    def _check_movement_is_restricted(self):
+        restricted = False
+        if restricted:
+            if 0 < self.DateTime.hour < 6:
+                return True
+
     def step(self):
 
         current_step = self.DateTime
-        self.DateTime += timedelta(minutes=30)  # next step
+        self.DateTime += timedelta(minutes=15)  # next step
         self.l.info("Current simulation time is %s"%str(self.DateTime))
         self.schedule.step()
 
@@ -317,7 +324,9 @@ class CityModel(MultiEnvironmentWorld):
                     self.activate_alarm_state()
                     # print("NIGHT CURFEW: ", self.night_curfew, '\n', "MASKS PROBS: ", self.masks_probs, '\n QUARANTINE: ', self.quarantine_period, "\n MEETIGN:", self.peopleInMeeting)
             # self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
-
+    
+        self.plotAll(self.config["output_dir"], "res%d.png"%self.currentStep)
+    
     def activate_alarm_state(self):
         self.alarm_state['inf_threshold'] = self.DateTime.strftime("%Y-%m-%d")
 
@@ -345,13 +354,13 @@ class CityModel(MultiEnvironmentWorld):
         if 'total_lockdown' in self.alarm_state.keys():
             self.lockdown_total = self.alarm_state['total_lockdown']
 
-    def createAgents(self, Humanagents, Workplaces, friendsXagent=3):
+    def createAgents(self, Humanagents, Workplaces, friendsXagent=3):# friendsXagent=3
 
         friendsXagent = self.peopleInMeeting
         family_dist = create_families(Humanagents)
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
-
+        r = 10.0/111100
         while agentsToBecreated >= 0:
             if isinstance(self._agentsToAdd[agentsToBecreated], HumanAgent):
                 # FAMILY PART
@@ -359,6 +368,7 @@ class CityModel(MultiEnvironmentWorld):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
 
                 for i in range(0, family_dist[index]):
+                    position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
                     self._agentsToAdd[agentsToBecreated - i].pos = position
                     self._agentsToAdd[agentsToBecreated - i].house = position
                     for y in range(0, family_dist[index]):
@@ -432,6 +442,8 @@ class CityModel(MultiEnvironmentWorld):
                 agentsToBecreated -= 1
             elif isinstance(self._agentsToAdd[agentsToBecreated], Workplace):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                
+                position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
                 self._agentsToAdd[agentsToBecreated].place = position  # redundant
                 self._agentsToAdd[agentsToBecreated].pos = position
                 self._agentsToAdd[agentsToBecreated].total_capacity = self.peopleInMeeting

@@ -59,7 +59,8 @@ def main(args):
         "quarantine": args.quarantine,
         "alarm_state": args.lockdown,
         "peopleMeeting": args.meeting,
-        "general_run": args.general_run
+        "general_run": args.general_run,
+        "output_dir":args.output_dir
     }
     city = CityModel(config)
     pr = PopulationRequest()
