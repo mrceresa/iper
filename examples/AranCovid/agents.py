@@ -115,7 +115,7 @@ class HumanAgent(XAgent):
             self.obj_place = self.house
             return self.obj_place  
 
-    def think(self, step, curr_time, cellmates):
+    def think(self):
 
         chosen_action, chosen_action_pars = StandStill(), [self]
 
@@ -147,26 +147,24 @@ class HumanAgent(XAgent):
 
         return chosen_action, chosen_action_pars
 
+    def getNeighs(self):
+        cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0/111100)  # pandas df [agentid, geometry, distance]
+        cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
+        return cellmates
 
     def step(self):
         self.l.debug("*** Agent %s stepping" % str(self.id))
         #print( "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",str(self.id),self.pos,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
-        cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0/111100)  # pandas df [agentid, geometry, distance]
-        #import ipdb
-        #ipdb.set_trace()
-        cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings
+        cellmates = None
+
         if self.machine.state in ["I", "A"]:
+            cellmates =  self.getNeighs()
             self.contact(cellmates)
             for str_id in [x for x in cellmates["agentid"] if x != self.id]:
                 self.add_contact(str_id)
 
-        #cellmates = self.get_cellmates()
-        _n = set([_aid for _aid in cellmates["agentid"]])
-        _d = _n.difference(self.family)
-        #if len(_d) > 1: print(len(_d))
-
-        action, a_pars = self.think(self.model.currentStep, self.model.DateTime, cellmates)
+        action, a_pars = self.think()
 
         #self.l.info("Agent %s is doing %s(%s)"%(self.id, action.__class__.__name__,str(a_pars)))
         action.do( *a_pars)
