@@ -20,7 +20,7 @@ class Hospital(XAgent):
         return "Agent " + str(self.id)
 
     def __str__(self):
-        return "Hospital at " + str(self.place) + "with " + str(self.PCR_availables) + " available tests"
+        return "Hospital at " + str(self.pos) + "with " + str(self.PCR_availables) + " available tests"
 
     def _postInit(self):
         pass
@@ -79,7 +79,7 @@ class Hospital(XAgent):
                     HospToTest.add(elem)
                     self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(
                         days=quarantine_period)
-                    self.model.space.get_agent(elem).obj_place = self.place
+                    self.model.space.get_agent(elem).obj_place = self.pos
 
             self.model.peopleToTest[ThreeD_ago] -= HospToTest
 
@@ -93,7 +93,7 @@ class Hospital(XAgent):
                     HospToTest.add(elem)
                     self.model.space.get_agent(elem).quarantined = self.model.DateTime + timedelta(
                         days=quarantine_period)
-                    self.model.space.get_agent(elem).obj_place = self.place
+                    self.model.space.get_agent(elem).obj_place = self.pos
 
             self.model.peopleToTest[TwoD_ago] -= HospToTest
 
@@ -103,13 +103,13 @@ class Hospital(XAgent):
 class Workplace(XAgent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        #self.place = (self.random.randrange(self.model.grid.width), self.random.randrange(self.model.grid.height))
+        #self.pos = (self.random.randrange(self.model.grid.width), self.random.randrange(self.model.grid.height))
         self.total_capacity = 0
         self.workers = set()
         self.mask = random.choice([Mask.HYGIENIC, Mask.FFP2])
 
     def __str__(self):
-        return "Workplace at " + str(self.place) + " with mask " + str(self.mask)
+        return "Workplace at " + str(self.pos) + " with mask " + str(self.mask)
 
     def __repr__(self):
         return "Agent " + str(self.id)

@@ -23,7 +23,7 @@ class SEAIHRD_covid(object):
         {'trigger': 'dead', 'source': 'H', 'dest': 'D', 'conditions': 'prob_to_die', }
     ]
 
-    def __init__(self, name, state, age):
+    def __init__(self, name, state, age, agent=None):
         # self.actual_state=actual_state
         self.time_in_state = 0
         self.pAI= {"0-9": 0.45, "10-19": 0.55, "20-29": 0.73,"30-39": 0.73, "40-49": 0.75,
@@ -41,7 +41,7 @@ class SEAIHRD_covid(object):
         self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
                                initial=state)
         self.prob_inf = 0.8
-
+        self._agent = agent
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10

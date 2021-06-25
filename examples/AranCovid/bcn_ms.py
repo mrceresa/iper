@@ -80,6 +80,7 @@ class CityModel(MultiEnvironmentWorld):
         self.night_curfew = 24
         self.masks_probs = [1, 0, 0]
 
+        self._hospitals = {}
         self.N_hospitals = config["hospitals"]
         self.Hosp_capacity = math.ceil((0.0046 * config["agents"]) / self.N_hospitals)  # 4.6 beds per 1,000 inhabitants
 
@@ -275,15 +276,13 @@ class CityModel(MultiEnvironmentWorld):
         plt.savefig(os.path.join(outdir, hosp_title))
 
 
-    def getHospitalPosition(self, place=None):
+    def getHospitals(self):
+        return self._hospitals.values()
+
+    def getHospitalPosition(self):
         """ Returns the position of the Hospitals or the Hospital agent if position is given """
-        if place is None:
-            return [i.place for i in self.schedule.agents if isinstance(i, Hospital)]
-        else:
-            hosp_at_place = [i for i in self.schedule.agents if isinstance(i, Hospital) and i.place == place]
-            if len(hosp_at_place) == 0:
-                raise ValueError("No hospital at place %s"%(str(place)))
-            return hosp_at_place
+        return self._hospitals.keys() #TODO: place or position?
+
             
     def _check_movement_is_restricted(self):
         restricted = False
@@ -442,9 +441,9 @@ class CityModel(MultiEnvironmentWorld):
                 family_dist[index] = 0
             elif isinstance(self._agentsToAdd[agentsToBecreated], Hospital):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
-                self._agentsToAdd[agentsToBecreated].place = position  # redundant
                 self._agentsToAdd[agentsToBecreated].pos = position
-                # print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].place} place")
+                self._hospitals[position] = self._agentsToAdd[agentsToBecreated]
+                # print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].pos} place")
                 agentsToBecreated -= 1
             elif isinstance(self._agentsToAdd[agentsToBecreated], Workplace):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
@@ -595,6 +594,7 @@ class CityModel(MultiEnvironmentWorld):
                     else:
                         human.quarantined = self.DateTime + timedelta(days=self.quarantine_period)  # quarantine
                     human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
+                    human.hospital = self._hospitals[human.obj_place]
 
                 elif human.machine.state == "A":  # if s == "E":
                     asymptomatic += 1
@@ -610,12 +610,12 @@ class CityModel(MultiEnvironmentWorld):
                     else:
                         # look for the nearest hospital to treat the agent
                         human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
-                        human.getWorld().space.move_agent(human, human.obj_place)
+                        human.getWorld().space.move_agent(human, human.obj_place) #TODO: YOU HAVE TO USE MOVE!!!!!
+                        human.hospital = self._hospitals[human.obj_place]
                         human.mask = Mask.FFP2
 
-                        # adds patient to nearest hospital patients list
-                        h = self.getHospitalPosition(human.obj_place)                      
-                        h[0].add_patient(human)
+                        # adds patient to nearest hospital patients list                   
+                        human.hospital.add_patient(human)
 
                         human.quarantined = None
                         human.friend_to_meet = set()
@@ -627,15 +627,13 @@ class CityModel(MultiEnvironmentWorld):
                             self.hosp_collector_counts['H-REC'] += 1"""
 
                     if s == "H":
-                        h = self.getHospitalPosition(human.obj_place)
-                        h[0].discharge_patient(human)
+                        human.hospital.discharge_patient(human)
                         human.HospDetected = True
                         # self.hosp_collector_counts['H-HOSP'] -= 1
                         # self.hosp_collector_counts['H-REC'] += 1
 
                 elif human.machine.state == "D":  # if s == "H":
-                    h = self.getHospitalPosition(human.obj_place)
-                    h[0].discharge_patient(human)
+                    human.hospital.discharge_patient(human)
                     # self.hosp_collector_counts['H-HOSP'] -= 1
                     # self.hosp_collector_counts['H-DEAD'] += 1
 

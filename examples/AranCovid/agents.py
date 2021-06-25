@@ -62,6 +62,9 @@ class HumanAgent(XAgent):
     def _postInit(self):
         self.obj_place = self.house
 
+    def _se(self):
+        """ This function is notified when a transition s->e happens"""
+        pass
 
     def working_time(self):
 
@@ -127,8 +130,8 @@ class HumanAgent(XAgent):
             if self.obj_place == self.pos and self.goal == "GO_TO_HOSPITAL":
                 # once at hospital, is tested and next step will go home to quarantine
                 self.mask = Mask.FFP2
-                h = self.model.getHospitalPosition(self.obj_place)
-                h[0].doTest(self)
+                h = self.model._hospitals[self.obj_place]
+                h.doTest(self)
 
         self.obj_place = self._thinkGoal()
 
