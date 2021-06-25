@@ -40,7 +40,7 @@ class SEAIHRD_covid(object):
         self.age = age
         self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
                                initial=state)
-        self.prob_inf = 0.05
+        self.prob_inf = 0.8
 
 
     def roundup(self, x):

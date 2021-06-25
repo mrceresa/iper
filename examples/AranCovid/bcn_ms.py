@@ -238,10 +238,10 @@ class CityModel(MultiEnvironmentWorld):
         X.plot(x="Day", y=columns, color=colors)  # table=True
         if alarm_state: plt.axvline(pd.Timestamp(self.alarm_state['inf_threshold']), color='r', linestyle="dashed",
                                     label='Lockdown')
-        # plt.ylabel('Values')
-        # plt.title('R0 values')
-        # plt.tight_layout()
-        # plt.savefig(os.path.join(outdir, R0_title))
+        plt.ylabel('Values')
+        plt.title('R0 values')
+        plt.tight_layout()
+        plt.savefig(os.path.join(outdir, R0_title))
 
         # Model stats plot
         X.drop(['R0', 'R0_Obs'], axis=1, inplace=True)
@@ -253,10 +253,10 @@ class CityModel(MultiEnvironmentWorld):
         X.plot(x="Day", y=columns, color=colors)  # table=True
         if alarm_state: plt.axvline(pd.Timestamp(self.alarm_state['inf_threshold']), color='r', linestyle="dashed",
                                     label='Lockdown')
-        # plt.ylabel('Values')
-        # plt.title('Model stats')
-        # plt.tight_layout()
-        # plt.savefig(os.path.join(outdir, title))
+        plt.ylabel('Values')
+        plt.title('Model stats')
+        plt.tight_layout()
+        plt.savefig(os.path.join(outdir, title))
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
         Y['Day'] = Y['Day'].apply(pd.Timestamp)
@@ -269,10 +269,10 @@ class CityModel(MultiEnvironmentWorld):
         Y.plot(x="Day", y=columns, color=colors)  # table=True
         if alarm_state: plt.axvline(pd.Timestamp(self.alarm_state['inf_threshold']), color='r', linestyle="dashed",
                                     label='Lockdown')
-        # plt.ylabel('Values')
-        # plt.title('Observed stats')
-        # plt.tight_layout()
-        # plt.savefig(os.path.join(outdir, hosp_title))
+        plt.ylabel('Values')
+        plt.title('Observed stats')
+        plt.tight_layout()
+        plt.savefig(os.path.join(outdir, hosp_title))
 
 
     def getHospitalPosition(self, place=None):
@@ -280,8 +280,11 @@ class CityModel(MultiEnvironmentWorld):
         if place is None:
             return [i.place for i in self.schedule.agents if isinstance(i, Hospital)]
         else:
-            return [i for i in self.schedule.agents if isinstance(i, Hospital) and i.place == place][0]
-
+            hosp_at_place = [i for i in self.schedule.agents if isinstance(i, Hospital) and i.place == place]
+            if len(hosp_at_place) == 0:
+                raise ValueError("No hospital at place %s"%(str(place)))
+            return hosp_at_place
+            
     def _check_movement_is_restricted(self):
         restricted = False
         if restricted:
@@ -291,7 +294,7 @@ class CityModel(MultiEnvironmentWorld):
     def step(self):
 
         current_step = self.DateTime
-        self.DateTime += timedelta(minutes=15)  # next step
+        self.DateTime += timedelta(minutes=30)  # next step
         self.l.info("Current simulation time is %s"%str(self.DateTime))
         self.schedule.step()
 
@@ -325,7 +328,7 @@ class CityModel(MultiEnvironmentWorld):
                     # print("NIGHT CURFEW: ", self.night_curfew, '\n', "MASKS PROBS: ", self.masks_probs, '\n QUARANTINE: ', self.quarantine_period, "\n MEETIGN:", self.peopleInMeeting)
             # self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
     
-        self.plotAll(self.config["output_dir"], "res%d.png"%self.currentStep)
+       #self.plotAll(self.config["output_dir"], "res%d.png"%self.currentStep)
     
     def activate_alarm_state(self):
         self.alarm_state['inf_threshold'] = self.DateTime.strftime("%Y-%m-%d")
@@ -358,19 +361,22 @@ class CityModel(MultiEnvironmentWorld):
 
         friendsXagent = self.peopleInMeeting
         family_dist = create_families(Humanagents)
+        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++famiglie",family_dist)
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
-        r = 10.0/111100
+        r = 20.0/111100
         while agentsToBecreated >= 0:
             if isinstance(self._agentsToAdd[agentsToBecreated], HumanAgent):
                 # FAMILY PART
                 if family_dist[index] == 0: index += 1
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                print("+++++++++++++++++++++++++++++++++********************",position)
 
                 for i in range(0, family_dist[index]):
                     position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
                     self._agentsToAdd[agentsToBecreated - i].pos = position
                     self._agentsToAdd[agentsToBecreated - i].house = position
+                    print("++++++++++++++++++++","id agente",self._agentsToAdd[agentsToBecreated - i].id,"   posizione iniziale agente", self._agentsToAdd[agentsToBecreated - i].pos)
                     for y in range(0, family_dist[index]):
                         if i != y:
                             self._agentsToAdd[agentsToBecreated - i].family.add(self._agentsToAdd[agentsToBecreated - y].id)
@@ -385,7 +391,7 @@ class CityModel(MultiEnvironmentWorld):
                         self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
-                    infected = np.random.choice(["S", "E", "I"], p=[0.985, 0, 0.015])
+                    infected = np.random.choice(["S", "E","A","I"],  p=[0.970, 0.015,0 ,0.015])#p=[0.985, 0, 0.015]) p=[0.970, 0.015,0 ,0.015])#
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
                                                                                          age_())
@@ -608,8 +614,8 @@ class CityModel(MultiEnvironmentWorld):
                         human.mask = Mask.FFP2
 
                         # adds patient to nearest hospital patients list
-                        h = self.getHospitalPosition(human.obj_place)
-                        h.add_patient(human)
+                        h = self.getHospitalPosition(human.obj_place)                      
+                        h[0].add_patient(human)
 
                         human.quarantined = None
                         human.friend_to_meet = set()
@@ -622,14 +628,14 @@ class CityModel(MultiEnvironmentWorld):
 
                     if s == "H":
                         h = self.getHospitalPosition(human.obj_place)
-                        h.discharge_patient(human)
+                        h[0].discharge_patient(human)
                         human.HospDetected = True
                         # self.hosp_collector_counts['H-HOSP'] -= 1
                         # self.hosp_collector_counts['H-REC'] += 1
 
                 elif human.machine.state == "D":  # if s == "H":
                     h = self.getHospitalPosition(human.obj_place)
-                    h.discharge_patient(human)
+                    h[0].discharge_patient(human)
                     # self.hosp_collector_counts['H-HOSP'] -= 1
                     # self.hosp_collector_counts['H-DEAD'] += 1
 
