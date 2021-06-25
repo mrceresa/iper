@@ -2,7 +2,7 @@ from transitions import Machine
 from enum import Enum
 import random
 import math
-
+import numpy as np
 
 class SEAIHRD_covid(object):
     # recovery time with gaussian distribution:{'19':(13.43,5.8), '29':(13.98,5.85),'39':(14.31,6.7),'49':(14.78,5.8),'59':(14.78,5.8),'99':(14.8,6.2)}
@@ -34,8 +34,13 @@ class SEAIHRD_covid(object):
                     "50-59": 0.15, "60-69": 0.18, "70-79": 0.20, "80-89": 0.50, "90+": 0.60}
         self.pHD = {"0-9": 0.03, "10-19": 0.20, "20-29": 0.20, "30-39": 0.20, "40-49": 0.25,
                     "50-59": 0.30, "60-69": 0.30, "70-79": 0.40, "80-89": 0.80, "90+": 0.99}
+        self.rate={}
         # self.prob_inf=0.9
-        self.rate = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.1}
+        rm = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.1}
+        rs = {'rEI':0.05, 'rIR': 0.01, 'rIH': 0.03, 'rHR': 0.01, 'rHD': 0.03}
+        for k,v in rm.items():
+            self.rate[k] = np.absolute(np.random.normal(v,rs[k]))
+
         self.name = name
         self.age = age
         self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
@@ -103,7 +108,7 @@ class SEAIHRD_covid(object):
                 #transition_for_I = self.recovered
                  self.recovered()
 
-            elif self.time_in_state % round(1 / self.rate['rIH']) == 0:  # 10 days on prob_severity
+            elif self.time_in_state == round(1 / self.rate['rIH']):  # 10 days on prob_severity
                 #transition_for_I = self.severity
                 self.severity()
 
