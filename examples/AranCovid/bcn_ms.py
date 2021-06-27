@@ -62,33 +62,32 @@ class CityModel(MultiEnvironmentWorld):
         self._loadGeoData()
         self.space = GeoSpacePandas(
             extent=(self._xs["w"], self._xs["s"],
-              self._xs["e"], self._xs["n"]
-            )
-          )
-        self.DateTime = datetime(year=2021, month=1, day=1, hour=9, minute=0, second=0)
+                    self._xs["e"], self._xs["n"]
+                    )
+        )
+        self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
         # self.virus = VirusCovid(config["virus"])
         self.pTest = 0.95
         self.R0 = 0
         self.R0_obs = 0
         self.R0_observed = {}
-        self.contact_count = [0,0]
+        self.contact_count = [0, 0]
 
         # alarm state characteristics
         self.alarm_state = config["alarm_state"]
         self.lockdown_total = False
-        self.quarantine_period = 7
+        self.quarantine_period = config["quarantine"]
         self.night_curfew = 24
-        self.masks_probs = [1, 0, 0]
+        self.masks_probs = [1, 0, 0]  # [0.01, 0.66,0.33]
 
         self._hospitals = {}
         self.N_hospitals = config["hospitals"]
         self.Hosp_capacity = math.ceil((0.0046 * config["agents"]) / self.N_hospitals)  # 4.6 beds per 1,000 inhabitants
 
         self.PCR_tests = config["tests"] / config["hospitals"]
-        # print("UCI BEDS: ", self.Hosp_capacity)
-        # print("HOSP CAPACITY IS: ", self.Hosp_capacity)
-        # print("TESTS PER HOSPITAL: ", self.PCR_tests)
-        self.employment_rate = 0.70
+        # self.PCR_tests = math.ceil(config["tests"] / config["hospitals"])
+
+        self.employment_rate = config["employment_rate"]
         self.peopleTested = {}
         self.peopleToTest = {}
 
@@ -164,12 +163,12 @@ class CityModel(MultiEnvironmentWorld):
 
     def _loadGeoData(self):
         path = os.getcwd()
-        shpfilename = os.path.join(path,"shapefiles","quartieriBarca1.shp")
+        shpfilename = os.path.join(path, "shapefiles", "quartieriBarca1.shp")
         if not os.path.exists(shpfilename):
-          shpfilename = os.path.join(path, "examples/bcn_multispace/shapefiles","quartieriBarca1.shp")
+            shpfilename = os.path.join(path, "examples/bcn_multispace/shapefiles", "quartieriBarca1.shp")
         print("Loading shapefile from", shpfilename)
         blocks = gpd.read_file(shpfilename)
-        self._blocks= blocks
+        self._blocks = blocks
 
     def plotAll(self, outdir, figname):
         fig = plt.figure(figsize=(15, 15))
@@ -227,10 +226,8 @@ class CityModel(MultiEnvironmentWorld):
 
         X['Day'] = X['Day'].apply(pd.Timestamp)
 
-        R0_df = X[['Day','R0', 'R0_Obs']]
+        R0_df = X[['Day', 'R0', 'R0_Obs']]
         R0_df.to_csv(outdir + "/" + R0_title + str(self.general_run) + '.csv', index=False)  # get the csv
-
-
 
         ### R0 plot ###
         columns = ['R0', 'R0_Obs']  # , 'Mcontacts', 'Quarantined', 'Contacts']
@@ -246,7 +243,7 @@ class CityModel(MultiEnvironmentWorld):
 
         # Model stats plot
         X.drop(['R0', 'R0_Obs'], axis=1, inplace=True)
-        X.to_csv(outdir + "/" + title + str(self.general_run) +'.csv', index=False)  # get the csv
+        X.to_csv(outdir + "/" + title + str(self.general_run) + '.csv', index=False)  # get the csv
 
         columns = ['Susceptible', 'Exposed', 'Infected', 'Recovered', 'Hospitalized', 'Dead']
         colors = ["Green", "Yellow", "Red", "Blue", "Gray", "Black"]
@@ -261,7 +258,7 @@ class CityModel(MultiEnvironmentWorld):
 
         Y = self.hosp_collector.get_table_dataframe("Hosp_DC_Table")
         Y['Day'] = Y['Day'].apply(pd.Timestamp)
-        Y.to_csv(outdir + "/" + hosp_title + str(self.general_run) +'.csv', index=False)  # get the csv
+        Y.to_csv(outdir + "/" + hosp_title + str(self.general_run) + '.csv', index=False)  # get the csv
 
         # Hospital stats plot
         columns = ['Hosp-Susceptible', 'Hosp-Infected', 'Hosp-Recovered', 'Hosp-Hospitalized', 'Hosp-Dead']
@@ -275,7 +272,6 @@ class CityModel(MultiEnvironmentWorld):
         plt.tight_layout()
         plt.savefig(os.path.join(outdir, hosp_title))
 
-
     def getHospitals(self):
         return self._hospitals.values()
 
@@ -283,7 +279,6 @@ class CityModel(MultiEnvironmentWorld):
         """ Returns the position of the Hospitals or the Hospital agent if position is given """
         return self._hospitals.keys() #TODO: place or position?
 
-            
     def _check_movement_is_restricted(self):
         restricted = False
         if restricted:
@@ -447,8 +442,8 @@ class CityModel(MultiEnvironmentWorld):
                 agentsToBecreated -= 1
             elif isinstance(self._agentsToAdd[agentsToBecreated], Workplace):
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
-                
-                position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
+
+                position = (position[0] + randint(-1, 1) * r, position[1] + randint(-1, 1) * r)
                 self._agentsToAdd[agentsToBecreated].place = position  # redundant
                 self._agentsToAdd[agentsToBecreated].pos = position
                 self._agentsToAdd[agentsToBecreated].total_capacity = self.peopleInMeeting
@@ -487,11 +482,9 @@ class CityModel(MultiEnvironmentWorld):
                         yesterday = today
 
                     if contacts == 0: contacts = 1
-                    # sorted(h.keys())[-1]
                     R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
                     R0_obs_values[1] += human.R0_contacts[yesterday][1]
                     R0_obs_values[2] += human.R0_contacts[yesterday][2]
-
 
                 contacts = human.R0_contacts[today][2]
                 if contacts == 0: contacts = 1
@@ -560,13 +553,15 @@ class CityModel(MultiEnvironmentWorld):
                     else:
                         for elem in a.PCR_results[date]: self.peopleTested[date].add(elem)"""
                 # delete contact tracing of Hdays time
-                if Htime in a.PCR_testing: del a.PCR_testing[Htime]
-                if Htime in a.PCR_results: del a.PCR_results[Htime]
+                #if Htime in a.PCR_testing: del a.PCR_testing[Htime]
+                #if Htime in a.PCR_results: del a.PCR_results[Htime]
 
-        self.peopleTested[self.DateTime.strftime('%Y-%m-%d')] = set()
-        self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')] = set()
+                #print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}. Con {peopleTested}")
 
-        # print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}")
+        today = self.DateTime.strftime('%Y-%m-%d')
+        #if not today in self.peopleTested:
+        self.peopleTested[today] = set()
+        self.peopleToTest[today] = set()
 
         # print(f"Lista total de testeados: {self.peopleTested}")
         # print(f"Lista total de agentes a testear: {self.peopleToTest}")
@@ -595,47 +590,37 @@ class CityModel(MultiEnvironmentWorld):
                         human.quarantined = self.DateTime + timedelta(days=self.quarantine_period)  # quarantine
                     human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
                     human.hospital = self._hospitals[human.obj_place]
+                    human.goal = "GO_TO_HOSPITAL"
 
-                elif human.machine.state == "A":  # if s == "E":
+                elif human.machine.state == "A":
                     asymptomatic += 1
 
-                elif human.machine.state == "H":  # if s == "A":
-                    # self.hosp_collector_counts['H-INF'] -= 1  # doesnt need to be, maybe it was not in the record
-                    # self.hosp_collector_counts['H-HOSP'] += 1
+                elif human.machine.state == "H":
                     human.HospDetected = False  # we assume hospitalized people do not transmit the virus
 
-                    if self.hosp_collector_counts["H-HOSP"] >= (
-                            self.Hosp_capacity * self.N_hospitals):  # hospital collapse
+                    if self.hosp_collector_counts["H-HOSP"] >= (self.Hosp_capacity * self.N_hospitals):
+                        # hospital collapse
                         human.machine.dead(H_collapse=True)
                     else:
                         # look for the nearest hospital to treat the agent
                         human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
-                        human.getWorld().space.move_agent(human, human.obj_place) #TODO: YOU HAVE TO USE MOVE!!!!!
+                        human.getWorld().space.move_agent(human, human.obj_place)  # TODO: YOU HAVE TO USE MOVE!!!!!
                         human.hospital = self._hospitals[human.obj_place]
                         human.mask = Mask.FFP2
 
-                        # adds patient to nearest hospital patients list                   
+                        # adds patient to nearest hospital patients list
                         human.hospital.add_patient(human)
 
                         human.quarantined = None
                         human.friend_to_meet = set()
 
                 elif human.machine.state == "R":
-                    """if s in ["I", "A"]:
-                        if human.HospDetected:
-                            self.hosp_collector_counts['H-INF'] -= 1
-                            self.hosp_collector_counts['H-REC'] += 1"""
-
                     if s == "H":
                         human.hospital.discharge_patient(human)
                         human.HospDetected = True
-                        # self.hosp_collector_counts['H-HOSP'] -= 1
-                        # self.hosp_collector_counts['H-REC'] += 1
 
                 elif human.machine.state == "D":  # if s == "H":
                     human.hospital.discharge_patient(human)
-                    # self.hosp_collector_counts['H-HOSP'] -= 1
-                    # self.hosp_collector_counts['H-DEAD'] += 1
 
             # change quarantine status if necessary
             if human.quarantined is not None and self.DateTime.day == human.quarantined.day:
@@ -643,15 +628,3 @@ class CityModel(MultiEnvironmentWorld):
                 # if human.machine.state in ["E", "I", "A"] and human.HospDetected:
                 #     # test them again
                 #     self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(human.id)
-
-            # if human.machine.state in ["A", "I"]:
-            #     tup = (human.machine.time_in_state, human.machine.state)
-            #     if not human.id in self.R0_observed.keys():
-            #         self.R0_observed[human.id] = [tup]
-            #     else:
-            #         self.R0_observed[human.id].append(tup)
-            # print("ANOTHER DAY:", "ASYMPT:", asymptomatic, " SYMPTOM:", symptomatic)
-
-            """            if t > human.machine.time_in_state and s == human.machine.state:
-                print("ERROR", s)
-                a"""

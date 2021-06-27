@@ -57,6 +57,7 @@ def main(args):
         "hospitals": args.hospitals,
         "tests": args.tests,
         "quarantine": args.quarantine,
+        "employment_rate": args.employment_rate,
         "alarm_state": args.lockdown,
         "peopleMeeting": args.meeting,
         "general_run": args.general_run,
@@ -109,6 +110,7 @@ if __name__ == '__main__':
     parser.add_argument('-H', '--hospitals', type=int, default=6, help="Numer of hospitals")
     parser.add_argument('-t', '--tests', type=int, default=4, help="Number of tests applied daily")
     parser.add_argument('-q', '--quarantine', type=int, default=10, help="Number of self-quarantine days")
+    parser.add_argument('-e', '--employment_rate', type=float, default=0.7, help="Employment rate")
     parser.add_argument('-l', '--lockdown', type=dict, default={'inf_threshold': 1, 'night_curfew': 18, 'masks': [0.01, 0.66, 0.33], 'quarantine': 21, 'meeting': 4, 'remote-working': 0.2, 'total_lockdown': False}, help="Number of detected infected people to apply health measures")
     parser.add_argument('-w', '--workplaces', type=int, default=50, help="Numer of workplaces")
     parser.add_argument('-m', '--meeting', type=int, default=10, help="Numer of People on Meetings")

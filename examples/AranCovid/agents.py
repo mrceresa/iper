@@ -26,8 +26,8 @@ class MoveTo(Action):
         #print("***************************",pos)
         if agent.pos != pos:
             agent.getWorld().space.move_agent(agent, pos)
-            
- 
+
+
 class StandStill(Action):
     def do(self, agent):
         pass
@@ -68,14 +68,13 @@ class HumanAgent(XAgent):
 
     def working_time(self):
 
-        
-        
-        if not self.workplace: 
+        if not self.workplace:
             return self.obj_place
-        
+
         workplace = self.model.space.get_agent(self.workplace)
-        
+
         # TODO: Ask Aran why we use a different mask
+        # because it can be the case agents are not wearing masks on the outside but its mandatory in the inside
         # if self.pos == workplace.place:
         #     self.mask = workplace.mask
 
@@ -88,32 +87,33 @@ class HumanAgent(XAgent):
         if not self.friend_to_meet:
             if np.random.choice([0, 1], p=[0.75,0.25]):
                 self.look_for_friend()  # probability to meet with a friend
-        
+
         return self.obj_place
-               
+
 
     def _thinkGoal(self):
         if self.model._check_movement_is_restricted():
-            return self.house       
-        
+            return self.house
+
+        if self.quarantined: return self.obj_place
         # working time
         if 8 < self.model.DateTime.hour <= 16:  # working time
             self.goal = "WORK"
             return self.working_time()
-        
+
         # leisure time
         if 16 < self.model.DateTime.hour <= self.model.night_curfew - 2:  # leisure time
             self.goal = "FUN"
             return self.leisure_time()
 
-        if self.model.night_curfew - 2 < self.model.DateTime.hour <= self.model.night_curfew - 1:  # Time to go home   
+        if self.model.night_curfew - 2 < self.model.DateTime.hour <= self.model.night_curfew - 1:  # Time to go home
             if self.pos != self.house:
                 self.obj_place = self.house
-            return self.obj_place  
+            return self.obj_place
 
         else:
             self.obj_place = self.house
-            return self.obj_place  
+            return self.obj_place
 
     def think(self):
 
@@ -126,14 +126,14 @@ class HumanAgent(XAgent):
         if self.obj_place != self.pos:
             return MoveTo(), [self, self.obj_place]
 
-        if self.quarantined: 
+        if self.quarantined and self.model.DateTime.hour == 9:  # test first thing in the morning
             if self.obj_place == self.pos and self.goal == "GO_TO_HOSPITAL":
                 # once at hospital, is tested and next step will go home to quarantine
                 self.mask = Mask.FFP2
                 h = self.model._hospitals[self.obj_place]
                 h.doTest(self)
-
-        self.obj_place = self._thinkGoal()
+        else:
+            self.obj_place = self._thinkGoal()
 
         # If we have a new goal execute it
         if self.obj_place != self.pos:
@@ -159,7 +159,7 @@ class HumanAgent(XAgent):
         cellmates = None
 
         if self.machine.state in ["I", "A"]:
-            cellmates =  self.getNeighs()
+            cellmates = self.getNeighs()
             self.contact(cellmates)
             for str_id in [x for x in cellmates["agentid"] if x != self.id]:
                 self.add_contact(str_id)
@@ -169,14 +169,12 @@ class HumanAgent(XAgent):
         #self.l.info("Agent %s is doing %s(%s)"%(self.id, action.__class__.__name__,str(a_pars)))
         action.do( *a_pars)
 
-        
-    
         #if not self.model.lockdown_total:
         #    self.move(cellmates)  # if not in total lockdown
 
         super().step()
 
-       
+
 
 
 
@@ -234,14 +232,16 @@ class HumanAgent(XAgent):
     def add_contact(self, contact):
         # check contacts for self agent
 
-        t = self.machine.time_in_state
-        s = self.machine.state
+        already_registered_contact = False
+        today  = self.model.DateTime.strftime('%Y-%m-%d')
+        if not today in self.contacts:
+            self.contacts[today] = {contact}  # initialize with contact
 
-        if not self.model.DateTime.strftime('%Y-%m-%d') in self.contacts:
-            self.contacts[self.model.DateTime.strftime('%Y-%m-%d')] = {contact}  # initialize with contact
+        elif contact not in self.contacts[today]:
+            self.contacts[today].add(contact)  # add contact to today's date
 
         else:
-            self.contacts[self.model.DateTime.strftime('%Y-%m-%d')].add(contact)  # add contact to now's date
+            already_registered_contact = True
 
         # add contacts of infected people for R0 calculations
         if self.machine.state in ["E", "A", "I"]:
@@ -251,8 +251,9 @@ class HumanAgent(XAgent):
             #print(self.R0_contacts)
             #print("************************",self.model.DateTime.strftime('%Y-%m-%d'))
 
-            if not self.model.DateTime.strftime('%Y-%m-%d') in self.R0_contacts: 
-                self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')] = [0,0,0]  # initialize
+            if not today in self.R0_contacts:
+                self.R0_contacts[today] = [0,0,0]  # initialize
 
-            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][0] += self.machine.prob_inf * pTransMask1 * pTransMask2  #prob_infection(self.mask, contacts_mask)  # self.model.virus.pTrans
-            self.R0_contacts[self.model.DateTime.strftime('%Y-%m-%d')][2] += 1
+            if not already_registered_contact:
+                self.R0_contacts[today][0] += self.machine.prob_inf * pTransMask1 * pTransMask2  #prob_infection(self.mask, contacts_mask)  # self.model.virus.pTrans
+                self.R0_contacts[today][2] += 1
