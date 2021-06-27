@@ -6,9 +6,9 @@ import argparse
 from shapely.geometry.geo import mapping
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-p','--pedestrian', type=str, default="False", help="Pedestrian Graph")
-parser.add_argument('-c','--car', type=str, default="False", help="Car Graph")
-parser.add_argument('-b','--bike', type=str, default="False", help="Bike Graph")
+parser.add_argument('-p','--pedestrian', type=str, default="True", help="Pedestrian Graph")
+parser.add_argument('-c','--car', type=str, default="True", help="Car Graph")
+parser.add_argument('-b','--bike', type=str, default="True", help="Bike Graph")
 parser.add_argument('-r','--root_path', type=str, default="./pickle_objects/", help="Save dir" )
 args = parser.parse_args()  
 
@@ -17,7 +17,7 @@ if args.pedestrian == "True":
     # Complete Graph
     G = ox.graph_from_place('Barcelona, Spain', network_type = 'walk')
     # Small Graph
-    #G = ox.graph_from_address('Plaça Catalunya', dist = 1000, network_type = 'walk')
+    # G = ox.graph_from_address('Plaça Catalunya', dist = 1000, network_type = 'walk')
 
     print("Labeling Pedestrian Data...")
     # Add Labels and dij flag, erase the speed predefined values
@@ -32,8 +32,8 @@ if args.pedestrian == "True":
         G.nodes[node_id]['dij'] = True
         
         # Only for the unique pedestrian if we want to use it for merging, desenable this.
-        mapping[node_id] = "P-" + str(node_id)
-    nx.relabel_nodes(G, mapping, copy = False)
+        #mapping[node_id] = "P-" + str(node_id)
+    #nx.relabel_nodes(G, mapping, copy = False)
     
     #Add speeds
     hwy_speeds_walk = {'residential': 4,
@@ -49,16 +49,16 @@ if args.pedestrian == "True":
     nodes_proj, edges_proj = ox.graph_to_gdfs(G, nodes=True, edges=True)
 
     #Pickle
-    with open(args.root_path + 'BCN_Pedestrian.p', 'wb') as f:
+    with open(args.root_path + 'BCN_PedestrianMerge.p', 'wb') as f:
         pickle.dump([nodes_proj, edges_proj], f)
     print("Pickle Pedestrian Done")
 
 if args.car == "True":
     print("Downloading Car Data...")
     # Complete Graph
-    #G = ox.graph_from_place('Barcelona, Spain', network_type = 'drive')
+    G = ox.graph_from_place('Barcelona, Spain', network_type = 'drive')
     # Small Graph
-    G = ox.graph_from_address('Plaça Catalunya', dist = 1000, network_type = 'drive')
+    #G = ox.graph_from_address('Plaça Catalunya', dist = 1000, network_type = 'drive')
 
     print("Labeling Car Data...")
     # Add Labels 
@@ -82,7 +82,7 @@ if args.car == "True":
     nodes_proj, edges_proj = ox.graph_to_gdfs(G, nodes=True, edges=True)
 
     #Pickle
-    with open(args.root_path + 'Part_BCN_Car.p', 'wb') as f:
+    with open(args.root_path + 'BCN_Car.p', 'wb') as f:
         pickle.dump([nodes_proj, edges_proj], f)
 
     print("Pickle Car Done")
@@ -90,9 +90,9 @@ if args.car == "True":
 if args.bike == "True": 
     print("Downloading Bike Data...")
     # Complete_ Graph
-    #G = ox.graph_from_place('Barcelona, Spain', network_type = 'bike')
+    G = ox.graph_from_place('Barcelona, Spain', network_type = 'bike')
     # Small Graph
-    G = ox.graph_from_address('Plaça Catalunya', dist = 1000, network_type = 'bike')
+    #G = ox.graph_from_address('Plaça Catalunya', dist = 1000, network_type = 'bike')
     print("Labeling Bike Data...")
     #Add Labels
     for edge_id in G.edges:
@@ -117,6 +117,6 @@ if args.bike == "True":
     nodes_proj, edges_proj = ox.graph_to_gdfs(G, nodes=True, edges=True)
 
     #Pickle
-    with open(args.root_path + 'Part_BCN_Bike.p', 'wb') as f:
+    with open(args.root_path + 'BCN_Bike.p', 'wb') as f:
         pickle.dump([nodes_proj, edges_proj], f)
     print("Pickle Bike Done")

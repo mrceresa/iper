@@ -82,24 +82,21 @@ def experiment_transport_line_plot(agents, steps):
     end_time =  start_time + (delta * steps)
     index_time = np.arange((start_time - start_time) / timedelta(seconds=60), (end_time - start_time) / timedelta(seconds=60), delta/timedelta(seconds=60)).astype(int)
     for agent in agents: 
-        i = 0
         current_time = start_time
-        old_row_name = ''
+        i = 0
         for key, traj in agent.record_trajectories.items(): 
-            while i < steps:
+            while current_time < traj.get_end_time():
                 row = traj.get_row_at(current_time)
-                if old_row_name == row.name:
+                if row['type'] == 'Pedestrian':
+                    walk[i] += 1
+                elif row['type'] == 'Car':
+                    car[i] += 1
+                elif row['type'] == 'Bike':
+                    bike[i] += 1     
+                current_time += delta
+                i += 1
+                if i >= steps:
                     break
-                else:
-                    if row['node'].split('-')[0] == 'P':
-                        walk[i] += 1
-                    elif row['node'].split('-')[0] == 'C':
-                        car[i] += 1
-                    elif row['node'].split('-')[0] == 'B':
-                        bike[i] += 1    
-                    old_row_name = row.name    
-                    current_time += delta
-                    i += 1
 
     x_value = [index_time, index_time, index_time]
     y_value = [walk, car, bike]
@@ -115,7 +112,7 @@ def plot_box(data,x_lagel_name, y_label_name, title):
     plt.title(title)
     plt.show()
 
-def experiment_mean_time_transport(agents, min = 10):
+def experiment_mean_time_transport(agents, min = 20):
     driving, walking, riding = [], [], []  
     for agent in agents: #For each agent 
         ped_time, car_time, bike_time = timedelta(),timedelta(),timedelta()
@@ -129,7 +126,7 @@ def experiment_mean_time_transport(agents, min = 10):
                 else:
                     item_type = item['node'].split("-")[0]
                     if start_item_type != item_type:
-                        ped_time += key - start_item
+                        ped_time += (key - start_item)
                         start_item = key
                         start_item_type = item_type
                     else:
@@ -178,6 +175,19 @@ def plot_box_route_agent(agents):
         plot = df.hvplot.box(title = "Routes Time Distribution", y='Times', ylabel='seconds', xlabel = 'Duration') + df.hvplot.box(title = "Routes Length Distribution", y='Length', xlabel='Length', ylabel='meters') + df.hvplot.box(title = "Routes Speed Distribution", y='Speed', xlabel='Speed', ylabel='meters/seconds') 
         hvplot.show(plot)
         break
+
+# Experiment 100 agents trajectories
+def trajectories(agents):
+    agents_traj = []
+    for agent in agents:
+        df_list = []
+        for index, traj in agent.record_trajectories.items(): #For each route 
+            df_list.append(traj.df)
+        traj = mpd.Trajectory(pd.concat(df_list), traj_id= agent.unique_id)
+        agents_traj.append(traj)
+    traj_collect = mpd.TrajectoryCollection(agents_traj)
+    plot = traj_collect.hvplot(title = 'Agents Routes', line_width=5, width=700, height=400)
+    hvplot.show(plot)
 
 def main():
     #list = ['C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'C', 'P', 'P', 'C', 'P']

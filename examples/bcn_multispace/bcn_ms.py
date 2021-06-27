@@ -42,6 +42,7 @@ from random import uniform
 import time
 
 from EudaldMobility.Mobility import Map_to_Graph
+from EudaldMobility.Pollution.pollution_model import Interpolation_Diffusion_Model
 
 class CityModel(MultiEnvironmentWorld):
 
@@ -74,7 +75,11 @@ class CityModel(MultiEnvironmentWorld):
     print('Pedestrian + Bike Loaded')
     self.define_boundaries_from_graphs(self.Ped_Map) 
     self.DateTime = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
+    self.current_hour = self.DateTime.hour
     self.time_step = timedelta(seconds=60)
+
+    # Pollution
+    self.pollution_model = Interpolation_Diffusion_Model(self.boundaries, self.DateTime)
   
   def define_boundaries_from_graphs(self, map):
     self.boundaries = map.get_boundaries()
@@ -136,6 +141,20 @@ class CityModel(MultiEnvironmentWorld):
     blocks = gpd.read_file(shpfilename)
     self._blocks= blocks   
 
+  def manage_pollution_model(self):
+    if self.DateTime.hour != self.current_hour:
+      # Read the new line from the dataset and update the particles
+      self.pollution_model.update_pollution_next_hour(self.current_time)
+      self.pollution_model.interpolate()
+      self.pollution_model.init_particles() #location of each particle
+      self.pollution_model.update_particles()
+      self.current_hour = self.DateTime.hour
+    else:
+      #apply only the diffusion model
+      self.pollution_model.diffusion()
+      self.pollution_model.update_particles()
+      #self.pollution_model.plot_3D()
+
   def plotAll(self,outdir, figname):
     fig = plt.figure(figsize=(15, 15))
     ax1 = plt.gca()
@@ -186,6 +205,7 @@ class CityModel(MultiEnvironmentWorld):
   def step(self):
     self.schedule.step()
     self.DateTime += self.time_step
+    self.manage_pollution_model()
     if self.space._gdf_is_dirty: self.space._create_gdf
 
   def createAgents(self):

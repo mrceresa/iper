@@ -10,7 +10,7 @@ import movingpandas as mpd
 import os
 
 import osmnx as ox
-from shapely.geometry import Point
+from shapely.geometry import Point 
 
 class RandomWalk(Action):
   def do(self, agent):
@@ -99,7 +99,10 @@ class Move(Action):
       else:
         newPos = agent.goal_traj.get_position_at(agent.model.DateTime)
       agent.getWorld().space.move_agent(agent, (newPos.x,newPos.y))
-  
+      #Pollution
+      pollution_value = agent.model.pollution_model.get_pollution_value((newPos.x,newPos.y))
+      agent.exposure_pollution += pollution_value
+
 class HumanAgent(XAgent):
   def __init__(self, unique_id, model):
     self.unique_id = unique_id
