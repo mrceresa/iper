@@ -205,7 +205,7 @@ class CityModel(MultiEnvironmentWorld):
   def step(self):
     self.schedule.step()
     self.DateTime += self.time_step
-    self.manage_pollution_model()
+    #self.manage_pollution_model()
     if self.space._gdf_is_dirty: self.space._create_gdf
 
   def createAgents(self):

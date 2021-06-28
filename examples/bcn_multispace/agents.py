@@ -99,9 +99,10 @@ class Move(Action):
       else:
         newPos = agent.goal_traj.get_position_at(agent.model.DateTime)
       agent.getWorld().space.move_agent(agent, (newPos.x,newPos.y))
-      #Pollution
-      pollution_value = agent.model.pollution_model.get_pollution_value((newPos.x,newPos.y))
-      agent.exposure_pollution += pollution_value
+    
+    #Pollution
+    pollution_value = agent.model.pollution_model.get_pollution_value((agent.pos[0],agent.pos[1]))
+    agent.exposure_pollution.append(pollution_value)
 
 class HumanAgent(XAgent):
   def __init__(self, unique_id, model):
@@ -110,11 +111,11 @@ class HumanAgent(XAgent):
     self.has_goal = False
     self.life_goals = 0 
     self.record_trajectories = {}
-    self.exposure_pollution = 0
+    self.exposure_pollution = []
     self.has_car = random.random() < 0.39
     self.has_bike = random.random() < 0.05
     self.which_map()
-    #self.map = self.model.Ped_Map
+    #self.map = self.model.PedCar_Map
     # If we want the predeterminated goals run:
     #self.goals_list = self.predeterminated_goals()
     super().__init__(self.unique_id )

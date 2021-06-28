@@ -11,10 +11,13 @@ from itertools import islice
 from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import movingpandas as mpd
 from statistics import mean
+from pyproj import CRS
 
 from param import DataFrame
+from shapely import geometry
 
 #Fix length edges joined graph (Suport function not needed anymore)
 def fix_length():
@@ -155,6 +158,7 @@ def plot_all_routes_agent(agents):
             route_list.append(traj)  
         traj_collect = mpd.TrajectoryCollection(route_list)
         unique_traj = mpd.Trajectory(pd.concat(df_list), traj_id='complete_traj')
+        print(unique_traj.df)
         plot = traj_collect.hvplot(title = "Agent's Routes", line_width=5, width=700, height=400) + unique_traj.hvplot(title = "Transport Type in Agent's Routes", c='type', line_width=7.0, width=700, height=400)
         hvplot.show(plot)
         break
@@ -187,6 +191,31 @@ def trajectories(agents):
         agents_traj.append(traj)
     traj_collect = mpd.TrajectoryCollection(agents_traj)
     plot = traj_collect.hvplot(title = 'Agents Routes', line_width=5, width=700, height=400)
+    hvplot.show(plot)
+
+# Experiment pollution
+def pollution_trajectories(agents, steps):
+    start_time = datetime(year=2021, month=1, day=1, hour= 0, minute=0, second=0) 
+    delta = timedelta(seconds=60)
+
+    for agent in agents:
+        current_time = start_time
+        i = 0
+        pollution_list = []
+        for key, traj in agent.record_trajectories.items(): 
+            while current_time < traj.get_end_time():
+                row = traj.get_row_at(current_time)
+                row['pollution'] = agent.exposure_pollution[i]
+                pollution_list.append(row)
+                current_time += delta
+                i += 1
+                if i >= steps:
+                    break
+        pollution_df = pd.DataFrame(pollution_list)
+        pollution_gdf = gpd.GeoDataFrame(pollution_df, geometry= pollution_df['geometry'], crs=CRS(32631))
+        pollution_traj = mpd.Trajectory(pollution_gdf, 'pollution_df')
+        print(pollution_traj.df)
+    plot = pollution_traj.hvplot(title = "Pollution Absorbed During the Agent's Journey", c='pollution', line_width=7.0, width=700, height=400, colorbar=True)
     hvplot.show(plot)
 
 def main():
