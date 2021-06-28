@@ -147,6 +147,9 @@ class HumanAgent(XAgent):
 
         return chosen_action, chosen_action_pars
 
+    def _on_change(self, source, dest):
+        self.model._on_agent_changed(self, source, dest)
+
     def getNeighs(self):
         cellmates = self.getWorld().space.agents_at(self.pos, radius=2.0/111100)  # pandas df [agentid, geometry, distance]
         cellmates = cellmates[(cellmates['agentid'].str.contains('Human'))]  # filter out buildings

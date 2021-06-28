@@ -44,9 +44,17 @@ class SEAIHRD_covid(object):
         self.name = name
         self.age = age
         self.machine = Machine(model=self, states=SEAIHRD_covid.states, transitions=SEAIHRD_covid.transitions,
-                               initial=state)
+                               initial=state, after_state_change='on_change',send_event=True)
         self.prob_inf = 0.8
         self._agent = agent
+
+
+
+    def on_change(self, event):
+        _s = event.transition.source
+        _d = event.transition.dest
+        if _s != _d:
+            self._agent._on_change(_s, _d)    
 
     def roundup(self, x):
         return int(math.ceil(x / 10.0)) * 10
@@ -54,7 +62,9 @@ class SEAIHRD_covid(object):
     def recovery_time(self):
         pass
 
-    def prob_infection(self, Mask1, Mask2):
+    #def prob_infection(self, Mask1, Mask2):
+    def prob_infection(self, event):
+        Mask1, Mask2 = event.args
         """ probability of infection after a risk contact. """
         pMask1 = Mask1.maskPtrans(Mask1)
         pMask2 = Mask2.maskPtrans(Mask2)

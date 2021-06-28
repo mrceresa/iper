@@ -566,6 +566,9 @@ class CityModel(MultiEnvironmentWorld):
         # print(f"Lista total de testeados: {self.peopleTested}")
         # print(f"Lista total de agentes a testear: {self.peopleToTest}")
 
+    def _on_agent_changed(self, agent, source, dest):
+        print("-"*10,"MODEL", agent, source, dest)
+
     def changeAgentStates(self):
         """ UPDATE AGENTS STATE """
         asymptomatic = 0
