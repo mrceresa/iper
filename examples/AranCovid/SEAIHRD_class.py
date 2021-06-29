@@ -36,8 +36,8 @@ class SEAIHRD_covid(object):
                     "50-59": 0.30, "60-69": 0.30, "70-79": 0.40, "80-89": 0.80, "90+": 0.99}
         self.rate={}
         # self.prob_inf=0.9
-        rm = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.1}
-        rs = {'rEI':0.05, 'rIR': 0.01, 'rIH': 0.03, 'rHR': 0.01, 'rHD': 0.03}
+        rm = {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.1}# {'rEI': 1 / 5, 'rIR': 0.05, 'rIH': 0.1, 'rHR': 0.05, 'rHD': 0.03}
+        rs = {'rEI':0.05, 'rIR': 0.01, 'rIH': 0.03, 'rHR': 0.01, 'rHD': 0.02}
         for k,v in rm.items():
             self.rate[k] = np.absolute(np.random.normal(v,rs[k]))
 
@@ -75,7 +75,7 @@ class SEAIHRD_covid(object):
         # print("CONTACT", self.prob_inf, pMask1, pMask2, prob_inf)
         return res
 
-    def prob_sintomatic(self):
+    def prob_sintomatic(self,event):
         """ probability to become symptomatic. """
         p = list(self.pAI.values())[int(self.roundup(self.age) / 10) - 1]
         return random.random() < p
@@ -88,7 +88,7 @@ class SEAIHRD_covid(object):
         else:
             return random.random() < p
 
-    def prob_severity(self):
+    def prob_severity(self,event):
         """ probability to become hospitalized. """
         p = list(self.pIH.values())[int(self.roundup(self.age) / 10) - 1]
         return random.random() < p

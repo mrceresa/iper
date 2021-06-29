@@ -57,6 +57,11 @@ class CityModel(MultiEnvironmentWorld):
         self.l.info("Scheduler is " + str(self.schedule))
         self.schedule = RandomActivation(self)
 
+        self.totalInStatesForDay=[]    
+        self.agents_in_states={"S":0, "E":0,"A":0,"I":0,"H":0,"R":0,"D":0}
+        self.Morti=0
+        self.Ospedalizzati=0
+
         self.l.info("Loading geodata")
         self._initGeo()
         self._loadGeoData()
@@ -82,7 +87,7 @@ class CityModel(MultiEnvironmentWorld):
 
         self._hospitals = {}
         self.N_hospitals = config["hospitals"]
-        self.Hosp_capacity = math.ceil((0.0046 * config["agents"]) / self.N_hospitals)  # 4.6 beds per 1,000 inhabitants
+        self.Hosp_capacity = math.ceil((0.1 * config["agents"]) / self.N_hospitals)#math.ceil((0.0046 * config["agents"]) / self.N_hospitals)     # 4.6 beds per 1,000 inhabitants
 
         self.PCR_tests = config["tests"] / config["hospitals"]
         # self.PCR_tests = math.ceil(config["tests"] / config["hospitals"])
@@ -300,6 +305,7 @@ class CityModel(MultiEnvironmentWorld):
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
             self.l.info("Today is a new day!")
+            self.totalInStatesForDay.append(self.agents_in_states)
             _t = self.datacollector.tables['Model_DC_Table']
             S,E,I,R,H,D = _t["Susceptible"][-1], _t["Exposed"][-1], _t["Infected"][-1], _t["Recovered"][-1], _t["Hospitalized"][-1], _t["Dead"][-1]
             self.l.info("************ S %d,E %d,I %d,R %d,H %d,D %d"%(S,E,I,R,H,D))
@@ -355,7 +361,7 @@ class CityModel(MultiEnvironmentWorld):
 
         friendsXagent = self.peopleInMeeting
         family_dist = create_families(Humanagents)
-        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++famiglie",family_dist)
+        #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++famiglie",family_dist)
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
         r =20.0/111100
@@ -364,13 +370,13 @@ class CityModel(MultiEnvironmentWorld):
                 # FAMILY PART
                 if family_dist[index] == 0: index += 1
                 position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
-                print("+++++++++++++++++++++++++++++++++********************",position)
+                #print("+++++++++++++++++++++++++++++++++********************",position)
 
                 for i in range(0, family_dist[index]):
                     position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
                     self._agentsToAdd[agentsToBecreated - i].pos = position
                     self._agentsToAdd[agentsToBecreated - i].house = position
-                    print("++++++++++++++++++++","id agente",self._agentsToAdd[agentsToBecreated - i].id,"   posizione iniziale agente", self._agentsToAdd[agentsToBecreated - i].pos)
+                    #print("++++++++++++++++++++","id agente",self._agentsToAdd[agentsToBecreated - i].id,"   posizione iniziale agente", self._agentsToAdd[agentsToBecreated - i].pos)
                     for y in range(0, family_dist[index]):
                         if i != y:
                             self._agentsToAdd[agentsToBecreated - i].family.add(self._agentsToAdd[agentsToBecreated - y].id)
@@ -386,9 +392,10 @@ class CityModel(MultiEnvironmentWorld):
 
                     # INFECTION
                     infected = np.random.choice(["S", "E","A","I"],  p=[0.970, 0.015,0 ,0.015])#p=[0.985, 0, 0.015]) p=[0.970, 0.015,0 ,0.015])#
+                    self.agents_in_states[infected]+= 1
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
-                                                                                         age_())
+                                                                                         age_(), agent=self._agentsToAdd[agentsToBecreated - i])
                         self._agentsToAdd[agentsToBecreated - i].machine.time_in_state = random.choice(
                             list(range(1, 11)))
                         self.collector_counts["SUSC"] -= 1
@@ -404,7 +411,7 @@ class CityModel(MultiEnvironmentWorld):
                                                                                                                     0]
                     elif infected == "E":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "E",
-                                                                                         age_())
+                                                                                         age_(), agent=self._agentsToAdd[agentsToBecreated - i])
                         self._agentsToAdd[agentsToBecreated - i].machine.time_in_state = random.choice(
                             list(range(1, 5)))
 
@@ -417,7 +424,7 @@ class CityModel(MultiEnvironmentWorld):
 
                     else:
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(
-                            self._agentsToAdd[agentsToBecreated - i].id, "S", age_())
+                            self._agentsToAdd[agentsToBecreated - i].id, "S", age_(), agent=self._agentsToAdd[agentsToBecreated - i])
 
                     # EMPLOYMENT
 
@@ -449,6 +456,7 @@ class CityModel(MultiEnvironmentWorld):
                 self._agentsToAdd[agentsToBecreated].total_capacity = self.peopleInMeeting
 
                 agentsToBecreated -= 1
+            self.totalInStatesForDay.append(self.agents_in_states)    
 
         super().createAgents()
         dc.update_DC_table(self)
@@ -567,7 +575,12 @@ class CityModel(MultiEnvironmentWorld):
         # print(f"Lista total de agentes a testear: {self.peopleToTest}")
 
     def _on_agent_changed(self, agent, source, dest):
-        print("-"*10,"MODEL", agent, source, dest)
+        print("-"*30,"MODEL", agent, source, dest)
+        self.agents_in_states[source]+= -1
+        self.agents_in_states[dest]+= 1
+        print( "----------------------------------------------------------------------------------------",self.agents_in_states)
+
+
 
     def changeAgentStates(self):
         """ UPDATE AGENTS STATE """
@@ -576,7 +589,8 @@ class CityModel(MultiEnvironmentWorld):
         for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
             s = human.machine.state
             human.machine.check_state()
-
+            Morti=0
+            Ospedalizzati=0
             if s != human.machine.state:
 
                 if human.machine.state == "S":  # if s == "R"
@@ -600,6 +614,8 @@ class CityModel(MultiEnvironmentWorld):
 
                 elif human.machine.state == "H":
                     human.HospDetected = False  # we assume hospitalized people do not transmit the virus
+                    self.Ospedalizzati+=1
+                    #print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",self.Ospedalizzati)
 
                     if self.hosp_collector_counts["H-HOSP"] >= (self.Hosp_capacity * self.N_hospitals):
                         # hospital collapse
@@ -624,6 +640,8 @@ class CityModel(MultiEnvironmentWorld):
 
                 elif human.machine.state == "D":  # if s == "H":
                     human.hospital.discharge_patient(human)
+                    self.Morti+=1
+                    #print("-----------------------------------------------------------------------------------------",self.Morti)
 
             # change quarantine status if necessary
             if human.quarantined is not None and self.DateTime.day == human.quarantined.day:
