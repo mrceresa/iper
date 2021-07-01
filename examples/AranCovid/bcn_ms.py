@@ -51,6 +51,9 @@ class CityModel(MultiEnvironmentWorld):
 
     def __init__(self, config):
         super().__init__(config)
+
+
+        self.timestep=30
         self.l.info("Initalizing model")
         self._basemap = config["basemap"]
         self.network = NetworkGrid(nx.Graph())
@@ -59,8 +62,10 @@ class CityModel(MultiEnvironmentWorld):
 
         self.totalInStatesForDay=[]    
         self.agents_in_states={"S":0, "E":0,"A":0,"I":0,"H":0,"R":0,"D":0}
-        self.Morti=0
-        self.Ospedalizzati=0
+        self.E_today=0
+        self.today1=0
+        self.Hospitalized_total=0
+
 
         self.l.info("Loading geodata")
         self._initGeo()
@@ -77,6 +82,7 @@ class CityModel(MultiEnvironmentWorld):
         self.R0_obs = 0
         self.R0_observed = {}
         self.contact_count = [0, 0]
+        self._contact_agents = set()
 
         # alarm state characteristics
         self.alarm_state = config["alarm_state"]
@@ -222,6 +228,7 @@ class CityModel(MultiEnvironmentWorld):
     def plot_results(self, outdir, title='stats', hosp_title='hosp_stats', R0_title='R0_stats'):
         """Plot cases per country"""
         self.l.info("PLOTTING RESULTS")
+        self.l.info(self.Hospitalized_total)
         if isinstance(self.alarm_state['inf_threshold'], int) or self.alarm_state['inf_threshold'] == "2021-01-02":
             alarm_state = False
         else:
@@ -277,6 +284,8 @@ class CityModel(MultiEnvironmentWorld):
         plt.tight_layout()
         plt.savefig(os.path.join(outdir, hosp_title))
 
+
+
     def getHospitals(self):
         return self._hospitals.values()
 
@@ -293,7 +302,7 @@ class CityModel(MultiEnvironmentWorld):
     def step(self):
 
         current_step = self.DateTime
-        self.DateTime += timedelta(minutes=30)  # next step
+        self.DateTime += timedelta(minutes=self.timestep)  # next step
         self.l.info("Current simulation time is %s"%str(self.DateTime))
         self.schedule.step()
 
@@ -314,10 +323,11 @@ class CityModel(MultiEnvironmentWorld):
             dc.update_stats(self)
             self.calculate_R0(current_step)
             dc.update_DC_table(self)
-
+            print("T"*30,len(self._contact_agents))
+            self._contact_agents = set()
+            
             # clean contact lists from agents for faster computations
-            self.clean_contact_list(current_step, Adays=2, Hdays=5, Tdays=10)
-            self.changeAgentStates()
+            self.clean_contact_list(current_step, Adays=2, Hdays=5, Tdays=10)           
 
             # decide on applying stricter measures
             if isinstance(self.alarm_state['inf_threshold'], int):
@@ -391,7 +401,7 @@ class CityModel(MultiEnvironmentWorld):
                         self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
-                    infected = np.random.choice(["S", "E","A","I"],  p=[0.970, 0.015,0 ,0.015])#p=[0.985, 0, 0.015]) p=[0.970, 0.015,0 ,0.015])#
+                    infected = np.random.choice(["S", "E","A","I"],  p=[0.990, 0, 0 ,0.01])#p=[0.985, 0, 0.015]) p=[0.970, 0.015,0 ,0.015])#
                     self.agents_in_states[infected]+= 1
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
@@ -465,61 +475,78 @@ class CityModel(MultiEnvironmentWorld):
         #     print(f'{a.unique_id} has {a.workers} ')
 
     def calculate_R0(self, current_step):
-        """ R0: prob of transmission x contacts x days with disease """
-        today = current_step.strftime('%Y-%m-%d')
-        yesterday = (current_step - timedelta(days=1)).strftime('%Y-%m-%d')
-        # use yesterday for detected people since it is the data recorded and given to hosp
 
-        R0_values = [0, 0, 0]
-        R0_obs_values = [0, 0, 0]
-        hosp_count = 0
-        agents_quarantined = 0
 
-        for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
-            if human.machine.state in ["E", "I", "A"] and yesterday != '2020-12-31' and yesterday in human.R0_contacts:
-                if human.HospDetected:  # calculate R0 observed
-                    hosp_count += 1
+        if len(self._contact_agents)==0:
+            self.R0=0
+        else:
+            self.R0 = self.E_today/len(self._contact_agents)
+        self.R0_obs = 0
+        self.E_today=0
+        
+    # def calculate_R0(self, current_step):
 
-                    if human.quarantined is not None:
-                        agents_quarantined += 1
+    #     #I_today =self.totalInStatesForDay[len(self.totalInStatesForDay)-1]["I"]#-self.totalInStatesForDay[len(self.totalInStatesForDay)-2]["E"]
+    #     I_today=self.agents_in_states["I"]
+    #     #print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",self.E_today,I_today,self.E_today/I_today )
 
-                    try:
-                        contacts = human.R0_contacts[yesterday][2]
-                    except KeyError:  # is a exp agent new from today
-                        contacts = human.R0_contacts[today][2]
-                        yesterday = today
 
-                    if contacts == 0: contacts = 1
-                    R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
-                    R0_obs_values[1] += human.R0_contacts[yesterday][1]
-                    R0_obs_values[2] += human.R0_contacts[yesterday][2]
 
-                contacts = human.R0_contacts[today][2]
-                if contacts == 0: contacts = 1
-                R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
-                R0_values[1] += human.R0_contacts[today][1]
-                R0_values[2] += human.R0_contacts[today][2]
+    #     """ R0: prob of transmission x contacts x days with disease """
+    #     today = current_step.strftime('%Y-%m-%d')
+    #     yesterday = (current_step - timedelta(days=1)).strftime('%Y-%m-%d')
+    #     # use yesterday for detected people since it is the data recorded and given to hosp
 
-        total_inf_exp = self.collector_counts["INF"] + self.collector_counts["EXP"]
-        if total_inf_exp == 0: total_inf_exp = 1
+    #     R0_values = [0, 0, 0]
+    #     R0_obs_values = [0, 0, 0]
+    #     hosp_count = 0
+    #     agents_quarantined = 0
 
-        self.R0 = round(
-            (R0_values[0] / total_inf_exp) * (R0_values[1] / total_inf_exp) * (R0_values[2] / total_inf_exp), 3)
+    #     for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
+    #         if human.machine.state in ["E", "I", "A"] and yesterday != '2020-12-31' and yesterday in human.R0_contacts:
+    #             if human.HospDetected:  # calculate R0 observed
+    #                 hosp_count += 1
 
-        if hosp_count == 0:
-            hosp_count = 1
+    #                 if human.quarantined is not None:
+    #                     agents_quarantined += 1
 
-        old_R0_obs = self.R0_obs
-        # self.R0_obs = (self.R0_obs + round((R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2))/2
-        self.R0_obs = (old_R0_obs + round(
-            (R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 3)) / 2
+    #                 try:
+    #                     contacts = human.R0_contacts[yesterday][2]
+    #                 except KeyError:  # is a exp agent new from today
+    #                     contacts = human.R0_contacts[today][2]
+    #                     yesterday = today
 
-        # print("HOY DIA", self.DateTime, "hay: ", hosp_count, "EN R0")
+    #                 if contacts == 0: contacts = 1
+    #                 R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
+    #                 R0_obs_values[1] += human.R0_contacts[yesterday][1]
+    #                 R0_obs_values[2] += human.R0_contacts[yesterday][2]
 
-        # self.R0_observed[0] = round((R0_values[2] / total_inf_exp), 2)
-        # self.R0_observed[1] = agents_quarantined / 10
-        # # round((R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2)
-        # self.R0_observed[2] = round((R0_obs_values[2] / hosp_count), 2)
+    #             contacts = human.R0_contacts[today][2]
+    #             if contacts == 0: contacts = 1
+    #             R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
+    #             R0_values[1] += human.R0_contacts[today][1]
+    #             R0_values[2] += human.R0_contacts[today][2]
+
+    #     total_inf_exp = self.collector_counts["INF"] + self.collector_counts["EXP"]
+    #     if total_inf_exp == 0: total_inf_exp = 1
+    #     #self.R0=self.E_today/I_today
+    #     self.R0 = round(
+    #         (R0_values[0] / total_inf_exp) * (R0_values[1] / total_inf_exp) * (R0_values[2] / total_inf_exp), 3)
+
+    #     if hosp_count == 0:
+    #         hosp_count = 1
+
+    #     old_R0_obs = self.R0_obs
+    #     # self.R0_obs = (self.R0_obs + round((R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2))/2
+    #     self.R0_obs = (old_R0_obs + round(
+    #         (R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 3)) / 2
+
+    #     # print("HOY DIA", self.DateTime, "hay: ", hosp_count, "EN R0")
+
+    #     # self.R0_observed[0] = round((R0_values[2] / total_inf_exp), 2)
+    #     # self.R0_observed[1] = agents_quarantined / 10
+    #     # # round((R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2)
+    #     # self.R0_observed[2] = round((R0_obs_values[2] / hosp_count), 2)
 
     def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
         """ Function for deleting past day contacts sets and arrange today's tests"""
@@ -575,77 +602,20 @@ class CityModel(MultiEnvironmentWorld):
         # print(f"Lista total de agentes a testear: {self.peopleToTest}")
 
     def _on_agent_changed(self, agent, source, dest):
+        # today = self.DateTime.day
+        # if today != self.today1:
+        #     self.E_today=0
         print("-"*30,"MODEL", agent, source, dest)
         self.agents_in_states[source]+= -1
         self.agents_in_states[dest]+= 1
+        if dest=="H":
+            self.Hospitalized_total+=1
         print( "----------------------------------------------------------------------------------------",self.agents_in_states)
+        if dest=="E":
+            self.E_today+=1
+            print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",self.E_today)
+        self.today1= self.DateTime.day   
+            
+        
 
-
-
-    def changeAgentStates(self):
-        """ UPDATE AGENTS STATE """
-        asymptomatic = 0
-        symptomatic = 0
-        for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
-            s = human.machine.state
-            human.machine.check_state()
-            Morti=0
-            Ospedalizzati=0
-            if s != human.machine.state:
-
-                if human.machine.state == "S":  # if s == "R"
-                    # self.hosp_collector_counts['H-REC'] -= 1
-                    # self.hosp_collector_counts['H-SUSC'] += 1
-                    human.HospDetected = False
-
-                elif human.machine.state == "I":  # infected, symptomatic, presents symptoms
-                    symptomatic += 1
-
-                    if self.quarantine_period == 0:
-                        human.quarantined = self.DateTime + timedelta(days=1)  # quarantine
-                    else:
-                        human.quarantined = self.DateTime + timedelta(days=self.quarantine_period)  # quarantine
-                    human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
-                    human.hospital = self._hospitals[human.obj_place]
-                    human.goal = "GO_TO_HOSPITAL"
-
-                elif human.machine.state == "A":
-                    asymptomatic += 1
-
-                elif human.machine.state == "H":
-                    human.HospDetected = False  # we assume hospitalized people do not transmit the virus
-                    self.Ospedalizzati+=1
-                    #print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",self.Ospedalizzati)
-
-                    if self.hosp_collector_counts["H-HOSP"] >= (self.Hosp_capacity * self.N_hospitals):
-                        # hospital collapse
-                        human.machine.dead(H_collapse=True)
-                    else:
-                        # look for the nearest hospital to treat the agent
-                        human.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, human.pos))
-                        human.getWorld().space.move_agent(human, human.obj_place)  # TODO: YOU HAVE TO USE MOVE!!!!!
-                        human.hospital = self._hospitals[human.obj_place]
-                        human.mask = Mask.FFP2
-
-                        # adds patient to nearest hospital patients list
-                        human.hospital.add_patient(human)
-
-                        human.quarantined = None
-                        human.friend_to_meet = set()
-
-                elif human.machine.state == "R":
-                    if s == "H":
-                        human.hospital.discharge_patient(human)
-                        human.HospDetected = True
-
-                elif human.machine.state == "D":  # if s == "H":
-                    human.hospital.discharge_patient(human)
-                    self.Morti+=1
-                    #print("-----------------------------------------------------------------------------------------",self.Morti)
-
-            # change quarantine status if necessary
-            if human.quarantined is not None and self.DateTime.day == human.quarantined.day:
-                human.quarantined = None
-                # if human.machine.state in ["E", "I", "A"] and human.HospDetected:
-                #     # test them again
-                #     self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(human.id)
+   

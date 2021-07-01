@@ -9,6 +9,8 @@ import haversine as hs
 import DataCollector_functions as dc
 from geopandas.geodataframe import GeoDataFrame
 from random import uniform, randint
+from datetime import datetime, timedelta
+
 class RandomWalk(Action):
     def do(self, agent):
         _xs = agent.getWorld()._xs
@@ -174,7 +176,10 @@ class HumanAgent(XAgent):
 
         #if not self.model.lockdown_total:
         #    self.move(cellmates)  # if not in total lockdown
-
+        if (self.model.DateTime - timedelta(minutes=self.model.timestep)).day!=self.model.DateTime.day:
+            #print("CHANGE STATE!!!!")
+            self.changeAgentStates()
+           
         super().step()
 
 
@@ -188,6 +193,9 @@ class HumanAgent(XAgent):
         #others_agents = [self.model.space.get_agent(aid) for aid in others if aid != self.id]
         for other in others_agents:
             if other.machine.state == "S":
+                
+                self.model._contact_agents.add(self.id) #Add the infecting agent to a set so that we can count them properly for R0
+                
                 other.machine.contact(self.mask, other.mask)
                 self.model.contact_count[0] += 1
                 if other.machine.state == "E":
@@ -260,3 +268,69 @@ class HumanAgent(XAgent):
             if not already_registered_contact:
                 self.R0_contacts[today][0] += self.machine.prob_inf * pTransMask1 * pTransMask2  #prob_infection(self.mask, contacts_mask)  # self.model.virus.pTrans
                 self.R0_contacts[today][2] += 1
+
+
+    def changeAgentStates(self):
+        """ UPDATE AGENTS STATE """
+        agents_quarantined=0
+        asymptomatic = 0
+        symptomatic = 0
+        
+        self.machine.check_state()
+        s = self.machine.state   
+        if s != self.machine.state:
+
+
+            if self.machine.state == "I":  # infected, symptomatic, presents symptoms
+                symptomatic += 1
+
+                if self.quarantine_period == 0:
+                    self.quarantined = self.DateTime + timedelta(days=1)  # quarantine
+                else:
+                    self.quarantined = self.DateTime + timedelta(days=self.quarantine_period)  # quarantine
+                self.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+                self.hospital = self._hospitals[self.obj_place]
+                self.goal = "GO_TO_HOSPITAL"
+
+            elif self.machine.state == "A":
+                asymptomatic += 1
+
+            elif self.machine.state == "H":
+                self.HospDetected = False  # we assume hospitalized people do not transmit the viru
+                
+                
+
+                if self.hosp_collector_counts["H-HOSP"] >= (self.Hosp_capacity * self.N_hospitals):
+                    # hospital collapse
+                    self.machine.dead(H_collapse=True)
+                else:
+                    # look for the nearest hospital to treat the agent
+                    self.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+                    #self.getWorld().space.move_agent(self, self.obj_place)  # TODO: YOU HAVE TO USE MOVE!!!!!
+                    self.hospital = self._hospitals[self.obj_place]
+                    self.mask = Mask.FFP2
+
+                    # adds patient to nearest hospital patients list
+                    self.hospital.add_patient(self)
+
+                    self.quarantined = None
+                    self.friend_to_meet = set()
+
+            elif self.machine.state == "R":
+                if s == "H":
+                    self.hospital.discharge_patient(self)
+                    self.HospDetected = True
+
+            elif self.machine.state == "D":  # if s == "H":
+                self.hospital.discharge_patient(self)
+                
+
+        # change quarantine status if necessary
+        if self.quarantined is not None and self.DateTime.day == self.quarantined.day:
+            self.quarantined = None
+            # if self.machine.state in ["E", "I", "A"] and self.HospDetected:
+            #     # test them again
+            #     self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(self.id)
+        if self.quarantined is not None:
+            agents_quarantined += 1
+        #print("????????????????????????????????????????????????????????????????????????????????????????????????????????????????????",agents_quarantined)

@@ -36,7 +36,17 @@ def update_stats(model):
             else:
                 model.hosp_collector_counts["H-SUSC"] += 1
 
-        elif human.machine.state == "A" or human.machine.state == "I":
+
+        elif human.machine.state == "A":
+            if human.HospDetected:
+                model.hosp_collector_counts["H-INF"] += 1
+            else:
+                model.hosp_collector_counts["H-SUSC"] += 1
+
+
+
+        elif human.machine.state == "I":
+        #elif human.machine.state == "A" or human.machine.state == "I":
             model.collector_counts['INF'] += 1
             if human.HospDetected:
                 model.hosp_collector_counts["H-INF"] += 1
