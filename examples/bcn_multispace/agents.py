@@ -103,7 +103,7 @@ class StandStill(Action):
 
 class HumanAgent(XAgent):
     def __init__(self, unique_id, model):
-        super().__init__(self.unique_id)
+        super().__init__(unique_id)
         self.unique_id = unique_id
         self.model = model
         self.has_goal = False
