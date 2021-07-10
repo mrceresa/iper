@@ -48,6 +48,9 @@ class SEAIHRD_covid(object):
         self.prob_inf = 0.8
         self._agent = agent
 
+        self.vaccin = None #days after vaciation
+        self.immunization= 0
+        #self.vaccinationSecond = None
 
 
     def on_change(self, event):
@@ -103,7 +106,13 @@ class SEAIHRD_covid(object):
         transition_for_I = self.nothing
         transition_for_H = self.nothing
 
-        if inizial_state == 'E':
+        if self.vaccin is not None:
+            self.vaccin+=1
+            self.immunization=1/(1+math.exp(-self.vaccin+15))*0.9
+        
+
+
+        elif inizial_state == 'E':
             if self.time_in_state == round(1 / self.rate['rEI']):  # 5 days on end_encubation
                 #transition_for_E = self.end_encubation
                 self.end_encubation()

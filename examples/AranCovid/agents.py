@@ -40,11 +40,12 @@ class HumanAgent(XAgent):
         self.mask = Mask.NONE
 
         self.machine = None
+        self.vaccinated= None# 0 da vaccinare,1 prima dose,2 seconda dose,3 vaccino monodose
         # variable to calculate time passed since last state transition
         self.days_in_current_state = model.DateTime
         # self.presents_virus = False  # for symptomatic and detected asymptomatic people
         self.quarantined = None
-
+        self.tobetested=None
         self.family = set()
         self.friends = set()
         self.contacts = {}  # dict where keys are days and each day has a list of people
@@ -85,6 +86,13 @@ class HumanAgent(XAgent):
         work_position_rand = (workplace.place[0]+randint(-1,1)*r, workplace.place[1]+randint(-1,1)*r)
         return work_position_rand
 
+    def goToHospital(self):
+        self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+        self.hospital = self.model._hospitals[self.obj_place]
+        self.goal = "GO_TO_HOSPITAL"
+        return self.obj_place
+       
+
     def leisure_time(self):
         if not self.friend_to_meet:
             if np.random.choice([0, 1], p=[0.75,0.25]):
@@ -93,12 +101,8 @@ class HumanAgent(XAgent):
         return self.obj_place
 
 
-    def _thinkGoal(self):
-        if self.model._check_movement_is_restricted():
-            return self.house
+    def _thinkGoal(self):            
 
-        if self.quarantined: return self.obj_place
-        # working time
         if 8 < self.model.DateTime.hour <= 16:  # working time
             self.goal = "WORK"
             return self.working_time()
@@ -111,8 +115,19 @@ class HumanAgent(XAgent):
         if self.model.night_curfew - 2 < self.model.DateTime.hour <= self.model.night_curfew - 1:  # Time to go home
             if self.pos != self.house:
                 self.obj_place = self.house
-            return self.obj_place
+            return self.obj_place 
 
+        if self.model._check_movement_is_restricted():
+            return self.house
+
+           
+        
+        if self.tobetested == True or self.vaccinated==0:#vaccinated =0 it means you have to go in the hospital for the vaccination
+            return self.goToHospital()
+
+        if self.quarantined is not None:
+            self.obj_place = self.house
+            return self.obj_place 
         else:
             self.obj_place = self.house
             return self.obj_place
@@ -121,33 +136,49 @@ class HumanAgent(XAgent):
 
         chosen_action, chosen_action_pars = StandStill(), [self]
 
+    
         if not self.mask and self.pos != self.house:
             self.mask = Mask.RandomMask(self.model.masks_probs)  # wear mask for walk
 
+        self.obj_place=self._thinkGoal()
+        
         # If we have a previous goal, go to it
+
         if self.obj_place != self.pos:
             return MoveTo(), [self, self.obj_place]
+          
 
-        if self.quarantined and self.model.DateTime.hour == 9:  # test first thing in the morning
-            if self.obj_place == self.pos and self.goal == "GO_TO_HOSPITAL":
+        if self.tobetested and self.obj_place == self.pos:  
                 # once at hospital, is tested and next step will go home to quarantine
                 self.mask = Mask.FFP2
                 h = self.model._hospitals[self.obj_place]
-                h.doTest(self)
-        else:
-            self.obj_place = self._thinkGoal()
+                result_test=h.doTest(self)
+                self.tobetested=False
+                if self.machine.state in ["E", "I", "A","H"]:
+                    real_infected=True
+                else:
+                     real_infected=False
 
-        # If we have a new goal execute it
-        if self.obj_place != self.pos:
-            return MoveTo(), [self, self.obj_place]
+                if (result_test==True and real_infected == True)or(result_test==False and real_infected==False):
+                    self.quarantined = 0
+                else: 
+                    self.quarantined = None
+
+                print("ts-ts-ts-tstst-stst-stst-----tststs---tststs---tststststst--stststs",result_test,self.quarantined)
+
+        if self.vaccinated==0 and self.obj_place == self.pos:
+            if self.machine.state=="S":
+                self.machine.vaccination
 
         if self.pos == self.house and self.obj_place == self.pos:
             self.mask = Mask.NONE
 
         if self.machine.state in ["H", "D"]:
+            
             pass
 
         return chosen_action, chosen_action_pars
+
 
     def _on_change(self, source, dest):
         self.model._on_agent_changed(self, source, dest)
@@ -177,9 +208,9 @@ class HumanAgent(XAgent):
         #if not self.model.lockdown_total:
         #    self.move(cellmates)  # if not in total lockdown
         if (self.model.DateTime - timedelta(minutes=self.model.timestep)).day!=self.model.DateTime.day:
+
             #print("CHANGE STATE!!!!")
             self.changeAgentStates()
-           
         super().step()
 
 
@@ -276,38 +307,40 @@ class HumanAgent(XAgent):
         asymptomatic = 0
         symptomatic = 0
         
+        
+
+
+
+
+        s = self.machine.state
         self.machine.check_state()
-        s = self.machine.state   
+
+        if self.machine.state=="S" and self.model.tobevaccinatedtoday>0 :
+            self.vaccinated=0
+            self.model.tobevaccinatedtoday-=1
+            print("??????????????????????????????????????????????????????????????",self.model.tobevaccinatedtoday)
+
+
         if s != self.machine.state:
 
 
-            if self.machine.state == "I":  # infected, symptomatic, presents symptoms
-                symptomatic += 1
-
-                if self.quarantine_period == 0:
-                    self.quarantined = self.DateTime + timedelta(days=1)  # quarantine
-                else:
-                    self.quarantined = self.DateTime + timedelta(days=self.quarantine_period)  # quarantine
-                self.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
-                self.hospital = self._hospitals[self.obj_place]
-                self.goal = "GO_TO_HOSPITAL"
-
-            elif self.machine.state == "A":
-                asymptomatic += 1
+            if self.machine.state == "I":  
+                 self.tobetested=True
+    
 
             elif self.machine.state == "H":
                 self.HospDetected = False  # we assume hospitalized people do not transmit the viru
                 
                 
 
-                if self.hosp_collector_counts["H-HOSP"] >= (self.Hosp_capacity * self.N_hospitals):
+                if self.model.hosp_collector_counts["H-HOSP"] >= (self.model.Hosp_capacity * self.model.N_hospitals):
                     # hospital collapse
                     self.machine.dead(H_collapse=True)
                 else:
                     # look for the nearest hospital to treat the agent
-                    self.obj_place = min(self.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
+                    self.obj_place = min(self.model.getHospitalPosition(), key=lambda c: euclidean(c, self.pos))
                     #self.getWorld().space.move_agent(self, self.obj_place)  # TODO: YOU HAVE TO USE MOVE!!!!!
-                    self.hospital = self._hospitals[self.obj_place]
+                    self.hospital = self.model._hospitals[self.obj_place]
                     self.mask = Mask.FFP2
 
                     # adds patient to nearest hospital patients list
@@ -326,11 +359,11 @@ class HumanAgent(XAgent):
                 
 
         # change quarantine status if necessary
-        if self.quarantined is not None and self.DateTime.day == self.quarantined.day:
-            self.quarantined = None
-            # if self.machine.state in ["E", "I", "A"] and self.HospDetected:
-            #     # test them again
-            #     self.peopleToTest[self.DateTime.strftime('%Y-%m-%d')].add(self.id)
+        if self.quarantined==self.model.quarantine_period :
+            self.tobetested=True
+           
         if self.quarantined is not None:
+            self.quarantined += 1
             agents_quarantined += 1
-        #print("????????????????????????????????????????????????????????????????????????????????????????????????????????????????????",agents_quarantined)
+        
+            #print("??????????????????????????????????????????????????????????????",self.quarantined)

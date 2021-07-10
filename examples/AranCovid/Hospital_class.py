@@ -58,7 +58,13 @@ class Hospital(XAgent):
                     for elem in agentcontacts[key]:
                         self.model.peopleToTest[today].add(elem)
 
-        if self.model.quarantine_period == 0: agent.quarantined = None
+        #if self.model.quarantine_period == 0: agent.quarantined = None
+        return true_pos
+
+        
+    def vaccination(self, agent):
+        pass
+
 
     def decideTesting(self, patientsTested):
         """ Called by model function at midnight to decide which agents will be tested from the contact tracing set
@@ -79,7 +85,8 @@ class Hospital(XAgent):
                 if elem not in patientsTested and PCRs > 0 and (agent.machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    agent.quarantined = self.model.DateTime + timedelta(days=quarantine_period)
+                    agent.quarantined =0
+                    #agent.quarantined = self.model.DateTime + timedelta(days=quarantine_period)
                     agent.obj_place = self.pos
                     agent.goal = "GO_TO_HOSPITAL"
 
@@ -93,7 +100,8 @@ class Hospital(XAgent):
                 if elem not in (patientsTested | HospToTest) and PCRs > 0 and (agent.machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
-                    agent.quarantined = self.model.DateTime + timedelta(days=quarantine_period)
+                    agent.quarantined =0
+                    #agent.quarantined = self.model.DateTime + timedelta(days=quarantine_period)
                     agent.obj_place = self.pos
                     agent.goal = "GO_TO_HOSPITAL"
 

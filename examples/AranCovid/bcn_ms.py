@@ -65,7 +65,9 @@ class CityModel(MultiEnvironmentWorld):
         self.E_today=0
         self.today1=0
         self.Hospitalized_total=0
-
+        self.perc_vacc_day=0.01
+        self.vaccinations_on_day=math.ceil(self.perc_vacc_day * config["agents"])
+        self.tobevaccinatedtoday=self.vaccinations_on_day
 
         self.l.info("Loading geodata")
         self._initGeo()
@@ -313,6 +315,9 @@ class CityModel(MultiEnvironmentWorld):
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
+
+            self.tobevaccinatedtoday=self.vaccinations_on_day
+
             self.l.info("Today is a new day!")
             self.totalInStatesForDay.append(self.agents_in_states)
             _t = self.datacollector.tables['Model_DC_Table']
@@ -321,6 +326,7 @@ class CityModel(MultiEnvironmentWorld):
             dc.reset_counts(self)
             dc.reset_hosp_counts(self)
             dc.update_stats(self)
+            
             self.calculate_R0(current_step)
             dc.update_DC_table(self)
             print("T"*30,len(self._contact_agents))
@@ -480,7 +486,7 @@ class CityModel(MultiEnvironmentWorld):
         if len(self._contact_agents)==0:
             self.R0=0
         else:
-            self.R0 = self.E_today/len(self._contact_agents)
+            self.R0 = round(self.E_today/len(self._contact_agents),3)
         self.R0_obs = 0
         self.E_today=0
         
@@ -613,7 +619,7 @@ class CityModel(MultiEnvironmentWorld):
         print( "----------------------------------------------------------------------------------------",self.agents_in_states)
         if dest=="E":
             self.E_today+=1
-            print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",self.E_today)
+            #print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",self.E_today)
         self.today1= self.DateTime.day   
             
         
