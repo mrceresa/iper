@@ -407,7 +407,7 @@ class CityModel(MultiEnvironmentWorld):
                         self._agentsToAdd[friend_index].friends.add(self._agentsToAdd[agentsToBecreated - i].id)
 
                     # INFECTION
-                    infected = np.random.choice(["S", "E","A","I"],  p=[0.990, 0, 0 ,0.01])#p=[0.985, 0, 0.015]) p=[0.970, 0.015,0 ,0.015])#
+                    infected = np.random.choice(["S", "E","A","I"],  p=[0.995, 0, 0 ,0.005])#p=[0.985, 0, 0.015]) p=[0.970, 0.015,0 ,0.015])#
                     self.agents_in_states[infected]+= 1
                     if infected == "I":
                         self._agentsToAdd[agentsToBecreated - i].machine = SEAIHRD_covid(agentsToBecreated - i, "I",
