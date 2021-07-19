@@ -122,7 +122,7 @@ class HumanAgent(XAgent):
 
            
         
-        if self.tobetested == True or self.vaccinated==0:#vaccinated =0 it means you have to go in the hospital for the vaccination
+        if self.tobetested == True or self.vaccinated==0:#vaccinated =0 it means you have to go in the hospital for the vaccination ad the suscetible becomes recovered directly
             return self.goToHospital()
 
         if self.quarantined is not None:
