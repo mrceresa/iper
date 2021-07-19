@@ -48,9 +48,10 @@ class Hospital(XAgent):
         pTest = self.model.pTest
         true_pos = np.random.choice([True, False], p=[pTest, 1 - pTest])
         if true_pos:  # test knows true state
-            if agentStatus in ["E", "I", "A"]:
+            if agentStatus in ["I", "A"]:
                 if not agent.HospDetected:
                     agent.HospDetected = True
+                    self.model.Infected_detects_for_RKI_today +=1
                 agentcontacts = agent.contacts
                 # print(f"Resulta que es positivo, da sus contactos {agentcontacts}")
                 # save agent contacts for future tests

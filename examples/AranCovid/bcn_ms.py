@@ -60,7 +60,16 @@ class CityModel(MultiEnvironmentWorld):
         self.l.info("Scheduler is " + str(self.schedule))
         self.schedule = RandomActivation(self)
 
-        self.totalInStatesForDay=[]    
+        #L'istituto RKI, Robert Koch Institut calcola Rt come 
+        # rapporto tra la somma del numero di contagiati negli ultimi 4 giorni e la somma del numero dei contagiati nei 4 giorni precedenti
+        self.days_for_R0_RKI=3 #these are the days for the computation of the coefficient Rt according to the RKI method
+        self.Infected_detects_for_RKI_today=0
+        self.Infected_detects_for_RKI=[]
+        self.Infected_type_for_RKI=["I","A"]
+        self.Infected_for_RKI_today=0
+        self.Infected_for_RKI=[]
+        self.totalInStatesForDay=[] 
+
         self.agents_in_states={"S":0, "E":0,"A":0,"I":0,"H":0,"R":0,"D":0}
         self.E_today=0
         self.today1=0
@@ -326,8 +335,16 @@ class CityModel(MultiEnvironmentWorld):
             dc.reset_counts(self)
             dc.reset_hosp_counts(self)
             dc.update_stats(self)
-            
+            #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",self.hosp_collector_counts["H-INF"])
+
+            self.Infected_detects_for_RKI.append(self.Infected_detects_for_RKI_today)
+            self.Infected_for_RKI.append(self.Infected_for_RKI_today)
+            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", self.Infected_detects_for_RKI)
+            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", self.Infected_for_RKI)
             self.calculate_R0(current_step)
+            self.Infected_detects_for_RKI_today=0
+            self.Infected_for_RKI_today=0
+
             dc.update_DC_table(self)
             print("T"*30,len(self._contact_agents))
             self._contact_agents = set()
@@ -483,12 +500,22 @@ class CityModel(MultiEnvironmentWorld):
     def calculate_R0(self, current_step):
 
 
-        if len(self._contact_agents)==0:
-            self.R0=0
-        else:
-            self.R0 = round(self.E_today/len(self._contact_agents),3)
-        self.R0_obs = 0
+        # if len(self._contact_agents)==0:
+        #     self.R0=0
+        # else:
+        #     self.R0 = round(self.E_today/len(self._contact_agents),3)
+        
         self.E_today=0
+
+        if len(self.Infected_detects_for_RKI)< 2*self.days_for_R0_RKI or sum(self.Infected_detects_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])==0:
+            self.R0_obs = 0
+        else:
+            self.R0_obs =sum(self.Infected_detects_for_RKI[-self.days_for_R0_RKI:len(self.Infected_detects_for_RKI)])/sum(self.Infected_detects_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])
+
+        if len(self.Infected_for_RKI)< 2*self.days_for_R0_RKI or sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])==0:
+            self.R0 = 0
+        else:
+            self.R0 =sum(self.Infected_for_RKI[-self.days_for_R0_RKI:len(self.Infected_for_RKI)])/sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])
         
     # def calculate_R0(self, current_step):
 
@@ -620,7 +647,11 @@ class CityModel(MultiEnvironmentWorld):
         if dest=="E":
             self.E_today+=1
             #print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",self.E_today)
-        self.today1= self.DateTime.day   
+        self.today1= self.DateTime.day
+        if dest in self.Infected_type_for_RKI:
+            self.Infected_for_RKI_today += 1
+
+
             
         
 
