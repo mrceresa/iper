@@ -380,7 +380,7 @@ class CityModel(MultiEnvironmentWorld):
         #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++famiglie",family_dist)
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
-        r =20.0/111100
+        r =40.0/111100
         while agentsToBecreated >= 0:
             if isinstance(self._agentsToAdd[agentsToBecreated], HumanAgent):
                 # FAMILY PART

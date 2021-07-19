@@ -82,7 +82,7 @@ class HumanAgent(XAgent):
         #     self.mask = workplace.mask
 
         self.mask = workplace.mask
-        r = 20.0/111100
+        r = 40.0/111100
         work_position_rand = (workplace.place[0]+randint(-1,1)*r, workplace.place[1]+randint(-1,1)*r)
         return work_position_rand
 
