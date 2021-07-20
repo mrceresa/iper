@@ -101,7 +101,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--output_dir', type=str, default="results-%s" % datetime.today().strftime('%Y%m%d-%H'),
+    parser.add_argument('-o', '--output_dir', type=str, default="results-%s" % datetime.today().strftime('%Y%m%d-%H%M%S'),
                         help="Output dir")  # %Y%m%d-%H%M%S
     parser.add_argument('-c', '--cache_dir', type=str, default="ctx-cache", help="Dir to cache maps")
     parser.add_argument('-v', '--verbose', action="store_true", help="Print additional information")

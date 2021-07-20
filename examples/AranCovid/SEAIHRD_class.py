@@ -72,7 +72,7 @@ class SEAIHRD_covid(object):
         pMask1 = Mask1.maskPtrans(Mask1)
         pMask2 = Mask2.maskPtrans(Mask2)
         pbi = self.prob_inf * pMask1 * pMask2
-        res = random.random() < pbi
+        res = random.random() < pbi*(1-self.immunization)
 
         if res: self.time_in_state = 0
         # print("CONTACT", self.prob_inf, pMask1, pMask2, prob_inf)
@@ -81,7 +81,8 @@ class SEAIHRD_covid(object):
     def prob_sintomatic(self,event):
         """ probability to become symptomatic. """
         p = list(self.pAI.values())[int(self.roundup(self.age) / 10) - 1]
-        return random.random() < p
+        return random.random() < p*(1-self.immunization)
+
 
     def prob_to_die(self, H_collapse=False):
         """ probability to died"""
@@ -89,12 +90,14 @@ class SEAIHRD_covid(object):
         if H_collapse:
             return True
         else:
-            return random.random() < p
+            return random.random() < p*(1-self.immunization)
+
 
     def prob_severity(self,event):
         """ probability to become hospitalized. """
         p = list(self.pIH.values())[int(self.roundup(self.age) / 10) - 1]
-        return random.random() < p
+        return random.random() < p*(1-self.immunization)
+
 
     def check_state(self):
 
@@ -108,7 +111,7 @@ class SEAIHRD_covid(object):
 
         if self.vaccin is not None:
             self.vaccin+=1
-            self.immunization=1/(1+math.exp(-self.vaccin+15))*0.9
+            self.immunization=1/(1+math.exp(-self.vaccin+5))*0.9
         
 
 

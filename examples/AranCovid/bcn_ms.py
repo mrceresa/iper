@@ -59,7 +59,7 @@ class CityModel(MultiEnvironmentWorld):
         self.network = NetworkGrid(nx.Graph())
         self.l.info("Scheduler is " + str(self.schedule))
         self.schedule = RandomActivation(self)
-
+        self.count=0
         #L'istituto RKI, Robert Koch Institut calcola Rt come 
         # rapporto tra la somma del numero di contagiati negli ultimi 4 giorni e la somma del numero dei contagiati nei 4 giorni precedenti
         self.days_for_R0_RKI=3 #these are the days for the computation of the coefficient Rt according to the RKI method
@@ -74,7 +74,7 @@ class CityModel(MultiEnvironmentWorld):
         self.E_today=0
         self.today1=0
         self.Hospitalized_total=0
-        self.perc_vacc_day=0.01
+        self.perc_vacc_day= 0.01
         self.vaccinations_on_day=math.ceil(self.perc_vacc_day * config["agents"])
         self.tobevaccinatedtoday=self.vaccinations_on_day
 
@@ -260,7 +260,7 @@ class CityModel(MultiEnvironmentWorld):
         if alarm_state: plt.axvline(pd.Timestamp(self.alarm_state['inf_threshold']), color='r', linestyle="dashed",
                                     label='Lockdown')
         plt.ylabel('Values')
-        plt.title('R0 values')
+        plt.title('Rt values')
         plt.tight_layout()
         plt.savefig(os.path.join(outdir, R0_title))
 
@@ -324,7 +324,7 @@ class CityModel(MultiEnvironmentWorld):
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
         if current_step.day != self.DateTime.day:
-
+            self.count+=1
             self.tobevaccinatedtoday=self.vaccinations_on_day
 
             self.l.info("Today is a new day!")
@@ -504,6 +504,15 @@ class CityModel(MultiEnvironmentWorld):
         #     self.R0=0
         # else:
         #     self.R0 = round(self.E_today/len(self._contact_agents),3)
+        if self.count<self.days_for_R0_RKI:
+            self.R0=0
+        else:
+
+            if self.agents_in_states["I"]+self.agents_in_states["A"]==0:
+                self.R0=0
+            else:
+                self.R0=(self.E_today*10)/(self.agents_in_states["I"]+self.agents_in_states["A"])
+
         
         self.E_today=0
 
@@ -512,10 +521,11 @@ class CityModel(MultiEnvironmentWorld):
         else:
             self.R0_obs =sum(self.Infected_detects_for_RKI[-self.days_for_R0_RKI:len(self.Infected_detects_for_RKI)])/sum(self.Infected_detects_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])
 
-        if len(self.Infected_for_RKI)< 2*self.days_for_R0_RKI or sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])==0:
-            self.R0 = 0
-        else:
-            self.R0 =sum(self.Infected_for_RKI[-self.days_for_R0_RKI:len(self.Infected_for_RKI)])/sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])
+
+        # if len(self.Infected_for_RKI)< 2*self.days_for_R0_RKI or sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])==0:
+        #     self.R0 = 0
+        # else:
+        #     self.R0 =sum(self.Infected_for_RKI[-self.days_for_R0_RKI:len(self.Infected_for_RKI)])/sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])
         
     # def calculate_R0(self, current_step):
 

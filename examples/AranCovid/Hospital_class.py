@@ -55,9 +55,13 @@ class Hospital(XAgent):
                 agentcontacts = agent.contacts
                 # print(f"Resulta que es positivo, da sus contactos {agentcontacts}")
                 # save agent contacts for future tests
-                for key in agentcontacts:
-                    for elem in agentcontacts[key]:
-                        self.model.peopleToTest[today].add(elem)
+
+
+
+                for key in agentcontacts:                    
+                    for elem in agentcontacts[key]:                       
+                       self.model.peopleToTest[today].add(elem)
+    
 
         #if self.model.quarantine_period == 0: agent.quarantined = None
         return true_pos

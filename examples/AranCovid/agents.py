@@ -167,8 +167,11 @@ class HumanAgent(XAgent):
                 print("ts-ts-ts-tstst-stst-stst-----tststs---tststs---tststststst--stststs",result_test,self.quarantined)
 
         if self.vaccinated==0 and self.obj_place == self.pos:
-            if self.machine.state=="S":
-                self.machine.vaccination
+            self.vaccinated=1
+            self.machine.vaccin=0 # inizializza il day_count della funzione sigmoidea vaccinazione nella macchina a stati
+            
+            # if self.machine.state=="S":    #in questo caso il vaccino fa passare direttamente da S a R
+            #     self.machine.vaccination
 
         if self.pos == self.house and self.obj_place == self.pos:
             self.mask = Mask.NONE
