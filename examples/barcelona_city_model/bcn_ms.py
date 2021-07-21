@@ -188,7 +188,7 @@ class CityModel(MultiEnvironmentWorld):
         shpfilename = os.path.join(path, "shapefiles", "quartieriBarca1.shp")
         if not os.path.exists(shpfilename):
             shpfilename = os.path.join(path, "examples/bcn_multispace/shapefiles", "quartieriBarca1.shp")
-        print("Loading shapefile from", shpfilename)
+        #print("Loading shapefile from", shpfilename)
         blocks = gpd.read_file(shpfilename)
         self._blocks = blocks
 
@@ -339,14 +339,14 @@ class CityModel(MultiEnvironmentWorld):
 
             self.Infected_detects_for_RKI.append(self.Infected_detects_for_RKI_today)
             self.Infected_for_RKI.append(self.Infected_for_RKI_today)
-            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", self.Infected_detects_for_RKI)
-            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", self.Infected_for_RKI)
+            #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", self.Infected_detects_for_RKI)
+            #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++", self.Infected_for_RKI)
             self.calculate_R0(current_step)
             self.Infected_detects_for_RKI_today=0
             self.Infected_for_RKI_today=0
 
             dc.update_DC_table(self)
-            print("T"*30,len(self._contact_agents))
+            #print("T"*30,len(self._contact_agents))
             self._contact_agents = set()
             
             # clean contact lists from agents for faster computations
@@ -499,11 +499,6 @@ class CityModel(MultiEnvironmentWorld):
 
     def calculate_R0(self, current_step):
 
-
-        # if len(self._contact_agents)==0:
-        #     self.R0=0
-        # else:
-        #     self.R0 = round(self.E_today/len(self._contact_agents),3)
         if self.count<self.days_for_R0_RKI:
             self.R0=0
         else:
@@ -521,75 +516,6 @@ class CityModel(MultiEnvironmentWorld):
         else:
             self.R0_obs =sum(self.Infected_detects_for_RKI[-self.days_for_R0_RKI:len(self.Infected_detects_for_RKI)])/sum(self.Infected_detects_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])
 
-
-        # if len(self.Infected_for_RKI)< 2*self.days_for_R0_RKI or sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])==0:
-        #     self.R0 = 0
-        # else:
-        #     self.R0 =sum(self.Infected_for_RKI[-self.days_for_R0_RKI:len(self.Infected_for_RKI)])/sum(self.Infected_for_RKI[-2*self.days_for_R0_RKI:-self.days_for_R0_RKI])
-        
-    # def calculate_R0(self, current_step):
-
-    #     #I_today =self.totalInStatesForDay[len(self.totalInStatesForDay)-1]["I"]#-self.totalInStatesForDay[len(self.totalInStatesForDay)-2]["E"]
-    #     I_today=self.agents_in_states["I"]
-    #     #print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",self.E_today,I_today,self.E_today/I_today )
-
-
-
-    #     """ R0: prob of transmission x contacts x days with disease """
-    #     today = current_step.strftime('%Y-%m-%d')
-    #     yesterday = (current_step - timedelta(days=1)).strftime('%Y-%m-%d')
-    #     # use yesterday for detected people since it is the data recorded and given to hosp
-
-    #     R0_values = [0, 0, 0]
-    #     R0_obs_values = [0, 0, 0]
-    #     hosp_count = 0
-    #     agents_quarantined = 0
-
-    #     for human in [agent for agent in self.schedule.agents if isinstance(agent, HumanAgent)]:
-    #         if human.machine.state in ["E", "I", "A"] and yesterday != '2020-12-31' and yesterday in human.R0_contacts:
-    #             if human.HospDetected:  # calculate R0 observed
-    #                 hosp_count += 1
-
-    #                 if human.quarantined is not None:
-    #                     agents_quarantined += 1
-
-    #                 try:
-    #                     contacts = human.R0_contacts[yesterday][2]
-    #                 except KeyError:  # is a exp agent new from today
-    #                     contacts = human.R0_contacts[today][2]
-    #                     yesterday = today
-
-    #                 if contacts == 0: contacts = 1
-    #                 R0_obs_values[0] += human.R0_contacts[yesterday][0] / contacts  # mean value of transmission
-    #                 R0_obs_values[1] += human.R0_contacts[yesterday][1]
-    #                 R0_obs_values[2] += human.R0_contacts[yesterday][2]
-
-    #             contacts = human.R0_contacts[today][2]
-    #             if contacts == 0: contacts = 1
-    #             R0_values[0] += human.R0_contacts[today][0] / contacts  # mean value of transmission
-    #             R0_values[1] += human.R0_contacts[today][1]
-    #             R0_values[2] += human.R0_contacts[today][2]
-
-    #     total_inf_exp = self.collector_counts["INF"] + self.collector_counts["EXP"]
-    #     if total_inf_exp == 0: total_inf_exp = 1
-    #     #self.R0=self.E_today/I_today
-    #     self.R0 = round(
-    #         (R0_values[0] / total_inf_exp) * (R0_values[1] / total_inf_exp) * (R0_values[2] / total_inf_exp), 3)
-
-    #     if hosp_count == 0:
-    #         hosp_count = 1
-
-    #     old_R0_obs = self.R0_obs
-    #     # self.R0_obs = (self.R0_obs + round((R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2))/2
-    #     self.R0_obs = (old_R0_obs + round(
-    #         (R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 3)) / 2
-
-    #     # print("HOY DIA", self.DateTime, "hay: ", hosp_count, "EN R0")
-
-    #     # self.R0_observed[0] = round((R0_values[2] / total_inf_exp), 2)
-    #     # self.R0_observed[1] = agents_quarantined / 10
-    #     # # round((R0_obs_values[0] / hosp_count) * (R0_obs_values[1] / hosp_count) * (R0_obs_values[2] / hosp_count), 2)
-    #     # self.R0_observed[2] = round((R0_obs_values[2] / hosp_count), 2)
 
     def clean_contact_list(self, current_step, Adays, Hdays, Tdays):
         """ Function for deleting past day contacts sets and arrange today's tests"""
@@ -648,12 +574,12 @@ class CityModel(MultiEnvironmentWorld):
         # today = self.DateTime.day
         # if today != self.today1:
         #     self.E_today=0
-        print("-"*30,"MODEL", agent, source, dest)
+        #print("-"*30,"MODEL", agent, source, dest)
         self.agents_in_states[source]+= -1
         self.agents_in_states[dest]+= 1
         if dest=="H":
             self.Hospitalized_total+=1
-        print( "----------------------------------------------------------------------------------------",self.agents_in_states)
+        #print( "----------------------------------------------------------------------------------------",self.agents_in_states)
         if dest=="E":
             self.E_today+=1
             #print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",self.E_today)

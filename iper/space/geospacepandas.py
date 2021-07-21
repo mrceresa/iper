@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 #from mesa.agent import Agent
 import pickle
 import os
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
 
 from sklearn.neighbors import BallTree
@@ -21,7 +21,8 @@ import multiprocessing as mp
 from sklearn.neighbors import NearestNeighbors, BallTree, KDTree
 from joblib import Parallel, effective_n_jobs, delayed
 import random
-
+from shapely.geometry import MultiLineString
+from shapely.ops import polygonize, cascaded_union
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
     """Helper for the Parallel calls in KNeighborsMixin.kneighbors
@@ -29,7 +30,114 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
     under PyPy.
     """
     return tree.query(*args, **kwargs)
+  
 
+import ipdb
+
+
+class GeoSpaceComposer(GeoSpace):
+
+    def __init__(self, extent, N, M, *args, **kwargs):
+      super().__init__(*args, **kwargs)
+      # Override Index
+
+      self._extent = extent
+      self._agents = {}
+
+      x =  np.linspace(extent[0], extent[1], N+1, endpoint=True)
+      y =  np.linspace(extent[2], extent[3], M+1, endpoint=True)
+
+      hlines = [((x1, yi), (x2, yi)) for x1, x2 in zip(x[:-1], x[1:]) for yi in y]
+      vlines = [((xi, y1), (xi, y2)) for y1, y2 in zip(y[:-1], y[1:]) for xi in x]
+
+      self._grids = list(polygonize(MultiLineString(hlines + vlines)))
+      self._spaces = {str(g): GeoSpacePandas(extent=g.bounds) for g in self._grids}
+
+      self._gdf_is_dirty = False
+
+    def _create_gdf(self, **kwargs):
+      for s in self._spaces.values():
+        if s._gdf_is_dirty:
+          s._create_gdf(**kwargs)
+
+    def _w(self, pos):
+      pos = tuple(map(float,pos))
+      for i, pol in enumerate(self._grids):
+        if pol.contains(Point(*pos)): return pol
+      return None
+
+    def _s(self, pol):
+      return self._spaces[str(pol)]
+
+    def getAgentSpace(self, agent):
+      g = self._w(agent.pos)
+      sp = self._s(g)
+      return sp
+
+    def getRandomPos(self):
+      pos = ( random.uniform(self._extent[0], self._extent[1]),
+              random.uniform(self._extent[2], self._extent[3])
+            )
+      return pos 
+
+    def get_agent(self, aid):
+      aid=str(aid)
+      if aid in self._agents:
+        return self._agents[aid]
+
+
+    def place_agent(self, agent, pos):
+      _from = self._w(agent.pos)
+      _to = self._w(pos)
+      if _to is None: raise ValueError("Destination position %s is not within the extent of this space"%str(pos))
+      self._agents[agent.id] = agent
+      if _from is None: 
+        self._s(_to).place_agent(agent, pos)
+        return
+      if _from == _to: 
+        self._s(_to).move_agent(agent, pos)
+      else:      
+        self._s(_from).remove_agent(agent)
+        self._s(_to).place_agent(agent, pos)
+
+    def move_agent(self, agent, pos):
+      if agent.id in self._agents:
+        sp = self.getAgentSpace(agent)
+        sp.move_agent(agent, pos)
+        return True
+      
+      return False
+
+    def remove_agent(self, agent):
+      if type(agent) is str:
+        agent = self._agents[agent]
+      else:
+        if not agent.id in self._agents: return
+
+      sp = self.getAgentSpace(agent)
+      if sp: sp.remove_agent(agent)
+
+      del self._agents[agent.id]
+      self._gdf_is_dirty = True
+
+    def check_if_dirty(self):
+      self._gdf_is_dirty = False
+      for i, pol in enumerate(self._grids):
+        if pol._gdf_is_dirty:
+          self._gdf_is_dirty = True 
+
+      return self._gdf_is_dirty 
+
+    def _clear_gdf(self):
+      for i, pol in enumerate(self._grids):
+        if pol._gdf_is_dirty: pol._clear_gdf()
+
+    def agents_at(self, pos, **kwargs):
+      pol = self._w(pos)
+      if pol is None: return []
+      sp = self._s(pol)
+      ids = sp.agents_at(pos, **kwargs)
+      return ids
 
 class GeoSpacePandas(GeoSpace):
     def __init__(self, extent, *args, **kwargs):
@@ -57,8 +165,9 @@ class GeoSpacePandas(GeoSpace):
     def place_agent(self, agent, pos):
       if not hasattr(agent, "shape"): agent.shape = Point(pos[0], pos[1])
       if not agent.id in self._agents: self._agents[agent.id] = agent
-      self.move_agent(agent, pos)
-      self._gdf_is_dirty = True
+      res = self.move_agent(agent, pos)
+      if res: self._gdf_is_dirty = True
+      return res
 
     def remove_agent(self, agent, pos):
       if not agent.id in self._agents: return
@@ -70,8 +179,9 @@ class GeoSpacePandas(GeoSpace):
         agent.pos = pos
         agent.shape = Point(pos[0], pos[1])
         self._gdf_is_dirty = True
-      else:
-        raise AttributeError("No agent %s"%agent.id)
+        return True
+      
+      return False
 
     def _create_gdf(self, use_ntrees=False):
       self._clear_gdf()

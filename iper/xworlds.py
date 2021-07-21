@@ -134,6 +134,7 @@ class XAgent(Agent):
     
   def __getattr__(self, name):
     #print("Accessing XML attribute", name)
+    #print(inspect.stack()[1])
     res = self._xd.rootNode.el.xpath("attributes/%s"%name)
     if res:
       _attr = res[0]
