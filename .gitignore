@@ -9,3 +9,7 @@ iper.egg-info/
 results*/
 ctx-cache/
 examples/Economy/BCN_Resources/bcn.osm
+examples/Economy/Experiment2/code_Clousure/BCN_Resources/bcn.osm
+examples/Economy/BCN_Resources/bcn.zip
+examples/Economy/Experiment2/code_Restrictions/BCN_Resources/bcn.osm
+examples/Economy/Experiment3/BCN_Resources/bcn.osm
