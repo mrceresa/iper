@@ -143,7 +143,7 @@ class GeoSpacePandas(GeoSpace):
     def __init__(self, extent, *args, **kwargs):
       super().__init__(*args, **kwargs)
       # Override Index
-
+      self._crs = "EPSG:4326"
       self._extent = extent
       self._agents = {}
       self._clear_gdf()
@@ -195,6 +195,7 @@ class GeoSpacePandas(GeoSpace):
         data.append(a_dictionary)
 
       self._agdf = self._agdf.append(data, ignore_index=True)
+      self._agdf.set_crs(self._crs)
       # Ensure that index in right gdf is formed of sequential numbers
       self._right = self._agdf.copy().reset_index(drop=True)      
       _right_r = np.array(self._right["geometry"].apply(
@@ -214,7 +215,7 @@ class GeoSpacePandas(GeoSpace):
         self._nn =  NearestNeighbors(n_neighbors=5, radius=2.0, n_jobs=n_jobs, algorithm="ball_tree", metric="haversine", leaf_size=2)
         self._nn.fit(_right_r)
       self._gdf_is_dirty = False
-
+      
     def add_geo(self, agents):
 
       """Add a list of GeoAgents to the Geospace.

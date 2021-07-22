@@ -48,6 +48,12 @@ from SEAIHRD_class import SEAIHRD_covid, Mask
 
 from EudaldMobility.Mobility import Map_to_Graph
 
+from shapely.geometry import MultiLineString
+from shapely.ops import polygonize, cascaded_union
+
+import matplotlib.patches as mpatches
+
+
 class CityModel(MultiEnvironmentWorld):
 
     def __init__(self, config):
@@ -170,14 +176,21 @@ class CityModel(MultiEnvironmentWorld):
 
     def _initGeo(self):
         # Initialize geo data
-        self._loc = ctx.Place(self._basemap, zoom_adjust=0)  # zoom_adjust modifies the auto-zoom
+        w,s,n,e = (2.1, 41.3170353, 41.4679135, 2.2283555)
+        zoom = ctx.tile._calculate_zoom(w, s, e, n)
+        im2, ext = ctx.bounds2img(w,s,e,n,zoom,ll=True)
         # Print some metadata
-        self._xs = {}
+        self._xs = {"w":w,"s":s,"n":n,"e":e,"image":im2,"ext":ext}
+        #self._loc = ctx.Place(self._basemap, zoom_adjust=0)  # zoom_adjust modifies the auto-zoom
+        # Print some metadata
+        #self._xs = {}
+
 
         # Longitude w,e Latitude n,s
-        for attr in ["w", "s", "e", "n", "place", "zoom", "n_tiles"]:
-            self._xs[attr] = getattr(self._loc, attr)
-            self.l.debug("{}: {}".format(attr, self._xs[attr]))
+
+        #for attr in ["w", "s", "e", "n", "place", "zoom", "n_tiles"]:
+        #    self._xs[attr] = getattr(self._loc, attr)
+        #    self.l.debug("{}: {}".format(attr, self._xs[attr]))
 
         self._xs["centroid"] = LineString(
             (
@@ -211,6 +224,47 @@ class CityModel(MultiEnvironmentWorld):
         blocks = gpd.read_file(shpfilename)
         self._blocks = blocks
 
+    def get_bins(self, extent,N=4,M=4):
+      x =  np.linspace(extent[0], extent[2], N+1, endpoint=True)
+      y =  np.linspace(extent[1], extent[3], M+1, endpoint=True)
+
+      hlines = [((x1, yi), (x2, yi)) for x1, x2 in zip(x[:-1], x[1:]) for yi in y]
+      vlines = [((xi, y1), (xi, y2)) for y1, y2 in zip(y[:-1], y[1:]) for xi in x]
+
+      grids = list(polygonize(MultiLineString(hlines + vlines)))
+
+      #df = pd.DataFrame()
+      return grids
+      
+    def _plotAgents(self, outdir, figname):
+        if self.space._gdf_is_dirty: self.space._create_gdf()
+
+        fig = plt.figure(figsize=(20,20))
+        ax1 = plt.gca()
+        self.space._agdf["state"] = 0
+        en = {"S":0,"R":1,"E":2,"A":3,"I":4,"H":5,"D":6}
+        for a in self.space._agents.values():
+          if not a.unique_id.startswith("Human"): continue
+          self.space._agdf.at[a.unique_id,"state"] = en.get(a.machine.state) 
+
+        self.space._agdf.plot(ax=ax1, column="state",markersize=1)
+        ctx.add_basemap(ax=ax1,crs=self.space._crs)
+
+        cmap = plt.cm.get_cmap('jet', len(en.keys())) 
+
+        plt.legend([mpatches.Patch(color=cmap(b)) for b in range(len(en.keys()))],
+           ['{}'.format(i) for i in ["S","R","E","A","I","H","D"]])
+
+        #self._blocks.plot(ax=ax1, facecolor='none', edgecolor="black")
+        
+        ax1.set_axis_on()
+        
+        # Plot agents
+        #self.space._agdf.plot(ax=ax1, legend=True)
+        plt.savefig(os.path.join(outdir, 'agents-' + figname))       
+        plt.close() 
+
+
     def plotAll(self, outdir, figname):
         fig = plt.figure(figsize=(15, 15))
         ax1 = plt.gca()
@@ -222,23 +276,48 @@ class CityModel(MultiEnvironmentWorld):
             self._blocks, hue=tot_people, scheme=scheme,
             cmap='Oranges', figsize=(12, 8), ax=ax1
         )
-        # plt.colorbar()
+        #plt.colorbar()
         plt.savefig(os.path.join(outdir, "density-" + figname))
+        plt.close()
 
-        fig = plt.figure(figsize=(15, 15))
-        ax1 = plt.gca()
+        
+        ext = (self._xs["w"],self._xs["s"],self._xs["e"],self._xs["n"])
+        #print(ext)
+        #pols = self.get_bins( ext, N=5, M=5 )
+        #grid = gpd.GeoDataFrame(pols,columns=["geometry"])
+        
+        self._plotAgents(outdir, figname)
+        #ax1.set_aspect('equal', 'datalim')
+  
+        #for i, geom in enumerate(pols):    
+        #  plt.plot(*geom.exterior.xy)
+          #c = geom.centroid
+          #plt.text(c.x, c.y,str(i))
 
-        ctx.plot_map(self._loc, ax=ax1)
-        self._blocks.plot(ax=ax1, facecolor='none', edgecolor="black")
+        #plt.show()
 
-        plt.tight_layout()
+        #grid["S"] = 0; grid["I"] = 0; grid["H"] = 0; grid["D"] = 0
+        #total_agents = 0
+        #not_found = []
+        #for a in self.space._agents.values():
+        #  if not a.unique_id.startswith("Human"): continue
+        #  found = False
+        #  for row in grid.itertuples():
+        #    if row.geometry.contains(Point(*a.pos)):
+        #      grid.at[row.Index, a.machine.state] += 1
+        #      total_agents += 1
+        #      found = True
+        #  if not found: not_found.append(a)
+            #else:
+            #  print("Agent",a,a.pos,"not in pol")
 
-        # Plot agents
-        if self.space._gdf_is_dirty: self.space._create_gdf()
-        self.space._agdf.plot(ax=ax1)
+
+        #print("Num agents found:",total_agents)
+        #print("Num agents not found:",len(not_found))
+
+        #grid.plot(ax=ax1, legend=True,facecolor=None)
 
         # xmin, ymin, xmax, ymax = self._xs["w"], self._xs["s"], self._xs["e"], self._xs["n"]
-
         # dy = (xmax-xmin)/10
         # dx = (ymax-ymin)/10
 
@@ -253,7 +332,6 @@ class CityModel(MultiEnvironmentWorld):
         # grid = gpd.GeoDataFrame({'geometry':polygons})
         # grid.plot(ax=ax1, facecolor='none', edgecolor="red")
 
-        plt.savefig(os.path.join(outdir, 'agents-' + figname))
 
     def plot_results(self, outdir, title='stats', hosp_title='hosp_stats', R0_title='R0_stats'):
         """Plot cases per country"""
