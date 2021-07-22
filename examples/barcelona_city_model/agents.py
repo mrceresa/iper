@@ -41,7 +41,7 @@ class HumanAgent(XAgent):
         self.machine = None
         self.vaccinated= None# 0 da vaccinare,1 prima dose,2 seconda dose,3 vaccino monodose
         # variable to calculate time passed since last state transition
-        self.days_in_current_state = model.currentDate
+        self.days_in_current_state = model.getTime()
         # self.presents_virus = False  # for symptomatic and detected asymptomatic people
         self.quarantined = None
         self.tobetested=None
@@ -102,16 +102,16 @@ class HumanAgent(XAgent):
 
     def _thinkGoal(self):            
 
-        if 8 < self.model.currentDate.hour <= 16:  # working time
+        if 8 < self.model.getTime().hour <= 16:  # working time
             self.goal = "WORK"
             return self.working_time()
 
         # leisure time
-        if 16 < self.model.currentDate.hour <= self.model.night_curfew - 2:  # leisure time
+        if 16 < self.model.getTime().hour <= self.model.night_curfew - 2:  # leisure time
             self.goal = "FUN"
             return self.leisure_time()
 
-        if self.model.night_curfew - 2 < self.model.currentDate.hour <= self.model.night_curfew - 1:  # Time to go home
+        if self.model.night_curfew - 2 < self.model.getTime().hour <= self.model.night_curfew - 1:  # Time to go home
             if self.pos != self.house:
                 self.obj_place = self.house
             return self.obj_place 
@@ -209,7 +209,7 @@ class HumanAgent(XAgent):
 
         #if not self.model.lockdown_total:
         #    self.move(cellmates)  # if not in total lockdown
-        if (self.model.currentDate - timedelta(minutes=self.model.timestep)).day!=self.model.currentDate.day:
+        if (self.model.getTime() - timedelta(minutes=self.model.timestep)).day!=self.model.getTime().day:
 
             #print("CHANGE STATE!!!!")
             self.changeAgentStates()
@@ -233,7 +233,7 @@ class HumanAgent(XAgent):
                 self.model.contact_count[0] += 1
                 if other.machine.state == "E":
                     self.model.contact_count[1] += 1
-                    other.R0_contacts[self.model.currentDate.strftime('%Y-%m-%d')] = [0, round(1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
+                    other.R0_contacts[self.model.getTime().strftime('%Y-%m-%d')] = [0, round(1 / other.machine.rate['rEI']) + round(1 / other.machine.rate['rIR']), 0]
         #print(self.model.contact_count )
 
     def look_for_friend(self):
@@ -277,7 +277,7 @@ class HumanAgent(XAgent):
         # check contacts for self agent
 
         already_registered_contact = False
-        today  = self.model.currentDate.strftime('%Y-%m-%d')
+        today  = self.model.getTime().strftime('%Y-%m-%d')
         if not today in self.contacts:
             self.contacts[today] = {contact}  # initialize with contact
 

@@ -26,7 +26,7 @@ class BaseBrain(XMLObject):
     #self._model.updateActions(self._avActions)
     self._model._rewards.append(
       (self._agent.id,
-       self._agent.getWorld().currentStep,
+       self._agent.getWorld().getStep(),
        self._agent.pos,
        reward       
       )

@@ -4,14 +4,14 @@ import agents
 
 def update_DC_table(model):
     """ Collects all statistics for the DC_Table """
-    next_row = {'Day': model.currentDate.strftime('%Y-%m-%d'), 'Susceptible': get_susceptible_count(model),
+    next_row = {'Day': model.getTime().strftime('%Y-%m-%d'), 'Susceptible': get_susceptible_count(model),
                 'Exposed': get_exposed_count(model), 'Infected': get_infected_count(model),
                 'Recovered': get_recovered_count(model), 'Hospitalized': get_hosp_count(model),
                 'Dead': get_dead_count(model), 'R0': get_R0(model), 'R0_Obs': get_R0_Obs(model)}
                 #, 'Mcontacts': get_R0_Obs0(model), 'Quarantined': get_R0_Obs1(model), 'Contacts': get_R0_Obs2(model) }
     model.datacollector.add_table_row("Model_DC_Table", next_row, ignore_missing=True)
 
-    next_row2 = {'Day': model.currentDate.strftime('%Y-%m-%d'), 'Hosp-Susceptible': get_h_susceptible_count(model),
+    next_row2 = {'Day': model.getTime().strftime('%Y-%m-%d'), 'Hosp-Susceptible': get_h_susceptible_count(model),
                  'Hosp-Infected': get_h_infected_count(model), 'Hosp-Recovered': get_h_recovered_count(model),
                  'Hosp-Hospitalized': get_hosp_count(model), 'Hosp-Dead': get_h_dead_count(model)}
     model.hosp_collector.add_table_row("Hosp_DC_Table", next_row2, ignore_missing=True)

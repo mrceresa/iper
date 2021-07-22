@@ -47,7 +47,7 @@ class RewardRule(object):
 class Sensor(XMLObject):
   def getWorldState(self, agent, world):
     state = [
-      world.currentStep,
+      world.getTime(),
       agent.money,
       
     ]
@@ -163,7 +163,7 @@ class XAgent(Agent):
   def removeAndClean(self, reason):
     death = self._events.add("death")
     death.el.attrib["cause"] = reason
-    death.el.attrib["simStep"] = str(self.getWorld().currentStep)
+    death.el.attrib["simStep"] = str(self.getWorld().getTime())
     if reason not in ["old age", "starvation"]:
       self.l.debug("Agent %s dead because of %s"%(self.id, reason))
     if self.exists:
@@ -281,9 +281,9 @@ class MultiEnvironmentWorld(Model):
     self._deathsinturn = []
     self._totCreated = 0
     self._totDestroyed = 0    
-    self.currentStep = 0  
-    self.startingDate = config["startingDate"] if "startingDate" in config else date.today()
-    self.currentDate = self.startingDate
+    self._currentStep = 0  
+    self._startingDate = config["startingDate"] if "startingDate" in config else date.today()
+    self._currentDate = self._startingDate
     self.timestep=config["timestep"] if "timestep" in config else 30 #In minutes
 
   def info(self):
@@ -297,20 +297,20 @@ class MultiEnvironmentWorld(Model):
 
 
   def step(self, call_scheduler=True):
-    self.currentStep+=1
+    self._currentStep+=1
     
-    oldDate = self.currentDate
-    self.currentDate += timedelta(minutes=self.timestep)  # next step
+    oldDate = self.getTime()
+    self._currentDate += timedelta(minutes=self.timestep)  # next step
     
     if call_scheduler: self.schedule.step()
-    if oldDate.day != self.currentDate.day: self.stepDay()
+    if oldDate.day != self.getTime().day: self.stepDay()
 
   def _checkModelContinueRunning(self, maxsteps, maxdays, user_cond):
-    if maxsteps and (self.currentStep >= maxsteps) : 
+    if maxsteps and (self._currentStep >= maxsteps) : 
       self.l.info("Terminating simulation because we reached the maximum number of steps (%d)"%maxsteps)
       return False
 
-    if maxdays and (self.currentDate - self.startingDate).days >= maxdays:
+    if maxdays and (self._currentDate - self._startingDate).days >= maxdays:
       self.l.info("Terminating simulation because we reached the maximum number of days (%d)"%maxdays)
       return False
 
@@ -326,7 +326,7 @@ class MultiEnvironmentWorld(Model):
       raise ValueError("The model will run forever if you don't set an exit condition. Use forver=True to force")
 
     while (running):
-      self.l.info("Step %d - %s elapsed"%(self.currentStep, self.currentDate - self.startingDate))    
+      self.l.info("Step %d - %s elapsed"%(self._currentStep, self._currentDate - self._startingDate))    
       self.info()          
       self.stepEnvironment()
       self.step()
@@ -334,6 +334,15 @@ class MultiEnvironmentWorld(Model):
 
 
     self.l.info("***** FINISHED SIMULATION *******")
+
+  def getTime(self):
+    return self._currentDate
+
+  def getStep(self):
+    return self._currentStep
+
+  def getElapsedSimulationTime(self):
+    return self._currentDate - self._startingDate
 
   def getAgents(self):
     return self._agentsById.values()
@@ -372,7 +381,7 @@ class MultiEnvironmentWorld(Model):
         self.l.error("Cannot find agent %s of type %s in %s"%(str(_agent), str(type(_agent)), str(self._agents)))
     else:
       _ev = _agent._events.add(_t)
-      _ev.el.attrib["simStep"] = str(self.currentStep)
+      _ev.el.attrib["simStep"] = str(self.getTime())
 
   def getAllAgentsIds(self) -> list:
     _w = self.getBoundaries()._size._width
@@ -438,7 +447,7 @@ class MultiEnvironmentWorld(Model):
         raise ValueError("Cannot fullfill requirements for model " + str(env))    
 
   def stepEnvironment(self):
-    #self.l.info("%d - "%self.currentStep)
+    #self.l.info("%d - "%self.getTime())
     #self.l.info("Deaths: %d - "%len(self._deathsinturn))    
     for env in self._envs:
       # TODO: Step added environments

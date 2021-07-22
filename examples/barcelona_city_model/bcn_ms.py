@@ -326,7 +326,7 @@ class CityModel(MultiEnvironmentWorld):
     def _check_movement_is_restricted(self):
         restricted = False
         if restricted:
-            if 0 < self.currentDate.hour < 6:
+            if 0 < self.getTime().hour < 6:
                 return True
 
     def stepDay(self):
@@ -369,7 +369,7 @@ class CityModel(MultiEnvironmentWorld):
         # self.plot_results()  # title="server_stats", hosp_title="server_hosp_stats"
         self.l.info("Plotting graphs...")
         tic = time.perf_counter()
-        self._plotAgents(self.config["output_dir"], "step-%d-day-%d.png"%(self.currentStep, self.currentDate.day))
+        self._plotAgents(self.config["output_dir"], "step-%d-day-%d.png"%(self.getStep(), self.getTime().day))
         toc = time.perf_counter()
         self.l.info("Done plotting graphs for the day %.1f seconds" % (toc - tic))
 
@@ -390,10 +390,10 @@ class CityModel(MultiEnvironmentWorld):
         super().step()
 
     
-       #self.plotAll(self.config["output_dir"], "res%d.png"%self.currentStep)
+       #self.plotAll(self.config["output_dir"], "res%d.png"%self.getStep())
     
     def activate_alarm_state(self):
-        self.alarm_state['inf_threshold'] = self.currentDate.strftime("%Y-%m-%d")
+        self.alarm_state['inf_threshold'] = self.getTime().strftime("%Y-%m-%d")
 
         if 'night_curfew' in self.alarm_state.keys():
             self.night_curfew = self.alarm_state['night_curfew']
@@ -468,7 +468,7 @@ class CityModel(MultiEnvironmentWorld):
                             list(range(1, 11)))
                         self.collector_counts["SUSC"] -= 1
                         self.collector_counts["INF"] += 1  # Adjust initial counts
-                        self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.currentDate.strftime('%Y-%m-%d')] = [0,
+                        self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.getTime().strftime('%Y-%m-%d')] = [0,
                                                                                                                     round(
                                                                                                                         1 /
                                                                                                                         self._agentsToAdd[
@@ -485,7 +485,7 @@ class CityModel(MultiEnvironmentWorld):
 
                         self.collector_counts["SUSC"] -= 1
                         self.collector_counts["EXP"] += 1  # Adjust initial counts
-                        self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.currentDate.strftime('%Y-%m-%d')] = \
+                        self._agentsToAdd[agentsToBecreated - i].R0_contacts[self.getTime().strftime('%Y-%m-%d')] = \
                             [0, round(1 / self._agentsToAdd[agentsToBecreated - i].machine.rate['rEI']) + round(
                                 1 / self._agentsToAdd[agentsToBecreated - i].machine.rate['rIR']) - self._agentsToAdd[
                                  agentsToBecreated - i].machine.time_in_state, 0]
@@ -561,11 +561,11 @@ class CityModel(MultiEnvironmentWorld):
 
     def clean_contact_list(self, Adays, Hdays, Tdays):
         """ Function for deleting past day contacts sets and arrange today's tests"""
-        date = self.currentDate.strftime('%Y-%m-%d')
-        Atime = (self.currentDate - timedelta(days=Adays)).strftime('%Y-%m-%d')
-        Htime = (self.currentDate - timedelta(days=Hdays)).strftime('%Y-%m-%d')
+        date = self.getTime().strftime('%Y-%m-%d')
+        Atime = (self.getTime() - timedelta(days=Adays)).strftime('%Y-%m-%d')
+        Htime = (self.getTime() - timedelta(days=Hdays)).strftime('%Y-%m-%d')
 
-        Ttime = (self.currentDate - timedelta(days=Tdays)).strftime('%Y-%m-%d')
+        Ttime = (self.getTime() - timedelta(days=Tdays)).strftime('%Y-%m-%d')
         if Ttime in self.peopleTested: del self.peopleTested[Ttime]
 
         # People tested in the last recorded days
@@ -586,10 +586,10 @@ class CityModel(MultiEnvironmentWorld):
                 if Atime in a.R0_contacts: del a.R0_contacts[Atime]
                 # create dict R0 for infected people in case it is not updated during the day
                 if a.machine.state in ["I", "A"]:
-                    a.R0_contacts[self.currentDate.strftime('%Y-%m-%d')] = [0, round(
+                    a.R0_contacts[self.getTime().strftime('%Y-%m-%d')] = [0, round(
                         1 / a.machine.rate['rIR']) - a.machine.time_in_state, 0]
                 elif a.machine.state == "E":
-                    a.R0_contacts[self.currentDate.strftime('%Y-%m-%d')] = [0, round(1 / a.machine.rate['rEI']) + round(
+                    a.R0_contacts[self.getTime().strftime('%Y-%m-%d')] = [0, round(1 / a.machine.rate['rEI']) + round(
                         1 / a.machine.rate['rIR']) - a.machine.time_in_state, 0]
 
             elif isinstance(a, Hospital):
@@ -604,7 +604,7 @@ class CityModel(MultiEnvironmentWorld):
 
                 #print(f"Lista de contactos de hospital {a.unique_id} es {a.PCR_testing}. Con {peopleTested}")
 
-        today = self.currentDate.strftime('%Y-%m-%d')
+        today = self.getTime().strftime('%Y-%m-%d')
         #if not today in self.peopleTested:
         self.peopleTested[today] = set()
         self.peopleToTest[today] = set()
@@ -625,7 +625,7 @@ class CityModel(MultiEnvironmentWorld):
         if dest=="E":
             self.E_today+=1
             #print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",self.E_today)
-        self.today1= self.currentDate.day
+        self.today1= self.getTime().day
         if dest in self.Infected_type_for_RKI:
             self.Infected_for_RKI_today += 1
 

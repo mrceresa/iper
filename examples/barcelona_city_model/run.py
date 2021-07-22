@@ -95,8 +95,8 @@ def main(args):
     from functools import partial
     cond = timedelta(hours = 10)
     cond_func = partial(_checkModelExitCondition,cond=cond)
-    #city.run(until=cond_func)
-    city.run(forever=True)
+    city.run(until=cond_func)
+    #city.run(forever=True)
     toc = time.perf_counter()
     l.info("Simulation lasted %.1f seconds" % (toc - tic))
 
@@ -107,9 +107,9 @@ def main(args):
     return city
 
 def _checkModelExitCondition(model, cond):
-    td = model.currentDate - model.startingDate
-    if td == cond: return False
-    return True
+    if model.getElapsedSimulationTime() < cond: 
+        return True
+    return False
 
 
 

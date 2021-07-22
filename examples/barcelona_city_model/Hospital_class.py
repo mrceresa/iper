@@ -38,7 +38,7 @@ class Hospital(XAgent):
         If result is positive agent contacts will be added to hospital PCR testing for future tests. """
         # print(f"Agente {agent.unique_id} testeandose en hospital {self.unique_id}")
 
-        today = self.model.DateTime.strftime('%Y-%m-%d')
+        today = self.model.getTime().strftime('%Y-%m-%d')
         # if not today in self.model.peopleTested:
         #     self.model.peopleTested[today] = set()
 
@@ -78,7 +78,7 @@ class Hospital(XAgent):
         PCRs = self.PCR_availables
         HospToTest = set()
 
-        ThreeD_ago = (self.model.DateTime - timedelta(days=3)).strftime('%Y-%m-%d')
+        ThreeD_ago = (self.model.getTime() - timedelta(days=3)).strftime('%Y-%m-%d')
 
         quarantine_period = self.model.quarantine_period
         if quarantine_period == 0: quarantine_period = 1
@@ -86,19 +86,19 @@ class Hospital(XAgent):
         if ThreeD_ago in self.model.peopleToTest and PCRs:
             for elem in self.model.peopleToTest[ThreeD_ago]:
                 agent = self.model.space.get_agent(elem)
-                #if agent.quarantined is None: agent.quarantined = self.model.DateTime + timedelta(days=quarantine_period)
+                #if agent.quarantined is None: agent.quarantined = self.model.getTime() + timedelta(days=quarantine_period)
                 if elem not in patientsTested and PCRs > 0 and (agent.machine.state not in ["H", "D"]):
                     PCRs -= 1
                     HospToTest.add(elem)
                     agent.quarantined =0
-                    #agent.quarantined = self.model.DateTime + timedelta(days=quarantine_period)
+                    #agent.quarantined = self.model.getTime() + timedelta(days=quarantine_period)
                     agent.obj_place = self.pos
                     agent.goal = "GO_TO_HOSPITAL"
 
             self.model.peopleToTest[ThreeD_ago] -= HospToTest
 
         # print(patientsTested)
-        TwoD_ago = (self.model.DateTime - timedelta(days=2)).strftime('%Y-%m-%d')
+        TwoD_ago = (self.model.getTime() - timedelta(days=2)).strftime('%Y-%m-%d')
         if PCRs and TwoD_ago in self.model.peopleToTest:
             for elem in self.model.peopleToTest[TwoD_ago]:
                 agent = self.model.space.get_agent(elem)
@@ -106,7 +106,7 @@ class Hospital(XAgent):
                     PCRs -= 1
                     HospToTest.add(elem)
                     agent.quarantined =0
-                    #agent.quarantined = self.model.DateTime + timedelta(days=quarantine_period)
+                    #agent.quarantined = self.model.getTime() + timedelta(days=quarantine_period)
                     agent.obj_place = self.pos
                     agent.goal = "GO_TO_HOSPITAL"
 
