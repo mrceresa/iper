@@ -46,6 +46,7 @@ from agents import HumanAgent
 import DataCollector_functions as dc
 from SEAIHRD_class import SEAIHRD_covid, Mask
 
+from EudaldMobility.Mobility import Map_to_Graph
 
 class CityModel(MultiEnvironmentWorld):
 
@@ -86,6 +87,11 @@ class CityModel(MultiEnvironmentWorld):
                     self._xs["e"], self._xs["n"]
                     )
         )
+
+        self.Ped_Map = Map_to_Graph('Pedestrian')  # Load the shapefiles
+        self.define_boundaries_from_graphs(self.Ped_Map)
+
+
         self.DateTime = datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0)
         # self.virus = VirusCovid(config["virus"])
         self.pTest = 0.95
@@ -148,6 +154,23 @@ class CityModel(MultiEnvironmentWorld):
 
         self.datacollector.collect(self)
         self.hosp_collector.collect(self)
+
+    def define_boundaries_from_graphs(self, map):
+        self.boundaries = map.get_boundaries()
+
+        self.boundaries['centroid'] = LineString(
+            (
+                (self.boundaries["w"], self.boundaries["s"]),
+                (self.boundaries["e"], self.boundaries["n"])
+            )).centroid
+
+        self.boundaries["bbox"] = Polygon.from_bounds(
+            self.boundaries["w"], self.boundaries["s"],
+            self.boundaries["e"], self.boundaries["n"])
+
+        self.boundaries["dx"] = 111.32;  # One degree in longitude is this in KM
+        self.boundaries["dy"] = 40075 * math.cos(self.boundaries["centroid"].y) / 360
+        self.l.info("Arc amplitude at this latitude %f, %f" % (self.boundaries["dx"], self.boundaries["dy"]))
 
     def _initGeo(self):
         # Initialize geo data
@@ -398,15 +421,21 @@ class CityModel(MultiEnvironmentWorld):
         agentsToBecreated = len(self._agentsToAdd) - 1
         index = 0
         r =40.0/111100
+        all_nodes = list(self.Ped_Map.G.nodes)
         while agentsToBecreated >= 0:
             if isinstance(self._agentsToAdd[agentsToBecreated], HumanAgent):
                 # FAMILY PART
                 if family_dist[index] == 0: index += 1
-                position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                node = random.choice(all_nodes)
+                position = (self.Ped_Map.G.nodes[node]['lon'],
+                            self.Ped_Map.G.nodes[node]['lat'])
+
+                #position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
                 #print("+++++++++++++++++++++++++++++++++********************",position)
 
                 for i in range(0, family_dist[index]):
-                    position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
+                    #position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
+
                     self._agentsToAdd[agentsToBecreated - i].pos = position
                     self._agentsToAdd[agentsToBecreated - i].house = position
                     #print("++++++++++++++++++++","id agente",self._agentsToAdd[agentsToBecreated - i].id,"   posizione iniziale agente", self._agentsToAdd[agentsToBecreated - i].pos)
@@ -475,13 +504,20 @@ class CityModel(MultiEnvironmentWorld):
                 agentsToBecreated -= family_dist[index]
                 family_dist[index] = 0
             elif isinstance(self._agentsToAdd[agentsToBecreated], Hospital):
-                position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                #position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                node = random.choice(all_nodes)
+                position = (self.Ped_Map.G.nodes[node]['lon'],
+                            self.Ped_Map.G.nodes[node]['lat'])
+
                 self._agentsToAdd[agentsToBecreated].pos = position
                 self._hospitals[position] = self._agentsToAdd[agentsToBecreated]
                 # print(f"Hospital {self._agentsToAdd[agents_created].id} created at {self._agentsToAdd[agents_created].pos} place")
                 agentsToBecreated -= 1
             elif isinstance(self._agentsToAdd[agentsToBecreated], Workplace):
-                position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                #position = (uniform(self._xs["w"], self._xs["e"]), uniform(self._xs["s"], self._xs["n"]))
+                node = random.choice(all_nodes)
+                position = (self.Ped_Map.G.nodes[node]['lon'],
+                            self.Ped_Map.G.nodes[node]['lat'])
 
                 position = (position[0] + randint(-1, 1) * r, position[1] + randint(-1, 1) * r)
                 self._agentsToAdd[agentsToBecreated].place = position  # redundant
