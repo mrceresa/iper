@@ -20,6 +20,7 @@ from Hospital_class import Workplace, Hospital
 import DataCollector_functions as dc
 import contextily as ctx
 import time
+from datetime import datetime, timedelta
 
 
 def main(args):
@@ -61,7 +62,9 @@ def main(args):
         "alarm_state": args.lockdown,
         "peopleMeeting": args.meeting,
         "general_run": args.general_run,
-        "output_dir":args.output_dir
+        "output_dir":args.output_dir,
+        "startingDate":datetime(year=2021, month=1, day=1, hour=0, minute=0, second=0) ,
+        "timestep":30 #minutes per step
     }
     city = CityModel(config)
     pr = PopulationRequest()
@@ -87,7 +90,13 @@ def main(args):
 
     city.plotAll(args.output_dir, "pre.png")
     tic = time.perf_counter()
-    city.run(args.steps)
+    #city.run(args.steps)
+
+    from functools import partial
+    cond = timedelta(hours = 10)
+    cond_func = partial(_checkModelExitCondition,cond=cond)
+    #city.run(until=cond_func)
+    city.run(forever=True)
     toc = time.perf_counter()
     l.info("Simulation lasted %.1f seconds" % (toc - tic))
 
@@ -96,6 +105,11 @@ def main(args):
     city.plotAll(args.output_dir, "res.png")
 
     return city
+
+def _checkModelExitCondition(model, cond):
+    td = model.currentDate - model.startingDate
+    if td == cond: return False
+    return True
 
 
 

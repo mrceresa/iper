@@ -25,6 +25,8 @@ from .behaviours.actions import Action
 
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
+
 
 class PopulationRequest(object):
   def __init__(self):
@@ -279,26 +281,57 @@ class MultiEnvironmentWorld(Model):
     self._deathsinturn = []
     self._totCreated = 0
     self._totDestroyed = 0    
-    self.currentStep = 0    
-
+    self.currentStep = 0  
+    self.startingDate = config["startingDate"] if "startingDate" in config else date.today()
+    self.currentDate = self.startingDate
+    self.timestep=config["timestep"] if "timestep" in config else 30 #In minutes
 
   def info(self):
-    self.l.info("TOTAL agent types %d"%len(self._agents))    
+    self.l.debug("TOTAL agent types %d"%len(self._agents))    
     for k,v in self._agents.items():
-      self.l.info("%s:%d"%(k, len(v)))  
+      self.l.debug("%s:%d"%(k, len(v)))  
 
-  def step(self):
-    self.schedule.step()
+  def stepDay(self):
+      """Called if there is a new day. Reimplement if neede"""
+      self.l.info("Today is a new day!")
+
+
+  def step(self, call_scheduler=True):
+    self.currentStep+=1
     
-  def run(self, n):
+    oldDate = self.currentDate
+    self.currentDate += timedelta(minutes=self.timestep)  # next step
+    
+    if call_scheduler: self.schedule.step()
+    if oldDate.day != self.currentDate.day: self.stepDay()
+
+  def _checkModelContinueRunning(self, maxsteps, maxdays, user_cond):
+    if maxsteps and (self.currentStep >= maxsteps) : 
+      self.l.info("Terminating simulation because we reached the maximum number of steps (%d)"%maxsteps)
+      return False
+
+    if maxdays and (self.currentDate - self.startingDate).days >= maxdays:
+      self.l.info("Terminating simulation because we reached the maximum number of days (%d)"%maxdays)
+      return False
+
+    if user_cond and user_cond(self) is False:
+      self.l.info("Terminating simulation because we reached user defined condition (%s)"%str(user_cond))
+      return False
+
+    return True    
+  def run(self, maxsteps=None, maxdays=None, until=None, forever=False):
     self.l.info("***** STARTING SIMULATION *******")
-    for i in range(n):
-      self.l.info("Step %d of %d"%(i, n))    
+    running = True
+    if not forever and maxsteps is None and maxdays is None and until is None:
+      raise ValueError("The model will run forever if you don't set an exit condition. Use forver=True to force")
+
+    while (running):
+      self.l.info("Step %d - %s elapsed"%(self.currentStep, self.currentDate - self.startingDate))    
       self.info()          
       self.stepEnvironment()
       self.step()
-      self.currentStep+=1
-      
+      running = self._checkModelContinueRunning(maxsteps, maxdays, until)
+
 
     self.l.info("***** FINISHED SIMULATION *******")
 
