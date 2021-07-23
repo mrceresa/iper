@@ -27,6 +27,7 @@ from sklearn.neighbors import NearestNeighbors
 from joblib import Parallel, effective_n_jobs, delayed
 import random
 
+
 class MeshSpace(NetworkGrid):
 
   def __init__(self, mesh, debug=False, name="New MeshSpace", \

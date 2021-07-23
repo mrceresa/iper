@@ -62,6 +62,7 @@ class HumanAgent(XAgent):
         self.tobetested=None
         self.family = set()
         self.friends = set()
+        self.house = None
         self.contacts = {}  # dict where keys are days and each day has a list of people
 
         self.workplace = None  # to fill with a workplace if employed

@@ -8,8 +8,8 @@ import geopandas as gpd
 from .mobility import Map_to_Graph
 
 class CitySpace(GeoSpacePandas):
-    def __init__(self, basemap, path_name, *args, **kwargs):
-      super().__init__(*args, **kwargs)
+    def __init__(self, basemap, path_name, extent):
+      super().__init__(extent)
       self.l = logging.getLogger(__name__)
 
       self._basemap = basemap

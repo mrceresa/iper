@@ -140,10 +140,9 @@ class GeoSpaceComposer(GeoSpace):
       return ids
 
 class GeoSpacePandas(GeoSpace):
-    def __init__(self, extent, *args, **kwargs):
-      super().__init__(*args, **kwargs)
+    def __(self, extent):
+      super().__init__(crs="EPSG:4326")
       # Override Index
-      self._crs = "EPSG:4326"
       self._extent = extent
       self._agents = {}
       self._clear_gdf()
@@ -198,7 +197,7 @@ class GeoSpacePandas(GeoSpace):
         data.append(a_dictionary)
 
       self._agdf = self._agdf.append(data, ignore_index=True)
-      self._agdf.set_crs(self._crs)
+      self._agdf.set_crs(self.crs)
       # Ensure that index in right gdf is formed of sequential numbers
       self._right = self._agdf.copy().reset_index(drop=True)      
       _right_r = np.array(self._right["geometry"].apply(

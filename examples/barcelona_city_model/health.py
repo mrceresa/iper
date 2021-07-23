@@ -5,16 +5,17 @@ import random
 from datetime import datetime, timedelta
 
 from iper import XAgent
+from mesa_geo import GeoAgent
 
 class ContactTracing(object):
     pass
 
-class Hospital(XAgent):
+class Hospital(XAgent, GeoAgent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id)
         self.total_capacity = model.Hosp_capacity #int(random.normalvariate(model.Hosp_capacity, int(model.Hosp_capacity * 0.4)))  # 10% of population
         self.list_pacients = set()  # patients in the hospital
-        self.PCR_availables = model.PCR_tests  # self.random.randrange(3, 5)
+        self.PCR_availables = random.randrange(3, 5)
         #self.PCR_testing = {}  # patients waiting for the testing
         #self.PCR_results = {}  # patients tested
         self.mask = Mask.FFP2
