@@ -140,7 +140,7 @@ class GeoSpaceComposer(GeoSpace):
       return ids
 
 class GeoSpacePandas(GeoSpace):
-    def __(self, extent):
+    def __init__(self, extent):
       super().__init__(crs="EPSG:4326")
       # Override Index
       self._extent = extent
