@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 
 from iper import XAgent
 
+class ContactTracing(object):
+    pass
+
 class Hospital(XAgent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id)
@@ -23,8 +26,10 @@ class Hospital(XAgent):
         return "Hospital at " + str(self.pos) + "with " + str(self.PCR_availables) + " available tests"
 
     def _postInit(self):
-        pass
-
+        node = self.model.space.getRandomNode()
+        self.pos = self.model.space.getNodePosition(node)
+        self.model._hospitals[self.pos] = self
+        
     def add_patient(self, agent):
         """ Adds a patient """
         self.list_pacients.add(agent)
@@ -130,7 +135,14 @@ class Workplace(XAgent):
         return "Agent " + str(self.id)
 
     def _postInit(self):
-        pass
+        node = self.model.space.getRandomNode()
+        position = self.model.space.getNodePosition(node)
+        
+        position = (position[0] + randint(-1, 1) * r, position[1] + randint(-1, 1) * r)
+        self.pos = position
+        self.total_capacity = self.peopleInMeeting
+
+        agentsToBecreated -= 1
 
     def set_capacity(self, mean, sd):
         """ Sets capacity of the workplace. """

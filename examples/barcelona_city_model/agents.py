@@ -33,6 +33,21 @@ class StandStill(Action):
     def do(self, agent):
         pass
 
+class HouseholdsAgent(XAgent):
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id)
+        for i in range(0, family_dist[index]):
+            #position = (position[0]+randint(-1,1)*r, position[1]+randint(-1,1)*r)
+
+            self._agentsToAdd[agentsToBecreated - i].pos = position
+            self._agentsToAdd[agentsToBecreated - i].house = position
+            #print("++++++++++++++++++++","id agente",self._agentsToAdd[agentsToBecreated - i].id,"   posizione iniziale agente", self._agentsToAdd[agentsToBecreated - i].pos)
+            for y in range(0, family_dist[index]):
+                if i != y:
+                    self._agentsToAdd[agentsToBecreated - i].family.add(self._agentsToAdd[agentsToBecreated - y].id)
+
+
+
 class HumanAgent(XAgent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id)
@@ -60,6 +75,13 @@ class HumanAgent(XAgent):
 
     def __repr__(self):
         return "Agent id " + str(self.id)
+
+    def _friendsNetwork(self):
+        pass
+
+    def _familyNetwork(self):
+        pass
+
 
     def _postInit(self):
         self.obj_place = self.house

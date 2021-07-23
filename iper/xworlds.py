@@ -319,7 +319,15 @@ class MultiEnvironmentWorld(Model):
       return False
 
     return True    
+  
+  def _onRun(self):
+    """Give the model a moment to perform pre-run initialization"""
+    pass
+      
   def run(self, maxsteps=None, maxdays=None, until=None, forever=False):
+    
+    self._onRun()
+
     self.l.info("***** STARTING SIMULATION *******")
     running = True
     if not forever and maxsteps is None and maxdays is None and until is None:

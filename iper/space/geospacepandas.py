@@ -24,6 +24,9 @@ import random
 from shapely.geometry import MultiLineString
 from shapely.ops import polygonize, cascaded_union
 
+import ipdb
+
+
 def _tree_query_parallel_helper(tree, *args, **kwargs):
     """Helper for the Parallel calls in KNeighborsMixin.kneighbors
     The Cython method tree.query is not directly picklable by cloudpickle
@@ -31,9 +34,6 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
     """
     return tree.query(*args, **kwargs)
   
-
-import ipdb
-
 
 class GeoSpaceComposer(GeoSpace):
 
@@ -163,11 +163,14 @@ class GeoSpacePandas(GeoSpace):
         return self._agents[aid]
 
     def place_agent(self, agent, pos):
-      if not hasattr(agent, "shape"): agent.shape = Point(pos[0], pos[1])
       if not agent.id in self._agents: self._agents[agent.id] = agent
-      res = self.move_agent(agent, pos)
-      if res: self._gdf_is_dirty = True
-      return res
+      if agent.unique_id.startswith("Human"):
+        if not hasattr(agent, "shape"): agent.shape = Point(pos[0], pos[1])
+        res = self.move_agent(agent, pos)
+        if res: self._gdf_is_dirty = True
+        return res
+      else: # If it is not a person
+        self.add_geo(agent)
 
     def remove_agent(self, agent, pos):
       if not agent.id in self._agents: return

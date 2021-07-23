@@ -16,7 +16,7 @@ from datetime import datetime
 from iper import PopulationRequest
 
 from agents import HumanAgent, RandomWalk
-from Hospital_class import Workplace, Hospital
+from health import Workplace, Hospital
 import DataCollector_functions as dc
 import contextily as ctx
 import time
@@ -67,6 +67,8 @@ def main(args):
         "timestep":30 #minutes per step
     }
     city = CityModel(config)
+
+    # Create model population
     pr = PopulationRequest()
 
     pr._data = {
