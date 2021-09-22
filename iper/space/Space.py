@@ -80,12 +80,14 @@ class MeshSpace(NetworkGrid):
     g = None
     if self.has_volume: 
       g = self._3g # If we have a volume connectivity we always use it
+      print("VOLUME NODES: %d"%len(g.nodes))      
     else:
       if self.has_surface: 
         g = self._2g  # Otherwise use the 2D one
-        
-    # If none we will have an error
-    assert(g is not None)
+        print("SURFACE NODES: %d"%len(g.nodes))              
+
+    self._lnodes = list(g.nodes)
+    self._nnodes = len(g.nodes)    
     
     super().__init__(g)
 
@@ -151,8 +153,13 @@ class MeshSpace(NetworkGrid):
 
   def place_agent(self, agent, agent_pos):
     node_id = agent_pos[0]
-    self._place_agent(agent, node_id)
-    agent.pos = agent_pos
+
+    if not self.out_of_bounds(node_id):
+      self._place_agent(agent, node_id)
+      agent.pos = agent_pos
+      return True
+    
+    return False
 
   def move_agent(self, agent , agent_pos):
     node_id = agent_pos[0]  
@@ -182,7 +189,7 @@ class MeshSpace(NetworkGrid):
     return (len(self.G.nodes), )
 
   def getRandomPos(self):
-    pos = random.choice(list(self.G.nodes))
+    pos = random.choice(self._lnodes)
     return (pos, )
 
   #def find_cell(self, pos):
@@ -223,17 +230,34 @@ class MeshSpace(NetworkGrid):
     nx.set_node_attributes(self.G, values, name) 
  
   def out_of_bounds(self, pos):
-    if type(pos) is tuple: pos = pos[0]
+    #print("Inside out of bounds", pos, type(pos))
+    if type(pos) is tuple and len(pos) == 1: 
+      pos = pos[0]    
+    elif type(pos) is int:
+      pass
+    else:
+      print(pos)
+      assert False, "Please set pos either as an integer (node number) or as a 1-D tuple (n,)"
+    
+    if pos not in self.G.nodes:
+    #if pos > len(self.G.nodes):
+      #print(pos,"is out of bound",self._nnodes)      
+      #import ipdb
+      #ipdb.set_trace()
+      return True
 
-    if pos in self.G.nodes:
-      return False
-      
-    return True
+    #print(pos,"is inside",self._nnodes)      
+    #if int(pos)>len(self.G.nodes) and pos in self.G.nodes:
+    #  print("BUG IN GRAPH!")          
+    #  import ipdb
+    #  ipdb.set_trace()    
+
+    return False
  
   def get_neighbors(self, agent_pos, include_center):
     agent_pos = agent_pos[0]
     _neighs = super().get_neighbors(agent_pos, include_center)
-    _neighs_t = [(_i,) for _i in _neighs]
+    _neighs_t = [(_i,) for _i in _neighs if not self.out_of_bounds(_i)]
     return _neighs_t
   
 #  def getField(self, field):
