@@ -318,7 +318,12 @@ def read_vtu(filein, debug=False, fileout=None):
     wr.SetInputData(pd)
     wr.Write()
 
-  cells = [("tetra", np.asarray(cells))]
+  #cells = [("tetra", np.asarray(cells))]
+  # NOTE: Not sure on the meaning of the "cells" in tetra array
+  #       For now skipping it
+  #import ipdb
+  #ipdb.set_trace()
+  cells = [("tetra", np.zeros(3))]  
   mesh = meshio.Mesh(np.asarray(points), cells)
   ms = MeshSpace(mesh, name=os.path.basename(filein), 
     compute_conn=False, g3=H)
