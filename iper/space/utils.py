@@ -163,6 +163,7 @@ def read(filename, debug=False):
   else:
     mesh = meshio.read(filename)
     ms = MeshSpace(mesh, name=os.path.basename(filename), debug=debug)
+
   return ms, mesh
 
 def from_meshio(points, cells):
@@ -250,6 +251,10 @@ def read_vtu(filein, debug=False, fileout=None):
     for l in list(aset):
       g.add_edge( cellid, l )  
 
+  # Make node ids consecutive so we can use as array index later!
+  mapping = {old_l:new_l for new_l, old_l in enumerate(g.nodes())}
+  H = nx.relabel_nodes(g, mapping)
+
   #len(g.nodes) 2452707
   #1351940 bulk have conn == 4
   #bulk = np.asarray(bulk); bulk_conn = np.asarray(bulk_conn)
@@ -316,9 +321,9 @@ def read_vtu(filein, debug=False, fileout=None):
   cells = [("tetra", np.asarray(cells))]
   mesh = meshio.Mesh(np.asarray(points), cells)
   ms = MeshSpace(mesh, name=os.path.basename(filein), 
-    compute_conn=False, g3=g)
+    compute_conn=False, g3=H)
     
-  ms._adj = to_scipy_sparse_matrix(g)
+  ms._adj = to_scipy_sparse_matrix(H)
 
   #import ipdb
   #ipdb.set_trace()
