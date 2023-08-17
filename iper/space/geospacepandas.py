@@ -1,6 +1,6 @@
 from mesa_geo import GeoSpace, GeoAgent
 from mesa.space import MultiGrid, NetworkGrid
-import logging
+from loguru import logger
 
 import pandas as pd
 import geopandas as gpd
@@ -30,10 +30,6 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
     under PyPy.
     """
     return tree.query(*args, **kwargs)
-  
-
-import ipdb
-
 
 class GeoSpaceComposer(GeoSpace):
 

@@ -11,7 +11,7 @@ from .xmlobjects import XMLObject, toStr, fromXmlFile
 from mesa import Agent, Model
 
 import uuid
-import logging
+from loguru import logger
 
 from copy import deepcopy
 from iper import _sandbox_defs, _agentTemplateFactory, _environmentFactory
@@ -68,7 +68,6 @@ class XAgent(Agent):
   def __init__(self, id, model=None):
     Agent.__init__( self, id, model)
     #_configure_logging()
-    self.l = logging.getLogger(self.__class__.__name__)        
     self._xd = XMLObject('Agent')
     self._meta = self._xd.add("metadata")
     self._meta.el.set("id", str(id))
@@ -86,9 +85,9 @@ class XAgent(Agent):
     self.pos = (0,0)
 
   def _postInit(self):
-    self.l.warn("You are calling virtual XAgent._postInit()")
-    self.l.warn("This is to allow late initialization of you agent code")            
-    self.l.warn("Consider overriding it in you agent")                
+    logger.warn("You are calling virtual XAgent._postInit()")
+    logger.warn("This is to allow late initialization of you agent code")            
+    logger.warn("Consider overriding it in you agent")                
 
   @property
   def id(self):
@@ -116,16 +115,16 @@ class XAgent(Agent):
       
   def addTemplates(self, templates):
     for _t in templates:
-      self.l.info("Adding template %s"%_t)
+      logger.info("Adding template %s"%_t)
       _xd2 = _agentTemplateFactory.instantiate(_t)
       if (_xd2 is not None) and (len(_xd2) > 0):
         _att = _xd2.find("attributes").getchildren()
         if len(_att):
-          self.l.error(" addTemplate.attributes NOT IMPLEMENTED")
+          logger.error(" addTemplate.attributes NOT IMPLEMENTED")
 
         _evs = _xd2.find("events").getchildren()
         if len(_evs):
-          self.l.error("addTemplate.events NOT IMPLEMENTED")
+          logger.error("addTemplate.events NOT IMPLEMENTED")
         
         _envs = _xd2.find("environments").getchildren()
         for _e in _envs:
@@ -147,7 +146,7 @@ class XAgent(Agent):
 
       return _v
     else:
-    #  self.l.error("Failed to get attribute %s from XML: %s"%(name, toStr(self._xd.rootNode.el)))
+    #  logger.error("Failed to get attribute %s from XML: %s"%(name, toStr(self._xd.rootNode.el)))
       raise AttributeError("Attribute %s is not defined for object of class %s"%(name, self.__class__.__name__))
   
   # This method is always needed or we have errors  
@@ -165,7 +164,7 @@ class XAgent(Agent):
     death.el.attrib["cause"] = reason
     death.el.attrib["simStep"] = str(self.getWorld().getTime())
     if reason not in ["old age", "starvation"]:
-      self.l.debug("Agent %s dead because of %s"%(self.id, reason))
+      logger.debug("Agent %s dead because of %s"%(self.id, reason))
     if self.exists:
       self._notifyDeath()
 
@@ -177,7 +176,7 @@ class XAgent(Agent):
     return self._last_reward
     
   def addReward(self, reward):
-    self.l.debug("Agent %s received reward %f"%(self.id, reward))          
+    logger.debug("Agent %s received reward %f"%(self.id, reward))          
     self._next_reward += reward
 
   def step(self):
@@ -199,7 +198,7 @@ class XAgent(Agent):
       # Some actions may destroy the agent in the middle of the loop
       # if this is the case just return from this ghost shell!
       if not self.exists: return 
-      self.l.debug("Agent %s executing action: %s"%(self.id, str(action)))
+      logger.debug("Agent %s executing action: %s"%(self.id, str(action)))
       try:
         self.getWorld().notify(
               Event(self.id, "perform_"+str(action.__class__.__name__))
@@ -208,14 +207,14 @@ class XAgent(Agent):
       except Exception as e:
         exc_buffer = io.BytesIO()
         traceback.print_exc(file=exc_buffer)
-        self.l.error(
+        logger.error(
                   'Uncaught exception running action %s:\n %s'
                   %(str(action), exc_buffer.getvalue()))
 
       for _behav in self.getBehaviours():
         if type(_behav) is not str:
           if not self.exists: return       
-          self.l.debug("Agent %s executing behaviour: %s"%(self.id, _behav.__class__.__name__))
+          logger.debug("Agent %s executing behaviour: %s"%(self.id, _behav.__class__.__name__))
           self.getWorld().notify(
                 Event(self.id, "perform_"+_behav.__class__.__name__)
               )        
@@ -270,7 +269,6 @@ class MultiEnvironmentWorld(Model):
       os.makedirs(self._aodir)    
     #_configure_logging()
     self._af = None # No factory defined. Override!
-    self.l = logging.getLogger(self.__class__.__name__)    
     self._envs = []
     self._rasters = []
     self._agentsToAdd = []
@@ -287,13 +285,13 @@ class MultiEnvironmentWorld(Model):
     self.timestep=config["timestep"] if "timestep" in config else 30 #In minutes
 
   def info(self):
-    self.l.debug("TOTAL agent types %d"%len(self._agents))    
+    logger.debug("TOTAL agent types %d"%len(self._agents))    
     for k,v in self._agents.items():
-      self.l.debug("%s:%d"%(k, len(v)))  
+      logger.debug("%s:%d"%(k, len(v)))  
 
   def stepDay(self):
       """Called if there is a new day. Reimplement if neede"""
-      self.l.info("Today is a new day!")
+      logger.info("Today is a new day!")
 
 
   def step(self, call_scheduler=True):
@@ -307,33 +305,33 @@ class MultiEnvironmentWorld(Model):
 
   def _checkModelContinueRunning(self, maxsteps, maxdays, user_cond):
     if maxsteps and (self._currentStep >= maxsteps) : 
-      self.l.info("Terminating simulation because we reached the maximum number of steps (%d)"%maxsteps)
+      logger.info("Terminating simulation because we reached the maximum number of steps (%d)"%maxsteps)
       return False
 
     if maxdays and (self._currentDate - self._startingDate).days >= maxdays:
-      self.l.info("Terminating simulation because we reached the maximum number of days (%d)"%maxdays)
+      logger.info("Terminating simulation because we reached the maximum number of days (%d)"%maxdays)
       return False
 
     if user_cond and user_cond(self) is False:
-      self.l.info("Terminating simulation because we reached user defined condition (%s)"%str(user_cond))
+      logger.info("Terminating simulation because we reached user defined condition (%s)"%str(user_cond))
       return False
 
     return True    
   def run(self, maxsteps=None, maxdays=None, until=None, forever=False):
-    self.l.info("***** STARTING SIMULATION *******")
+    logger.info("***** STARTING SIMULATION *******")
     running = True
     if not forever and maxsteps is None and maxdays is None and until is None:
       raise ValueError("The model will run forever if you don't set an exit condition. Use forver=True to force")
 
     while (running):
-      self.l.info("Step %d - %s elapsed"%(self._currentStep, self._currentDate - self._startingDate))    
+      logger.info("Step %d - %s elapsed"%(self._currentStep, self._currentDate - self._startingDate))    
       self.info()          
       self.stepEnvironment()
       self.step()
       running = self._checkModelContinueRunning(maxsteps, maxdays, until)
 
 
-    self.l.info("***** FINISHED SIMULATION *******")
+    logger.info("***** FINISHED SIMULATION *******")
 
   def getTime(self):
     return self._currentDate
@@ -348,37 +346,37 @@ class MultiEnvironmentWorld(Model):
     return self._agentsById.values()
 
   def _onEvent(self, event):
-    #self.l.info("** Applying %d reward rules on %d events "%(len(self._rewardRules),len(self._events)))
+    #logger.info("** Applying %d reward rules on %d events "%(len(self._rewardRules),len(self._events)))
     # Add reward on events
     for _r in self._rewardRules:
-      self.l.debug("Rule %s check on event %s"%(_r._ev._type, event._type))                
+      logger.debug("Rule %s check on event %s"%(_r._ev._type, event._type))                
       if _r._ev._type == event._type:
-        self.l.debug("Check on _a %s == %s? %s"%(event._a, _r._ev._a, str(event._a.startswith(_r._ev._a))))                
+        logger.debug("Check on _a %s == %s? %s"%(event._a, _r._ev._a, str(event._a.startswith(_r._ev._a))))                
         if event._a.startswith(_r._ev._a):
           _agent = self.getAgent(event._a)
           val = _r._values[0]
-          self.l.debug("Rule %s fired on %s"%(_r._ev._type, event._type))                          
+          logger.debug("Rule %s fired on %s"%(_r._ev._type, event._type))                          
           _agent.addReward(_r._values[0])
 
   def notify(self, event):
     self._events.append(event)
     self._onEvent(event)
     _a, _t, _b = event._a, event._type, event._b
-    self.l.debug("Agent %s notified %s on %s"%(_a, _t, _b))
+    logger.debug("Agent %s notified %s on %s"%(_a, _t, _b))
     _agent = self.getAgent(_a)   
     if _agent is None:
-      self.l.debug("Agent %s WON'T be notified %s on %s"%(_a, _t, _b))       
-      self.l.debug("Can't notify because agent does not exists!")
-      self.l.debug("Maybe it was already removed? Check agent logs for details...")      
+      logger.debug("Agent %s WON'T be notified %s on %s"%(_a, _t, _b))       
+      logger.debug("Can't notify because agent does not exists!")
+      logger.debug("Maybe it was already removed? Check agent logs for details...")      
       return 
     if _t == "death":
       self._deathsinturn.append(_a)
       _agent.toXmlFile(odir=self._aodir)
       if _agent in self._agents[type(_agent)]:
-        self.l.debug("Removing dead agent")
+        logger.debug("Removing dead agent")
         self.removeAgent(_agent)
       else:      
-        self.l.error("Cannot find agent %s of type %s in %s"%(str(_agent), str(type(_agent)), str(self._agents)))
+        logger.error("Cannot find agent %s of type %s in %s"%(str(_agent), str(type(_agent)), str(self._agents)))
     else:
       _ev = _agent._events.add(_t)
       _ev.el.attrib["simStep"] = str(self.getTime())
@@ -390,7 +388,7 @@ class MultiEnvironmentWorld(Model):
     for i in range(_w):
       for j in range(_h):
         for aid in self.getAgentIds((i,j), "all"):
-          self.l.info(aid)
+          logger.info(aid)
           bag.append(aid)
         
     return bag
@@ -425,17 +423,17 @@ class MultiEnvironmentWorld(Model):
     return None
 
   def _check_env_reqs(self, env):
-    self.l.info("Analyzing requirements for environment %s"%env.name)
+    logger.info("Analyzing requirements for environment %s"%env.name)
     if len(env._req) == 0:
-      self.l.info("Nothing required")
+      logger.info("Nothing required")
     else:
       for _r in env._req:  
-        self.l.info("Requires: %s"%toStr(_r))
+        logger.info("Requires: %s"%toStr(_r))
         _renv = _environmentFactory._capabilities.get(_r.tag, None)
         if _renv:
           self.add_env(_renv)
         else:    
-          self.l.info("Cannot satisfy dependency of %s in %s"%(_r.tag, _environmentFactory._capabilities))
+          logger.info("Cannot satisfy dependency of %s in %s"%(_r.tag, _environmentFactory._capabilities))
           return False
     return True
   
@@ -447,8 +445,8 @@ class MultiEnvironmentWorld(Model):
         raise ValueError("Cannot fullfill requirements for model " + str(env))    
 
   def stepEnvironment(self):
-    #self.l.info("%d - "%self.getTime())
-    #self.l.info("Deaths: %d - "%len(self._deathsinturn))    
+    #logger.info("%d - "%self.getTime())
+    #logger.info("Deaths: %d - "%len(self._deathsinturn))    
     for env in self._envs:
       # TODO: Step added environments
       pass
@@ -491,7 +489,7 @@ class MultiEnvironmentWorld(Model):
   def createAgents(self):
     #Register the agent with the world
     if len(self._agentsToAdd) <= 0: return
-    self.l.info("Creating %d agents"%len(self._agentsToAdd))
+    logger.info("Creating %d agents"%len(self._agentsToAdd))
     for _agent in self._agentsToAdd:
       self.addAgent(_agent)
       
@@ -512,7 +510,7 @@ class MultiEnvironmentWorld(Model):
     
   def _applyEnvRequir(self, agent):
     for env in self._envs:
-      self.l.debug("Requesting environment %s"%str(env.getName()))
+      logger.debug("Requesting environment %s"%str(env.getName()))
       _ed = agent._envdata.add(env.getName())
       for a in env._aa:
         _tag = _ed.add(a.tag)
@@ -539,6 +537,6 @@ class MultiEnvironmentWorld(Model):
         self.registerDynamicRaster(raster_name, True)
         self.getDynamicRaster(raster_name).setInitValues(0, 5, 5)
         self._rasters.append(raster_name)
-    self.l.info(self._rasters)
+    logger.info(self._rasters)
        
 

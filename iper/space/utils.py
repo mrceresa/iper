@@ -3,8 +3,7 @@ import os, sys
 import networkx as nx
 import meshio
 from iper.space.Space import MeshSpace
-import logging
-_log = logging.getLogger(__name__)
+from loguru import logger
 from trimesh.grouping import group_rows, hashable_rows, float_to_int
 #from matplotlib.tri import Triangulation
 import numpy as np

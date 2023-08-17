@@ -1,18 +1,17 @@
-import logging
+from loguru import logger
 import numpy as np
 import operator
 from iper.behaviours.actions import TestAction
 
 class BrainModel(object):
   def __init__(self, name):
-    self.l = logging.getLogger(self.__class__.__name__)
     self._name = name
     self._rewards = []
     self._nS = 1 # Num of states
     self._nA = 1 # Num of Actions    
 
   def train(self, ):
-    self.l.info("Training model %s with %d new data"%(self._name, len(self._rewards)))
+    logger.info("Training model %s with %d new data"%(self._name, len(self._rewards)))
     
   def policy(self, status):
     return [] 
@@ -28,12 +27,12 @@ class QLearnBrainModel(BrainModel):
     self._pol = {}
     
   def train(self):
-    self.l.info("Training model %s with %d new data"%(self._name, len(self._rewards)))
-    self.l.info("Q: %s"%(str(self._Q)))
-    self.l.info("pol: %s"%(str(self._pol)))    
+    logger.info("Training model %s with %d new data"%(self._name, len(self._rewards)))
+    logger.info("Q: %s"%(str(self._Q)))
+    logger.info("pol: %s"%(str(self._pol)))    
 
   def policy(self, status):
-    self.l.debug("Inside policy with status %s"%str(status))
+    logger.debug("Inside policy with status %s"%str(status))
     status = tuple(status) #List is not hashable
     _actions = self._pol.setdefault(status, [0 for _ in range(self._nA)])
     index, value = max(enumerate(_actions), key=operator.itemgetter(1))
@@ -41,13 +40,12 @@ class QLearnBrainModel(BrainModel):
 
 class BrainModelFactory(object):
   def __init__(self):
-    self.l = logging.getLogger(self.__class__.__name__)    
     self._models = {"default":BrainModel("default"),
                     "goap":BrainModel("goap"),
                     "Q":QLearnBrainModel("Q")}    
 
   def train(self):
-    self.l.info("Updating models using batches...")
+    logger.info("Updating models using batches...")
     for _m in self.get_all():
       _model = self.get(_m)
       _model.train()
@@ -67,11 +65,11 @@ class BrainModelFactory(object):
     if action is None: return False
     name = str(name)
     if name in self._models:
-      self.l.error("A model with name %s is already registered"%name) 
+      logger.error("A model with name %s is already registered"%name) 
       return False   
     self._models[name] = action
           
   def list_all(self):
-    self.l.info("* This factory contains %d models"%len(self._models))
+    logger.info("* This factory contains %d models"%len(self._models))
     for i, k in self._models.items():
-      self.l.info("**** %s: %s"%(i, k)) 
+      logger.info("**** %s: %s"%(i, k)) 

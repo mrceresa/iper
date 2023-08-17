@@ -2,8 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import coloredlogs, logging
-_log = logging.getLogger(__name__)
+import coloredlogs
+from loguru import logger
 
 from maze import Maze
 import argparse
@@ -17,7 +17,7 @@ def main(args):
   coloredlogs.install(level=loglevel)
   
   # Start model
-  _log.info("Started Maze simulator with params %s"%str(args))
+  logger.info("Started Maze simulator with params %s"%str(args))
   model = Maze(args.agents)
   
   model.plotAll()

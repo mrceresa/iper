@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 from .xmlobjects import XMLObject
 from . import _brainModelFactory
 
@@ -13,7 +13,6 @@ class WorldState(object):
 class BaseBrain(XMLObject):
   def __init__(self, agent, model="default"):
     XMLObject.__init__( self)
-    self.l = logging.getLogger(self.__class__.__name__)        
     self._xd = XMLObject('Brain')
     self._xd.set("model", model)
     self._xd.set("agent", agent.id)

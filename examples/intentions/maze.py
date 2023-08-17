@@ -9,13 +9,15 @@ import numpy as np
 
 import os
 
+import iper
 from iper import GeoSpacePandas
 from iper import XAgent
 from iper.behaviours.actions import MoveTo, Eat
 from iper.brains import ScriptedBrain
 
-import logging
-_log = logging.getLogger(__name__)
+from loguru import logger
+
+iper.load_all()
 
 class CatBrain(ScriptedBrain):
   def __init__(self, agent):
@@ -58,7 +60,7 @@ class Cat(XAgent):
     XAgent.__init__(self, unique_id, model)
 
   def _postInit(self, *argv, **kargv):
-    _log.debug("*** Agent %s postInit called"%self.id) 
+    logger.debug("*** Agent %s postInit called"%self.id) 
     
   def step(self):
     self.updateState()  
@@ -67,14 +69,14 @@ class Maze(MultiEnvironmentWorld):
 
   def __init__(self, N, config={"size":{"width":2,"height":2,"torus":False}}):
     super().__init__(config)
-    _log.info("Initalizing model")   
+    logger.info("Initalizing model")   
     self.schedule = RandomActivation(self)
     _size = self.config["size"]
     self.grid = MultiGrid(_size["width"], _size["height"], _size["torus"])
     self.createAgents()
 
   def createAgents(self):
-    self.l.info("Requesting agents for the simulation.")
+    logger.info("Requesting agents for the simulation.")
     
     pr = PopulationRequest()
     pr._data = {
@@ -100,24 +102,24 @@ class Maze(MultiEnvironmentWorld):
   def run_model(self, n):
     self.info()
     self.currentStep = 0
-    self.l.info("***** STARTING SIMULATION!!")
+    logger.info("***** STARTING SIMULATION!!")
     for i in range(n):
       self.stepEnvironment()
       self.currentStep+=1
       self.schedule.step()
-      _log.info("Step %d of %d"%(i, n))
+      logger.info("Step %d of %d"%(i, n))
 
-    self.l.info("***** FINISHED SIMULATION!!")
+    logger.info("***** FINISHED SIMULATION!!")
 
     self.info()
   
   def info(self):
-    self.l.info("*"*3 + "This is world %s",self.__class__.__name__ + "*"*3)
+    logger.info("*"*3 + "This is world %s",self.__class__.__name__ + "*"*3)
 
-    self.l.info("*"*3 + "With %d agents: types and num %s"%(len(self._agentsById), str(self._agents)))
-    self.l.info("*"*3 + "With %d environments: types and num %s"%(len(self._envs), str(self._envs)))
+    logger.info("*"*3 + "With %d agents: types and num %s"%(len(self._agentsById), str(self._agents)))
+    logger.info("*"*3 + "With %d environments: types and num %s"%(len(self._envs), str(self._envs)))
 
     for _a in self.getAgents():
-      _log.debug("*"*3 + _a.info())    
+      logger.debug("*"*3 + _a.info())    
 
-    self.l.info("*"*3 + "...BYE!" + "*"*3)
+    logger.info("*"*3 + "...BYE!" + "*"*3)

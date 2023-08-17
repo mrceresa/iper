@@ -1,6 +1,6 @@
 
 import random
-import logging
+from loguru import logger
 from ..xmlobjects import XMLObject
 
 class Action(object):
@@ -8,7 +8,6 @@ class Action(object):
     if not name: name = self.__class__.__name__
     #XMLObject.__init__( self, name)
     self.name = name
-    self.l = logging.getLogger(name)  
     self._pre = []
     self._post = []      
 

@@ -5,7 +5,7 @@ from glob import glob
 
 from ..xmlobjects import toStr, fromXmlFile
 
-import logging
+from loguru import logger
 
 from copy import deepcopy
 from iper import _sandbox_defs

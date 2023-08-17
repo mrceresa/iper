@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 
 from .actions import Action
 
@@ -22,7 +22,7 @@ class BehaviourFactory(object):
     if action is None: return False
     name = str(name)
     if name in self._behaviours:
-      self.l.error("A method with name %s is already registered"%name) 
+      logger.error("A method with name %s is already registered"%name) 
       return False   
     self._behaviours[name] = action
           

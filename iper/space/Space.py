@@ -1,6 +1,6 @@
 from mesa_geo import GeoSpace, GeoAgent
 from mesa.space import MultiGrid, NetworkGrid
-import logging
+from loguru import logger
 
 import pandas as pd
 import geopandas as gpd
@@ -32,7 +32,6 @@ class MeshSpace(NetworkGrid):
   def __init__(self, mesh, debug=False, name="New MeshSpace", \
               compute_conn=True, g2=None, g3=None): 
               
-    self.l = logging.getLogger(self.__class__.__name__)  
     self.name = name
     self._mesh = mesh
     self._info = {}
@@ -92,15 +91,15 @@ class MeshSpace(NetworkGrid):
     # Check if we have the info saved
     basedir = os.getcwd()
 
-    self.l.info("Generating connectivity graphs for mesh %s"%self.name)
-    self.l.info(str(self._mesh))
+    logger.info("Generating connectivity graphs for mesh %s"%self.name)
+    logger.info(str(self._mesh))
     
     # Generate triangulation
     from iper.space.utils import \
       parse_connectivity_3d_triangles, \
       parse_connectivity_3d_quads
 
-    self.l.info("Calculating connectivity...")
+    logger.info("Calculating connectivity...")
     # Transform to a graph
 
     if self.has_surface and "triangle" in self._info:
