@@ -25,8 +25,15 @@ from .behaviours.actions import Action
 
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
+from mesa.space import MultiGrid
+
+def getRandomPos(grid: MultiGrid):
+  pos = ( random.randint(0, grid.width-1),
+          random.randint(0, grid.height-1)
+        )
+  return pos 
 
 class PopulationRequest(object):
   def __init__(self):
@@ -397,7 +404,12 @@ class MultiEnvironmentWorld(Model):
     self._rewardRules.append(rule)
     
   def addAgent(self, agent):
-    self.space.place_agent(agent, agent.pos)
+    # logger.info("New pos "+str(agent.pos))
+    # logger.info(str( (self.space.height, self.space.width) ) )
+    if hasattr(self, "space"):
+      self.space.place_agent(agent, agent.pos)
+    elif hasattr(self, "grid"):
+      self.grid.place_agent(agent, agent.pos)
     self.schedule.add(agent)
     
     self._totCreated += 1
@@ -409,7 +421,11 @@ class MultiEnvironmentWorld(Model):
 
   def removeAgent(self, agent):
     self.schedule.remove(agent)
-    self.space.remove_agent(agent)
+    if hasattr(self, "space"):
+      self.space.remove_agent(agent)
+    elif hasattr(self, "grid"):
+      self.grid.remove_agent(agent)
+
     self._agents[type(agent)].remove(agent)
     if not self._agents[type(agent)]:
       del self._agents[type(agent)]
@@ -502,8 +518,10 @@ class MultiEnvironmentWorld(Model):
   def _prepareAgentForAdd(self, agent, size):
     # Generate random position
     #if size is None: self = (size.config["size"]["width"], self.config["size"]["height"])
-    
-    agent.pos = self.space.getRandomPos()
+    if hasattr(self, "grid"):
+      agent.pos = getRandomPos(self.grid)
+    else:
+      agent.pos = self.space.getRandomPos()
    
     # Configure environments
     self._applyEnvRequir(agent)
